@@ -3856,10 +3856,12 @@ cursor: pointer;
 font-weight:600;
 color:var(--accent);
 font-size: clamp(7.5pt, 1.7vh, 1em);
+	text-transform: none;
 }
 
 .keywordDescriptions {
 font-size: clamp(7pt, 1.5vh, 1em);
+	text-transform: none;
 }
 
 #keyword-content {
@@ -5075,4 +5077,5 @@ display:flex;
 
 .flying-card:hover {
     transform: none !important;
+
 }
