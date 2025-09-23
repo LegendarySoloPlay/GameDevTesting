@@ -1103,7 +1103,7 @@ genericCardSort(heroesToCopy);
     // Combine all icons
     const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
     
-    li.innerHTML = `<span style="white-space: nowrap;">HQ-${hqPosition} | ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${hero.name}</span>`;
+    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${hero.name}</span>`;
             li.dataset.cardId = hero.id;
 
             li.onmouseover = () => {
@@ -1764,4 +1764,5 @@ async function handleCardPlacement(card, options = {}) {
     onscreenConsole.log(`You returned <span class="console-highlights">${card.name}</span> to the bottom of your deck.`);
   }
   updateGameBoard();
+
 }
