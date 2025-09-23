@@ -111,6 +111,7 @@
     width: auto;
     height: 5vh;
     vertical-align: middle;
+	
 }
 
 #bribe-popup .btn {
@@ -2671,6 +2672,7 @@ height:2.8vh;
 margin-right:4px;
 margin-left: 2px;
 vertical-align: middle;
+filter: drop-shadow(0 0 0.3vh white);
 }
 
 .reserved-card-icons {
@@ -2679,6 +2681,7 @@ height:2vh;
 margin-right:4px;
 margin-left: 2px;
 vertical-align: middle;
+filter: drop-shadow(0 0 0.3vh white);
 }
 
 #overallsetlist {
@@ -3020,6 +3023,7 @@ font-size: calc(0.7vh + 0.7vw);
 vertical-align:text-top;
 margin-right: 2px;
 height: calc(0.8vh + 0.8vw);
+filter: drop-shadow(0 0 0.3vh white);
 }
 
 #mastermind-tactic-image {
@@ -3375,6 +3379,7 @@ margin-left: 0.5vw;
 width: auto;
 height:2.4vh;
 vertical-align: text-bottom;
+filter: drop-shadow(0 0 0.3vh white);
 }
 
 .cosmic-threat-card-icons {
@@ -3382,6 +3387,7 @@ width: auto;
 height:2vh;
 vertical-align: middle;
 margin-top:0.2vh;
+filter: drop-shadow(0 0 0.3vh white);
 }
 
 .popup-card-icons {
@@ -3389,6 +3395,7 @@ width: auto;
 height:2vh;
 vertical-align: text-top;
 margin-top:0.2vh;
+filter: drop-shadow(0 0 0.3vh white);
 }
 
 .console-highlights {
@@ -3907,6 +3914,7 @@ position: absolute;
     
 .shattered-overlay .card-icons {
 height: 1.8vh;
+filter: drop-shadow(0 0 0.3vh white);
 }
 
 #investigate-confirm {
@@ -5078,4 +5086,5 @@ display:flex;
     transform: none !important;
 
 }
+
 
