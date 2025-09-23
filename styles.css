@@ -1031,7 +1031,6 @@ opacity: 1;
 
 .bold-spans {
 font-family: "Roboto Condensed", sans-serif;
-    font-optical-sizing: auto;
     font-weight: 600;
     font-style: normal;
 color: var(--accent);
@@ -5079,3 +5078,4 @@ display:flex;
     transform: none !important;
 
 }
+
