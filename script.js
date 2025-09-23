@@ -5119,7 +5119,7 @@ if (destroyedSpaces[i]) {
     // Create an image element
     const cardImage = document.createElement('img');
 
-        cardImage.src = "Visual Assets/Other/masterStrike.webp";
+        cardImage.src = "Visual Assets/Other/MasterStrike.webp";
         cardImage.alt = "Destroyed City Space";
         cardImage.classList.add('destroyed-space');
         cardContainer.appendChild(cardImage);
@@ -11313,4 +11313,5 @@ function updateThemeImages(themeName) {
 
 // Call both initialization functions
 initThemeSwitcher();
+
 initFontSelector();
