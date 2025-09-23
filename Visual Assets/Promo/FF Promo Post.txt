@@ -1,0 +1,13 @@
+Hey all!
+
+I'm thrilled to be back with another update to my browser-based solo version of Marvel Legendary and our next expansion: Fantastic Four! 😁
+
+In addition to Marvel's First Family, the cosmic threat of Galactus and more, I've also done some major overhauls: 
+
+⭐ Theme and Font Customization - Not just a simple Light/Dark mode - you can select from expansion-styled themes and fonts.
+⭐ Animations - Villain attacks and Hero recruits are now animated.
+⭐ Restart Mechanics - Many of you have asked for a Restart button - it was a little trickier than anticipated but I found a solution! The Game Setup screen now features a 'Load Last Setup' button than will auto-select your choices from last game.
+
+🔗 Play here: https://legendarysoloplay.github.io/Legendary-Solo-Play/
+
+If you enjoy playing and want to support future updates, there is a small donation link on the home page. Thanks for all your support!❤️
