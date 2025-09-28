@@ -1,4 +1,4 @@
-//04.09.2025 11.12
+//v1
 
 console.log('Script loaded');
 console.log(window.henchmen);
@@ -393,6 +393,7 @@ var city3PermBuff = 0;
 var city4PermBuff = 0;
 var city5PermBuff = 0;
 var mastermindPermBuff = 0;
+let mastermindPermBuffDynamicPrev = 0;
 var mastermindReserveAttack = 0;
 var bridgeReserveAttack = 0;
 var streetsReserveAttack = 0;
@@ -426,6 +427,7 @@ let healingPossible = true;
 let finalBlowEnabled = false;
 let escapedVillainsCount = 0;
 let lastTurn = false;
+let finalTwist = false;
 let mastermindDeck = [];
 let alwaysLeads = '';
 let totalBystanders = 30;
@@ -3440,15 +3442,21 @@ function updateMastermindOverlay() {
     if (existingXCutionerOverlay) existingXCutionerOverlay.remove();
     if (existingXCutionerExpanded) existingXCutionerExpanded.remove();
 
-    // Update mastermindPermBuff for Mr. Sinister
-    if (mastermind.name === 'Mr. Sinister') {
-        mastermindPermBuff = bystanderCount;
-    }
+let mastermindPermBuffDynamicNow = 0;
 
-        // Update mastermindPermBuff for Mole Man
-    if (mastermind.name === 'Mole Man') {
-        mastermindPermBuff = alwaysLeadsEscapeCount;
-    }
+if (mastermind.name === 'Mr. Sinister') {
+  mastermindPermBuffDynamicNow += bystanderCount;
+}
+
+if (mastermind.name === 'Mole Man') {
+  mastermindPermBuffDynamicNow += alwaysLeadsEscapeCount;
+}
+
+// Adjust the total by the delta only (so other buffs remain intact)
+mastermindPermBuff += (mastermindPermBuffDynamicNow - mastermindPermBuffDynamicPrev);
+
+// Remember this value for next render
+mastermindPermBuffDynamicPrev = mastermindPermBuffDynamicNow;
 
     // XCutioner Heroes section
     if (mastermind.XCutionerHeroes && mastermind.XCutionerHeroes.length > 0) {
@@ -3923,7 +3931,7 @@ async function processVillainCard() {
             }
             
             // Moved to the very end, after all other processing
-            if (pendingHeroKO && schemeTwistChainDepth === 0) {
+            if (pendingHeroKO && schemeTwistChainDepth === 0 && !finalTwist) {
                 pendingHeroKO = false;
                 await showHeroSelectPopup();
             }
@@ -5355,32 +5363,66 @@ if (mastermind.name === 'Galactus') {
     </div>
   `;
 
-    keywordButton.addEventListener('click', async (e) => {
-      // set guard BEFORE anything that might trigger a redraw
-      mastermindCosmicThreatResolved = true;
-      // remove the actual clicked element to avoid visual lag/dupes
-      e.currentTarget.remove();
+  keywordButton.addEventListener('click', async (e) => {
+    // Visually remove to avoid duplicate overlays, but do NOT mark resolved yet
+    e.currentTarget.remove();
 
-      const chosenClass = await showGalactusClassChoicePopup(); // returns 'Strength'|'Instinct'|'Covert'|'Tech'|'Range'
-      const count = allRevealable.filter(c => hasClass(c, chosenClass)).length * 3;
-      applyMastermindCosmicThreat(mastermind, count, chosenClass);
-    });
+    const chosenClass = await showGalactusClassChoicePopup(); // returns 'Strength' | ... | null
+    if (!chosenClass) {
+      // Cancelled: ensure the flag stays false and re-render so button returns
+      mastermindCosmicThreatResolved = false;
+      updateGameBoard();
+      return;
+    }
 
-  } else {
-    const threshold = mastermind.name === 'The Beyonder' ? 5 : 6;
-keywordButtonText.innerHTML = `
-  <div>Cosmic Threat:</div>
-  <div>${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards</div>
-`;
+    // Recompute revealables live
+    const livePool = [
+      ...playerHand,
+      ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy)
+    ];
+    const hasClass = (card, wanted) =>
+      ['class1','class2','class3'].some(k =>
+        String(card?.[k] ?? '').trim().toLowerCase() === String(wanted).trim().toLowerCase()
+      );
 
-    const count = allRevealable.filter(c => typeof c?.cost === 'number' && c.cost >= threshold).length * 3;
+    const attackReduction = livePool.filter(c => hasClass(c, chosenClass)).length * 3;
 
-    keywordButton.addEventListener('click', (e) => {
-      mastermindCosmicThreatResolved = true;
-      e.currentTarget.remove();
-      applyMastermindCosmicThreat(mastermind, count, `${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards`);
-    });
-  }
+    applyMastermindCosmicThreat(mastermind, attackReduction, chosenClass);
+    // Only now mark it resolved
+    mastermindCosmicThreatResolved = true;
+    updateGameBoard();
+  });
+
+} else {
+  const threshold = mastermind.name === 'The Beyonder' ? 5 : 6;
+  keywordButtonText.innerHTML = `
+    <div>Cosmic Threat:</div>
+    <div>${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards</div>
+  `;
+
+  keywordButton.addEventListener('click', () => {
+    // Recompute revealables live
+    const livePool = [
+      ...playerHand,
+      ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy)
+    ];
+    const attackReduction = livePool
+      .filter(c => typeof c?.cost === 'number' && c.cost >= threshold).length * 3;
+
+    // Remove visual button, apply reduction, then flag as resolved
+    const btn = mastermindContainer.querySelector(`#${MM_BTN_ID}`);
+    if (btn) btn.remove();
+
+    applyMastermindCosmicThreat(
+      mastermind,
+      attackReduction,
+      `${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards`
+    );
+
+    mastermindCosmicThreatResolved = true;
+    updateGameBoard();
+  });
+}
 
   keywordButton.appendChild(keywordButtonText);
   mastermindContainer.appendChild(keywordButton);
@@ -5661,6 +5703,7 @@ if (lastTurn && !lastTurnMessageShown) {
 
             case "7Twists":
                 if (twistCount >= 7) {
+                    finalTwist = true;
                     document.getElementById('defeat-context').innerHTML = `The final Dark Portal has opened. ${mastermind.name} stands triumphant as the Dark Dimension's power seeps into our world. All hope is lost.`;
                     showDefeatPopup();
                 }
@@ -5696,6 +5739,7 @@ if (lastTurn && !lastTurnMessageShown) {
 
             case "8Twists":
                 if (twistCount >= 8) {
+                    finalTwist = true;
                     document.getElementById('defeat-context').innerHTML = `The Cosmic Cube is fully charged. With a single thought, ${mastermind.name} reshapes all of existence and the universe will never be the same.`;
                     showDefeatPopup();
                 }
@@ -5746,6 +5790,7 @@ if (lastTurn && !lastTurnMessageShown) {
             case "hqDetonated":
                 if ((hqExplosion1 >= 6 && hqExplosion2 >= 6 && hqExplosion3 >= 6 && 
                     hqExplosion4 >= 6 && hqExplosion5 >= 6) || heroDeck.length === 0) {
+                    finalTwist = true;
                     document.getElementById('defeat-context').innerHTML = `All HQ spaces have been destroyed or the Hero Deck has run out. The Helicarrier erupts in a chain of explosions, plunging into the ocean in a fiery wreck.`;
                     showDefeatPopup();
                 }
@@ -5753,6 +5798,7 @@ if (lastTurn && !lastTurnMessageShown) {
 
             case "babyThreeVillainEscape":
                 if (stackedTwistNextToMastermind >= 3) {
+                    finalTwist = true;
                     document.getElementById('defeat-context').innerHTML = `Three twists have been stacked next to ${mastermind.name}. Hope Summers has been taken, her future stolen, and the fate of mutantkind has changed forever.`;
                     showDefeatPopup();
                 }
@@ -5774,6 +5820,7 @@ if (lastTurn && !lastTurnMessageShown) {
 
             case "ForceField7Twists":
                 if (twistCount >= 7) {
+                    finalTwist = true;
                     document.getElementById('defeat-context').innerHTML = `The final force field is in place. ${mastermind.name} is untouchable and their reign will last forever.`;
                     showDefeatPopup();
                 }
@@ -5781,6 +5828,7 @@ if (lastTurn && !lastTurnMessageShown) {
 
             case "NegativeZone7Twists":
                 if (twistCount >= 7) {
+                    finalTwist = true;
                     document.getElementById('defeat-context').innerHTML = `Reality has been dragged into the Negative Zone. ${mastermind.name} rules over a warped antimatter universe and our world is lost forever.`;
                     showDefeatPopup();
                 }
@@ -6001,11 +6049,11 @@ function updateEvilWinsTracker() {
       break;
 
         case "Bathe the Earth in Cosmic Rays":
-      evilWinsText.innerHTML = `${KOdHeroes + carriedOffHeroes}/6 Non Grey Heroes KO'd or Carried Off`;
+      evilWinsText.innerHTML = `${KOdHeroes + carriedOffHeroes}/6 Non Grey Heroes in KO Pile`;
       break;
 
         case "Flood the Planet with Melted Glaciers":
-      evilWinsText.innerHTML = `${KOdHeroes + carriedOffHeroes}/20 Non Grey Heroes KO'd or Carried Off`;
+      evilWinsText.innerHTML = `${KOdHeroes + carriedOffHeroes}/20 Non Grey Heroes in KO Pile`;
       break;
 
         case "Invincible Force Field":
@@ -7640,11 +7688,9 @@ function applyMastermindCosmicThreat(mastermindCard, attackReduction, label) {
 
 // Call when Mastermind attack finishes resolving (to remove temp reduction)
 function removeMastermindCosmicThreatBuff() {
-  if (mastermindCosmicThreat > 0) {
     mastermindTempBuff += mastermindCosmicThreat;
     mastermindCosmicThreat = 0;
     updateGameBoard();
-  }
 }
 
 async function showGalactusClassChoicePopup() {
@@ -7657,8 +7703,9 @@ async function showGalactusClassChoicePopup() {
     const instructionsDiv = document.getElementById('context');
     const heroImage = document.getElementById('hero-one-location-image');
     const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+    const closeBtn = document.getElementById('close-choice-button'); // <- use this
 
-    // Init UI
+    // Init UI (same as you had)
     popupTitle.textContent = 'Choose a Class';
     instructionsDiv.textContent = 'Select a class to reveal for Galactus’s Cosmic Threat.';
     cardsList.innerHTML = '';
@@ -7668,13 +7715,29 @@ async function showGalactusClassChoicePopup() {
     modalOverlay.style.display = 'block';
     popup.style.display = 'block';
 
-    // Show Galactus card (use your actual Galactus art path)
     heroImage.src = 'Visual Assets/Masterminds/FantasticFour_Galactus.webp';
     heroImage.style.display = 'block';
     oneChoiceHoverText.style.display = 'none';
 
     const options = ['Strength','Instinct','Covert','Tech','Range'];
     let selected = null;
+
+    function resetPopupUI() {
+      popupTitle.textContent = 'Hero Ability!';
+      instructionsDiv.textContent = 'Context';
+      confirmButton.textContent = 'Confirm';
+      confirmButton.disabled = true;
+      heroImage.src = '';
+      heroImage.style.display = 'none';
+      oneChoiceHoverText.style.display = 'block';
+      popup.style.display = 'none';
+      modalOverlay.style.display = 'none';
+    }
+
+    function finish(result) {
+      resetPopupUI();
+      resolve(result); // 'Strength' | 'Instinct' | 'Covert' | 'Tech' | 'Range' | null
+    }
 
     options.forEach(opt => {
       const li = document.createElement('li');
@@ -7692,27 +7755,20 @@ async function showGalactusClassChoicePopup() {
     });
 
     confirmButton.onclick = () => {
-      if (selected) {
-        closePopup();
-        resolve(selected); // 'Strength'|'Instinct'|'Covert'|'Tech'|'Range'
-      }
+      if (selected) finish(selected);
     };
 
-    function closePopup() {
-      // Minimal reset (match your own reset routine if you have one)
-      popupTitle.textContent = 'Hero Ability!';
-      instructionsDiv.textContent = 'Context';
-      confirmButton.textContent = 'Confirm';
-      confirmButton.disabled = true;
-      heroImage.src = '';
-      heroImage.style.display = 'none';
-      oneChoiceHoverText.style.display = 'block';
-      popup.style.display = 'none';
-      modalOverlay.style.display = 'none';
+    // NEW: cancel path with the provided button
+    if (closeBtn) {
+      closeBtn.style.display = 'inline-block';
+      closeBtn.onclick = () => finish(null);
     }
+    // (Optional) overlay click to cancel:
+    modalOverlay.onclick = (e) => {
+      if (e.target === modalOverlay) finish(null);
+    };
   });
 }
-
 
 // Helper function
 function getSelectedScheme() {
@@ -7748,6 +7804,8 @@ function showHeroKOPopup() {
         let activeImage = null;
 
         heroKOPopup.appendChild(confirmButton);
+
+		updateGameBoard();
 
         // Build list retaining original HQ indices
         const eligible = hq
@@ -9744,7 +9802,6 @@ if (card.name === "Professor X - Telepathic Probe" &&
     // Focus button click handler
     focusButton.addEventListener('click', async (e) => {
         e.stopPropagation();
-        focusButton.style.display = 'none'; // Hide button immediately
         
         if (focusFunction && typeof focusFunction === 'function') {
             try {
@@ -9755,6 +9812,10 @@ if (card.name === "Professor X - Telepathic Probe" &&
             }
         } else {
             console.error(`Focus ability function not found for ${card.name}`);
+        }
+
+		if (totalRecruitPoints < focusCost) {
+            focusButton.style.display = 'none'; // Hide button immediately
         }
     });
 
@@ -10333,7 +10394,7 @@ async function animateCardToDestination(cardElement, destinationElement, options
     
     // Rest of the animation code remains the same...
     const {
-        duration = 1000,
+        duration = 700,
         curveHeight = 100,
         onComplete = null
     } = options;
@@ -10482,7 +10543,7 @@ async function recruitHeroConfirmed(hero, hqIndex) {
     // Animate the card to its destination if we found a card element
     if (cardElement) {
 animateCardToDestination(cardElement, destinationElement, {
-            duration: 1200,
+            duration: 700,
             curveHeight: 150,
             onComplete: () => {
                 // Update the game board after animation completes
@@ -11315,3 +11376,83 @@ function updateThemeImages(themeName) {
 initThemeSwitcher();
 
 initFontSelector();
+
+// Remote-scroll #keyword-content only when side panel is visible and the hovered target can't scroll.
+(function routeWheelFallbackToKeyword() {
+  const keyword   = document.getElementById('keyword-content');
+  const sidePanel = document.getElementById('side-panel');
+
+  if (!keyword || !sidePanel) {
+    console.warn('routeWheelFallbackToKeyword: missing #keyword-content or #side-panel');
+    return;
+  }
+
+  const isVisible = (el) => {
+    const cs = getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  };
+
+  const isScrollable = (el, axis) => {
+    if (!el) return false;
+    const cs = getComputedStyle(el);
+    const ov  = axis === 'y' ? cs.overflowY : cs.overflowX;
+    if (!/(auto|scroll|overlay)/i.test(ov)) return false;
+    return axis === 'y'
+      ? el.scrollHeight > el.clientHeight
+      : el.scrollWidth  > el.clientWidth;
+  };
+
+  const buildChain = (node) => {
+    const chain = [];
+    while (node) {
+      if (node.nodeType === 1) chain.push(node);
+      node = node.parentElement;
+    }
+    return chain;
+  };
+
+  // Does the event's target or any ancestor (or the page) *have* a scroll box on this axis?
+  const hasScrollableAnywhere = (e, axis) => {
+    const path = e.composedPath ? e.composedPath() : buildChain(e.target);
+    for (const n of path) {
+      if (n && n.nodeType === 1 && isScrollable(n, axis)) return true;
+      if (n === document || n === window) break;
+    }
+    // Also treat the page itself as a scroll container
+    const page = document.scrollingElement || document.documentElement;
+    return isScrollable(page, axis);
+  };
+
+  document.addEventListener('wheel', (e) => {
+    // Only apply this behaviour while side panel is visible.
+    if (!isVisible(sidePanel)) return;
+
+    // Let other widgets handle zoom/gesture combos.
+    if (e.ctrlKey) return;
+    if (e.defaultPrevented) return;
+
+    const axis = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? 'y' : 'x';
+
+    // If *anything* under the pointer (or the page) is a scroll container, let it behave normally.
+    if (hasScrollableAnywhere(e, axis)) return;
+
+    // Otherwise, route the wheel to #keyword-content without breaking other scrollers.
+    e.preventDefault();  // stop the body/page from scrolling
+    if (axis === 'y') {
+      keyword.scrollTop  += (e.deltaY || 0);
+    } else {
+      const dx = e.deltaX || e.deltaY || 0; // support Shift+wheel trackpad gestures
+      keyword.scrollLeft += dx;
+    }
+  }, { passive: false, capture: true }); // capture so our check runs early without blocking defaults
+})();
+
+
+
+
+
+
+
+
+
+

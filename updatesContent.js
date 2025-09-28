@@ -1,5 +1,5 @@
 // updatesContent.js
-//01.09.2025 20.38
+//v1
 const updatesHTML = `
 <h3>✨ <i>Version 3.0.0</i> - Fantastic Four <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="popup-card-icons"></h3>
 <p>Welcome to our next expansion! This update brings you the <strong>Fantastic Four</strong> at their finest - all new cards and mechanics! There have also been some major patches and changes under the hood.</p>

@@ -1,6 +1,5 @@
 // Fantastic Four Expansion
-// Pre-release
-// 05/09/2025 17.45
+// v1
 
 //Keywords
 
@@ -371,11 +370,11 @@ async function batheEarthInCosmicRaysTwist() {
             updateInstructions();
         }
 
-        // Sort & render only the eligible (non-grey) cards
-        // If genericCardSort sorts in-place, pass the array directly.
-        genericCardSort(eligibleCards);
+        // Create a copy of eligibleCards to sort for display only
+        const displayCards = [...eligibleCards];
+        genericCardSort(displayCards);
 
-        eligibleCards.forEach((card) => {
+        displayCards.forEach((card) => {
             const li = document.createElement('li');
 
             const createTeamIconHTML = (value) => {
@@ -423,21 +422,23 @@ async function batheEarthInCosmicRaysTwist() {
         // Handle confirmation
         confirmButton.onclick = async () => {
             if (selectedCard) {
-                console.log('Card returned to the top of the deck:', selectedCard);
+                console.log('Card KO\'d:', selectedCard);
 
                 // Find the selected card's current index in the *actual* hand
                 const indexInHand = playerHand.findIndex(c => c && c.id === selectedCard.id);
                 if (indexInHand !== -1) {
                     // Remove the card from the player's hand
-                    playerHand.splice(indexInHand, 1);
+                    const koedCard = playerHand.splice(indexInHand, 1)[0];
+                    koPile.push(koedCard);
+                    onscreenConsole.log(`<span class="console-highlights">${koedCard.name}</span> has been KO'd.`);
+                    koBonuses();
+                    closePopup();
+                    updateGameBoard();
+                    await cosmicRaysRecruit(selectedCard.cost);
+                } else {
+                    console.error('Selected card not found in player hand');
+                    onscreenConsole.log("Error: Selected card not found in hand.");
                 }
-
-                koPile.push(selectedCard);
-		onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`);
-		koBonuses();
-                closePopup();
-                updateGameBoard();
-		await cosmicRaysRecruit(selectedCard.cost);
                 resolve();
             }
         };
@@ -576,26 +577,25 @@ async function cosmicRaysRecruit(maxCost) {
             if (!selectedCard) return;
 
             // Remove from HQ
-            const idx = hq.findIndex(c =>
-                (c && (c.id ?? c.uniqueId)) === (selectedCard.id ?? selectedCard.uniqueId)
-            );
-            if (idx !== -1) {
-                hq.splice(idx, 1);
-            }
+const idx = hq.findIndex(c =>
+    (c && (c.id ?? c.uniqueId)) === (selectedCard.id ?? selectedCard.uniqueId)
+);
 
+if (idx !== -1) {
+    // Instead of splice + assignment, just replace the element directly
     const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-    hq[idx] = newCard;
+    hq[idx] = newCard; // ✅ Direct replacement maintains array structure
     
     if (newCard) {
         onscreenConsole.log(`<span class="console-highlights">${newCard.name}</span> has entered the HQ.`);
-    } 
-
-addHRToTopWithInnerHTML();
+    }
+    
+    addHRToTopWithInnerHTML();
     
     if (!hq[idx] && heroDeck.length === 0) {
         heroDeckHasRunOut = true;
     }
-
+}
             // Add to hand
             playerHand.push(selectedCard);
 	playSFX('recruit');
@@ -1056,7 +1056,7 @@ function galactusForceOfEternity() {
 }
 
 function galactusForceOfEternityDiscard() {
-onscreenConsole.log(`<span class="console-highlights">Galactus</span> has made you draw six additional cards. Now discard six cards.`);
+    onscreenConsole.log(`<span class="console-highlights">Galactus</span> has made you draw six additional cards. Now discard six cards.`);
     
     return new Promise(async (resolve) => {
         // Get all cards in hand (not just zero-cost)
@@ -1126,7 +1126,7 @@ onscreenConsole.log(`<span class="console-highlights">Galactus</span> has made y
 
         function updateInstructions() {
             if (selectedCards.length < 6) {
-                instructionsDiv.textContent = `Select ${6 - selectedCards.length} more card${selectedCards.length === 2 ? '' : 's'} to discard.`;
+                instructionsDiv.textContent = `Select ${6 - selectedCards.length} more card${selectedCards.length === 5 ? '' : 's'} to discard.`;
             } else {
                 const namesList = selectedCards.map(card => 
                     `<span class="console-highlights">${card.name}</span>`
@@ -1169,33 +1169,34 @@ onscreenConsole.log(`<span class="console-highlights">Galactus</span> has made y
             updateConfirmButton();
             updateInstructions();
         }
-genericCardSort(availableCards);
-        // Populate the list with available cards
-        availableCards.forEach(card => {
+
+        // Create a copy for display only - don't sort the original availableCards
+        const displayCards = [...availableCards];
+        genericCardSort(displayCards);
+
+        // Populate the list with display cards (but keep original card references)
+        displayCards.forEach(card => {
             const li = document.createElement('li');
             const createTeamIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
 
-    const createClassIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-    
-    const teamIcon = createTeamIconHTML(card.team);
-    const class1Icon = createClassIconHTML(card.class1);
-    const class2Icon = createClassIconHTML(card.class2);
-    const class3Icon = createClassIconHTML(card.class3);
-    
-    // Combine all icons
-    const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
-    
-    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
+            const createClassIconHTML = (value) => {
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
+            
+            const teamIcon = createTeamIconHTML(card.team);
+            const class1Icon = createClassIconHTML(card.class1);
+            const class2Icon = createClassIconHTML(card.class2);
+            const class3Icon = createClassIconHTML(card.class3);
+            
+            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
 
             li.setAttribute('data-card-id', card.uniqueId);
 
@@ -1238,6 +1239,7 @@ genericCardSort(availableCards);
                 
                 closePopup();
                 updateGameBoard();
+                onscreenConsole.log(`Discarded 6 cards.`);
                 resolve();
             }
         };
@@ -1603,17 +1605,17 @@ return;
 }
 
 function moloidsFight() {
-onscreenConsole.log(`Fight! KO one of your Heroes.`);
-return new Promise((resolve, reject) => {
+    onscreenConsole.log(`Fight! KO one of your Heroes.`);
+    return new Promise((resolve, reject) => {
         // Combine heroes from the player's hand and cards played this turn
-        const combinedCards = [
-            ...playerHand.filter(card => card.type === 'Hero'), // Heroes in hand (always included)
-            ...cardsPlayedThisTurn.filter(card => 
-                card.type === 'Hero' && 
-                !card.isCopied && 
-                !card.sidekickToDestroy
-            )
-        ];
+        const handHeroes = playerHand.filter(card => card.type === 'Hero');
+        const playedHeroes = cardsPlayedThisTurn.filter(card => 
+            card.type === 'Hero' && 
+            !card.isCopied && 
+            !card.sidekickToDestroy
+        );
+        
+        const combinedCards = [...handHeroes, ...playedHeroes];
         
         // Check if there are any heroes in the combined list
         if (combinedCards.length === 0) {
@@ -1649,7 +1651,6 @@ return new Promise((resolve, reject) => {
         // Update the confirm button state
         function updateConfirmButton() {
             confirmButton.disabled = selectedCard === null;
-            // No need to show/hide the button anymore since it's always visible
         }
 
         // Update instructions based on selection
@@ -1657,7 +1658,8 @@ return new Promise((resolve, reject) => {
             if (selectedCard === null) {
                 instructionsDiv.textContent = 'Select a hero to KO.';
             } else {
-                instructionsDiv.innerHTML= `Selected: <span class="console-highlights">${selectedCard.card.name}</span> will be KO'd.`;
+                const location = playerHand.includes(selectedCard) ? '(from Hand)' : '(from Played Cards)';
+                instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> ${location} will be KO'd.`;
             }
         }
 
@@ -1677,8 +1679,8 @@ return new Promise((resolve, reject) => {
         }
 
         // Toggle card selection
-        function toggleCardSelection(card, cardIndex, listItem) {
-            if (selectedCard && selectedCard.index === cardIndex && selectedCard.isFromHand === (cardIndex < playerHand.length)) {
+        function toggleCardSelection(card, listItem) {
+            if (selectedCard && selectedCard.id === card.id) {
                 // Deselect if clicking the same card
                 selectedCard = null;
                 listItem.classList.remove('selected');
@@ -1686,15 +1688,11 @@ return new Promise((resolve, reject) => {
             } else {
                 // Deselect previous selection if any
                 if (selectedCard) {
-                    const prevListItem = document.querySelector(`[data-card-id="${selectedCard.index}"]`);
+                    const prevListItem = document.querySelector(`[data-card-id="${selectedCard.id}"]`);
                     if (prevListItem) prevListItem.classList.remove('selected');
                 }
                 // Select new card
-                selectedCard = {
-                    card: card,
-                    index: cardIndex,
-                    isFromHand: cardIndex < playerHand.length
-                };
+                selectedCard = card;
                 listItem.classList.add('selected');
                 updateHeroImage(card);
             }
@@ -1707,20 +1705,27 @@ return new Promise((resolve, reject) => {
         confirmButton.onclick = () => {
             if (!selectedCard) return;
 
-            const { card, index, isFromHand } = selectedCard;
-            console.log(`${card.name} has been KO'd.`);
-            onscreenConsole.log(`<span class="console-highlights">${card.name}</span> has been KO'd.`);
-koBonuses();
+            console.log(`${selectedCard.name} has been KO'd.`);
+            onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`);
+            koBonuses();
             
             // Remove the card from the correct array (hand or played)
-            if (isFromHand) {
-                playerHand.splice(index, 1);
-            } else {
-                cardsPlayedThisTurn.splice(index - playerHand.length, 1);
+            let removedFromHand = false;
+            
+            // Try to remove from hand first
+            const handIndex = playerHand.findIndex(c => c.id === selectedCard.id);
+            if (handIndex !== -1) {
+                playerHand.splice(handIndex, 1);
+                removedFromHand = true;
+            }
+            
+            // If not found in hand, try to remove from played cards
+            if (!removedFromHand) {
+                selectedCard.markedToDestroy = true;
             }
             
             // Add the card to the KO pile
-            koPile.push(card);
+            koPile.push(selectedCard);
             
             closePopup();
             updateGameBoard();
@@ -1741,35 +1746,37 @@ koBonuses();
             popup.style.display = 'none';
             modalOverlay.style.display = 'none';
         }
-genericCardSort(combinedCards);
+
+        // Sort the cards before displaying them
+        genericCardSort(combinedCards);
+
         // Populate the list with the heroes from the player's hand and played cards
-        combinedCards.forEach((card, index) => {
+        combinedCards.forEach((card) => {
             console.log('Adding card to selection list:', card);
             const li = document.createElement('li');
-                      const createTeamIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
+            const location = playerHand.includes(card) ? '(Hand)' : '(Played Cards)';
+            
+            const createTeamIconHTML = (value) => {
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
 
-    const createClassIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-    
-    const teamIcon = createTeamIconHTML(card.team);
-    const class1Icon = createClassIconHTML(card.class1);
-    const class2Icon = createClassIconHTML(card.class2);
-    const class3Icon = createClassIconHTML(card.class3);
-    
-    // Combine all icons
-    const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
-    
-    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
-            li.setAttribute('data-card-id', index);
+            const createClassIconHTML = (value) => {
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
+            
+            const teamIcon = createTeamIconHTML(card.team);
+            const class1Icon = createClassIconHTML(card.class1);
+            const class2Icon = createClassIconHTML(card.class2);
+            const class3Icon = createClassIconHTML(card.class3);
+            
+            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} ${location}</span>`;
+            li.setAttribute('data-card-id', card.id);
 
             li.onmouseover = () => {
                 if (!activeImage) { // Only change if no selection is locked
@@ -1787,7 +1794,7 @@ genericCardSort(combinedCards);
                 }
             };
 
-            li.onclick = () => toggleCardSelection(card, index, li);
+            li.onclick = () => toggleCardSelection(card, li);
             cardsList.appendChild(li);
         });
     });      
@@ -1980,8 +1987,8 @@ function morgAmbush() {
 
 
 function stardustFight() {
-onscreenConsole.log(`Fight! Choose one of your <img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Heroes to add to next turn's draw as a seventh card.`);
-return new Promise((resolve) => {
+    onscreenConsole.log(`Fight! Choose one of your <img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Heroes to add to next turn's draw as a seventh card.`);
+    return new Promise((resolve) => {
         const cardsYouHave = [
             ...playerHand,
             ...cardsPlayedThisTurn.filter(card => 
@@ -1991,12 +1998,12 @@ return new Promise((resolve) => {
         ];
         
         const CovertCardsYouHave = cardsYouHave.filter(item => 
-    item.type === "Hero" && (
-        item.class1 === "Covert" || 
-        item.class2 === "Covert" || 
-        item.class3 === "Covert"
-    )
-);
+            item.type === "Hero" && (
+                item.class1 === "Covert" || 
+                item.class2 === "Covert" || 
+                item.class3 === "Covert"
+            )
+        );
 
         if (CovertCardsYouHave.length === 0) {
             console.log('No available Covert Heroes.');
@@ -2059,8 +2066,8 @@ return new Promise((resolve) => {
             }
         }
 
-        // Toggle card selection
-        function toggleCardSelection(card, index, listItem) {
+        // Toggle card selection - FIXED: Use the card object directly instead of index
+        function toggleCardSelection(card, listItem) {
             if (selectedCard === card) {
                 // Deselect if same card clicked
                 selectedCard = null;
@@ -2075,7 +2082,6 @@ return new Promise((resolve) => {
                 }
                 // Select new card
                 selectedCard = card;
-                selectedIndex = index;
                 listItem.classList.add('selected');
                 updateHeroImage(card);
             }
@@ -2083,35 +2089,39 @@ return new Promise((resolve) => {
             updateConfirmButton();
             updateInstructions();
         }
-genericCardSort(CovertCardsYouHave);
-        // Populate the list with eligible heroes
-        CovertCardsYouHave.forEach((card, index) => {
+
+        // Sort the cards before displaying them
+        genericCardSort(CovertCardsYouHave);
+
+        // Populate the list with eligible heroes - FIXED: Don't rely on index for selection
+        CovertCardsYouHave.forEach((card) => {
             console.log('Adding card to selection list:', card);
             const li = document.createElement('li');
             const location = playerHand.includes(card) ? '(Hand)' : '(Played Cards)';
-		          const createTeamIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
+            
+            const createTeamIconHTML = (value) => {
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
 
-    const createClassIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-    
-    const teamIcon = createTeamIconHTML(card.team);
-    const class1Icon = createClassIconHTML(card.class1);
-    const class2Icon = createClassIconHTML(card.class2);
-    const class3Icon = createClassIconHTML(card.class3);
-    
-    // Combine all icons
-    const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
-    
-    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} ${location}</span>`;            
+            const createClassIconHTML = (value) => {
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
+            
+            const teamIcon = createTeamIconHTML(card.team);
+            const class1Icon = createClassIconHTML(card.class1);
+            const class2Icon = createClassIconHTML(card.class2);
+            const class3Icon = createClassIconHTML(card.class3);
+            
+            // Combine all icons
+            const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
+            
+            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} ${location}</span>`;            
 
             li.setAttribute('data-card-id', card.id);
 
@@ -2131,7 +2141,7 @@ genericCardSort(CovertCardsYouHave);
                 }
             };
 
-            li.onclick = () => toggleCardSelection(card, index, li);
+            li.onclick = () => toggleCardSelection(card, li);
             cardsList.appendChild(li);
         });
 
@@ -2437,14 +2447,14 @@ updateGameBoard();
 }
 
 function invisibleWomanDisappearingAct() {
-onscreenConsole.log(`Focus! You have spent 2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, allowing you to KO a card from your hand or discard pile.`);
+    onscreenConsole.log(`Focus! You have spent 2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, allowing you to KO a card from your hand or discard pile.`);
 
-totalRecruitPoints -= 2;
+       if (playerHand.length === 0 && playerDiscardPile.length === 0) {
+        onscreenConsole.log(`No cards available to KO.`);
+        return;
+    }
 
-if (playerHand.length === 0 && playerDiscardPile.length === 0) {
-onscreenConsole.log(`No cards available to KO.`);
-                return;
-            }
+     totalRecruitPoints -= 2;
 
     return new Promise((resolve) => {
         // Get popup elements
@@ -2457,8 +2467,7 @@ onscreenConsole.log(`No cards available to KO.`);
         const KOImage = document.getElementById('card-ko-popup-image');
         const context = document.getElementById('card-ko-popup-h2');
         const closeButton = document.getElementById('no-thanks-button');
-const xcloseButton = document.getElementById('card-ko-popup-close');
-
+        const xcloseButton = document.getElementById('card-ko-popup-close');
 
         // Initialize UI
         context.innerHTML = `You may KO a card from your hand or discard pile.`;
@@ -2529,33 +2538,34 @@ const xcloseButton = document.getElementById('card-ko-popup-close');
             updateConfirmButton();
             updateInstructions();
         }
-genericCardSort(playerDiscardPile);
+
+        // Sort the arrays before displaying
+        genericCardSort(playerDiscardPile);
+        genericCardSort(playerHand);
+
         // Populate discard pile
         playerDiscardPile.forEach((card) => {
             const li = document.createElement('li');
             const createTeamIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
 
-    const createClassIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-    
-    const teamIcon = createTeamIconHTML(card.team);
-    const class1Icon = createClassIconHTML(card.class1);
-    const class2Icon = createClassIconHTML(card.class2);
-    const class3Icon = createClassIconHTML(card.class3);
-    
-    // Combine all icons
-    const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
-    
-    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
+            const createClassIconHTML = (value) => {
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
+            
+            const teamIcon = createTeamIconHTML(card.team);
+            const class1Icon = createClassIconHTML(card.class1);
+            const class2Icon = createClassIconHTML(card.class2);
+            const class3Icon = createClassIconHTML(card.class3);
+            
+            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
 
             li.dataset.cardId = card.id;
 
@@ -2578,33 +2588,30 @@ genericCardSort(playerDiscardPile);
             li.onclick = () => toggleCardSelection(card, 'discard pile', li);
             discardPileList.appendChild(li);
         });
-genericCardSort(playerHand);
+
         // Populate hand
         playerHand.forEach((card) => {
             const li = document.createElement('li');
             const createTeamIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
 
-    const createClassIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-    
-    const teamIcon = createTeamIconHTML(card.team);
-    const class1Icon = createClassIconHTML(card.class1);
-    const class2Icon = createClassIconHTML(card.class2);
-    const class3Icon = createClassIconHTML(card.class3);
-    
-    // Combine all icons
-    const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
-    
-    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
+            const createClassIconHTML = (value) => {
+                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+                    return '';
+                }
+                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+            };
+            
+            const teamIcon = createTeamIconHTML(card.team);
+            const class1Icon = createClassIconHTML(card.class1);
+            const class2Icon = createClassIconHTML(card.class2);
+            const class3Icon = createClassIconHTML(card.class3);
+            
+            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
 
             li.dataset.cardId = card.id;
 
@@ -2628,22 +2635,29 @@ genericCardSort(playerHand);
             handList.appendChild(li);
         });
 
-        // Handle confirmation
+        // Handle confirmation - FIXED: Find card by ID instead of index
         confirmButton.onclick = () => {
             if (selectedCard && selectedLocation) {
                 let koIndex;
                 if (selectedLocation === 'discard pile') {
+                    // Find by ID instead of relying on array position
                     koIndex = playerDiscardPile.findIndex(c => c.id === selectedCard.id);
-                    if (koIndex !== -1) playerDiscardPile.splice(koIndex, 1);
+                    if (koIndex !== -1) {
+                        const removedCard = playerDiscardPile.splice(koIndex, 1)[0];
+                        koPile.push(removedCard);
+                    }
                 } else {
+                    // Find by ID instead of relying on array position
                     koIndex = playerHand.findIndex(c => c.id === selectedCard.id);
-                    if (koIndex !== -1) playerHand.splice(koIndex, 1);
+                    if (koIndex !== -1) {
+                        const removedCard = playerHand.splice(koIndex, 1)[0];
+                        koPile.push(removedCard);
+                    }
                 }
 
                 if (koIndex !== -1) {
-                    koPile.push(selectedCard);                  
                     onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> has been KO'd from your ${selectedLocation}.`);
-koBonuses();
+                    koBonuses();
                     closePopup();
                     updateGameBoard();
                     resolve(true);
@@ -2660,13 +2674,12 @@ koBonuses();
             resolve(false);
         };
         
-                // Handle cancellation
+        // Handle cancellation
         xcloseButton.onclick = () => {
             onscreenConsole.log(`No card was KO'd.`);
             closePopup();
             resolve(false);
         };
-
 
         function closePopup() {
             context.innerHTML = `Select a card to KO and gain +1<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
@@ -2681,9 +2694,6 @@ koBonuses();
             modalOverlay.style.display = 'none';
         }
     });
-
-updateGameBoard();
-
 }
 
 function invisibleWomanFourOfAKind() {
