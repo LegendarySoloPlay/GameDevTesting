@@ -1,4 +1,4 @@
-//v1
+//30.09.2025 20.55
 
 console.log('Script loaded');
 console.log(window.henchmen);
@@ -36,6 +36,16 @@ window.addEventListener("load", async () => {
   }, remaining);
 });
 
+document.getElementById('donate-call-to-action')
+  .addEventListener('click', () => {
+    window.open('https://www.paypal.me/benjaminb21', '_blank', 'noopener');
+  });
+
+  document.getElementById('donate-call-to-action-in-game')
+  .addEventListener('click', () => {
+    window.open('https://www.paypal.me/benjaminb21', '_blank', 'noopener');
+  });
+
 // Custom on-screen log function
 const onscreenConsole = {
   log: function (...args) {
@@ -64,6 +74,106 @@ document.querySelector('.inner-console-log').addEventListener('scroll', function
   // If the user manually scrolls, nothing will change here. 
   // You can still track the user's scrolling if needed for any other logic.
 });
+
+(function () {
+  const originalConsoleLog = console.log;
+  window._debugLogBuffer = [];
+
+  console.log = function (...args) {
+    // Save to buffer
+    const msg = args.map(arg =>
+      typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+    ).join(' ');
+    window._debugLogBuffer.push(msg);
+
+    // Call original
+    originalConsoleLog.apply(console, args);
+  };
+})();
+
+// ============================
+// EXPORT CONSOLE LOG FUNCTION
+// ============================
+function exportConsoleLogs() {
+  const now = new Date();
+  const timestamp = now.toLocaleString();
+
+  // --- helpers ---
+  function imgToPlaceholder(imgHtml) {
+    // ALT first
+    const altMatch = imgHtml.match(/\balt=(["'])(.*?)\1/i);
+    let label = altMatch ? altMatch[2] : '';
+
+    // Fallback: filename from SRC
+    if (!label) {
+      const srcMatch = imgHtml.match(/\bsrc=(["'])(.*?)\1/i);
+      if (srcMatch) {
+        const base = srcMatch[2].split('/').pop().replace(/\.\w+$/,'');
+        label = base;
+      }
+    }
+
+    // Normalise: drop "Icon", tidy, uppercase
+    label = String(label).replace(/\s*icon\s*/i, '').replace(/[_\-]/g, ' ').trim();
+    return `[${label ? label.toUpperCase() : 'ICON'}]`;
+  }
+
+  function replaceImgsWithPlaceholders(htmlString) {
+    if (!htmlString) return '';
+    // Replace every <img ...> with [LABEL]
+    const replaced = htmlString.replace(/<img[^>]*>/gi, (img) => imgToPlaceholder(img));
+    // Strip any remaining HTML to plain text
+    const tmp = document.createElement('div');
+    tmp.innerHTML = replaced;
+    return tmp.innerText;
+  }
+
+  // ---- User-Friendly (from on-screen log) ----
+  const onscreenLogContainer = document.querySelector('.inner-console-log');
+  const onscreenMessages = Array.from(onscreenLogContainer.querySelectorAll('p'));
+
+  const userFriendlyText = onscreenMessages
+    .reverse()
+    .map(el => replaceImgsWithPlaceholders(el.innerHTML).trim())
+    .join('\n');
+
+  // ---- Debug Copy (captured console.log buffer) ----
+  const debugLines = (window._debugLogBuffer || []).map(line =>
+    replaceImgsWithPlaceholders(line)
+  );
+  const debugText = debugLines.join('\n');
+
+  // ---- Build final plain-text export ----
+  const exportContent =
+`For debugging, please email a copy to legendarysoloplay@gmail.com
+
+CONSOLE LOG EXPORT: ${timestamp}
+
+User-Friendly:
+${userFriendlyText}
+
+Debug Copy:
+${debugText}`;
+
+  // ---- Create and download .txt file ----
+  const blob = new Blob([exportContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `debug-logs-${now.getTime()}.txt`; // Unique filename with timestamp
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  
+  // Clean up the URL object
+  URL.revokeObjectURL(url);
+}
+
+// ============================
+// CLICK HANDLER
+// ============================
+document.getElementById('console-log-export').addEventListener('click', exportConsoleLogs);
 
 // Function to toggle dropdowns when clicking either anchor or anchor2
 document.querySelectorAll('.dropdown-check-list').forEach(function(checkList) {
@@ -428,6 +538,7 @@ let finalBlowEnabled = false;
 let escapedVillainsCount = 0;
 let lastTurn = false;
 let finalTwist = false;
+let schemeTwistTuckComplete = false;
 let mastermindDeck = [];
 let alwaysLeads = '';
 let totalBystanders = 30;
@@ -2437,7 +2548,31 @@ function allowPaint() {
   });
 }
 
+let gameStartTime;
+
+// Function to start the timer
+function startGameTimer() {
+    gameStartTime = new Date(); // Record the current time when game starts
+}
+
+// Function to format time as HH:MM:SS
+function formatTime(milliseconds) {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    // Pad with leading zeros
+    return [
+        hours.toString().padStart(2, '0'),
+        minutes.toString().padStart(2, '0'),
+        seconds.toString().padStart(2, '0')
+    ].join(':');
+}
+
 async function onBeginGame(e) {
+startGameTimer();
+
   const loader   = document.querySelector('.loading-container');
   const blackout = document.querySelector('.blackout-overlay');
 
@@ -3192,139 +3327,148 @@ function shuffleDeck(deck) {
 
 let isFirstTurn = true;
 
+// ---------------------------------
+// Draw villain card(s) entry point (unchanged logic)
+// ---------------------------------
 async function drawVillainCard() {
 
-    if (destroyedSpaces[4] === true) {
-        onscreenConsole.log(`The city is destroyed. No more Villains can be drawn. You have until the end of this turn before defeat...`)
-        return;
-    }
+  if (destroyedSpaces[4] === true) {
+    onscreenConsole.log(`The city is destroyed. No more Villains can be drawn. You have until the end of this turn before defeat...`)
+    return;
+  }
 
-const highCostHeroCount = hq.filter(hero => hero.cost >= 7).length;
-if (isFirstTurn && highCostHeroCount >= 2) {
-await mulliganChoice();
+  const highCostHeroCount = hq.filter(hero => hero.cost >= 7).length;
+  if (isFirstTurn && highCostHeroCount >= 2) {
+    await mulliganChoice();
+  }
+
+  const drawCount = isFirstTurn ? 3 : 1;
+  isFirstTurn = false;
+
+  for (let i = 0; i < drawCount; i++) {
+    await processVillainCard();
+  }
 }
 
-    const drawCount = isFirstTurn ? 3 : 1;
-    isFirstTurn = false;
-
-    
-    for (let i = 0; i < drawCount; i++) {
-        await processVillainCard();
-    }
-}
-
+// ---------------------------------
+// Regular villain placement & movement (guarded)
+// ---------------------------------
 async function processRegularVillainCard(villainCard) {
-    const sewersIndex = city.length - 1;
+  console.log('processRegularVillainCard called for:', villainCard.name);
+  console.log('Current city state before placement:', JSON.stringify(city.map(c => c ? c.name : null)));
+  const sewersIndex = city.length - 1;
 
-    // Save the previous occupant of the sewers BEFORE placing the new villain
-    const previousSewersCard = city[sewersIndex] || null;
+  // Save the previous occupant of the sewers BEFORE placing the new villain
+  const previousSewersCard = city[sewersIndex] || null;
 
-    // Place new villain
-    city[sewersIndex] = villainCard;
-    onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> enters the city.`);
+  // Place new villain
+  city[sewersIndex] = villainCard;
+  onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> enters the city.`);
 
-    const destroyedCount = destroyedSpaces.filter(Boolean).length;
+  const destroyedCount = destroyedSpaces.filter(Boolean).length;
 
-    if (destroyedCount > 0) {
-        await processMovementWithDestroyedSpaces(previousSewersCard);
-    } else {
-        // Standard movement logic
-        let previousCard = previousSewersCard;
-        for (let j = sewersIndex - 1; j >= 0; j--) {
-            if (city[j] === null) {
-                city[j] = previousCard;
-                previousCard = null;
-                break;
-            } else if (previousCard !== null) {
-                let temp = city[j];
-                city[j] = previousCard;
-                previousCard = temp;
+  if (destroyedCount > 0) {
+    await processMovementWithDestroyedSpaces(previousSewersCard);
+  } else {
+    // Standard movement logic
+    let previousCard = previousSewersCard;
+    for (let j = sewersIndex - 1; j >= 0; j--) {
+      if (previousCard !== null && city[j] === null) {
+        city[j] = previousCard;
+        previousCard = null;
+        break;
+      } else if (previousCard !== null) {
+        const temp = city[j];
+        city[j] = previousCard;
+        previousCard = temp;
 
-                if (j === 0 && previousCard) {
-                    await new Promise(resolve => { showPopup('Villain Escape', previousCard, resolve); });
-                    await handleVillainEscape(previousCard);
-                    addHRToTopWithInnerHTML();
-                    previousCard = null;
-                }
-            }
+        if (j === 0 && previousCard) {
+          await new Promise(resolve => { showPopup('Villain Escape', previousCard, resolve); });
+          await handleVillainEscape(previousCard);
+          addHRToTopWithInnerHTML();
+          previousCard = null;
         }
+      }
+      // If previousCard is null, continue to finish the loop without mutation
     }
+  }
 
-    // Arrival popup if no ambush
-    if (!villainCard.ambushEffect || villainCard.ambushEffect === "None") {
-        await new Promise(resolve => { showPopup('Villain Arrival', villainCard, resolve); });
-        addHRToTopWithInnerHTML();
-    }
+  // Arrival popup if no ambush
+  if (!villainCard.ambushEffect || villainCard.ambushEffect === "None") {
+    await new Promise(resolve => { showPopup('Villain Arrival', villainCard, resolve); });
+    addHRToTopWithInnerHTML();
+  }
 
-    // Ambush
-    if (villainCard.ambushEffect && villainCard.ambushEffect !== "None") {
-        await new Promise(resolve => { showPopup('Villain Ambush', villainCard, resolve); });
-        const ambushEffectFunction = window[villainCard.ambushEffect];
-        if (typeof ambushEffectFunction === 'function') {
-            let negate = false;
-            if (typeof promptNegateAmbushEffectWithInvisibleWoman === 'function') {
-                negate = await promptNegateAmbushEffectWithInvisibleWoman();
-            }
-            if (negate) {
-                onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Ambush effect was negated.`);
-            } else {
-                await ambushEffectFunction(villainCard);
-            }
-        }
-        addHRToTopWithInnerHTML();
+  // Ambush
+  if (villainCard.ambushEffect && villainCard.ambushEffect !== "None") {
+    await new Promise(resolve => { showPopup('Villain Ambush', villainCard, resolve); });
+    const ambushEffectFunction = window[villainCard.ambushEffect];
+    if (typeof ambushEffectFunction === 'function') {
+      let negate = false;
+      if (typeof promptNegateAmbushEffectWithInvisibleWoman === 'function') {
+        negate = await promptNegateAmbushEffectWithInvisibleWoman();
+      }
+      if (negate) {
+        onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Ambush effect was negated.`);
+      } else {
+        await ambushEffectFunction(villainCard);
+      }
     }
+    addHRToTopWithInnerHTML();
+  }
 }
 
-// Destroyed-space movement, same logic but over non-destroyed slots only
+// ---------------------------------
+// Destroyed-space movement (unchanged except early escape guard)
+// ---------------------------------
 async function processMovementWithDestroyedSpaces(previousCard) {
-    const sewersIndex = city.length - 1;
+  const sewersIndex = city.length - 1;
 
-    // Find first non-destroyed slot = new front
-    let newFrontIndex = -1;
-    for (let i = 0; i < city.length; i++) {
-        if (!destroyedSpaces[i]) { newFrontIndex = i; break; }
-    }
-    if (newFrontIndex === -1) return;
+  // Find first non-destroyed slot = new front
+  let newFrontIndex = -1;
+  for (let i = 0; i < city.length; i++) {
+    if (!destroyedSpaces[i]) { newFrontIndex = i; break; }
+  }
+  if (newFrontIndex === -1) return;
 
-    // Build the movement path: non-destroyed indices to the left of sewers (right->left)
-    const path = [];
-    for (let i = sewersIndex - 1; i >= newFrontIndex; i--) {
-        if (!destroyedSpaces[i]) path.push(i);
-    }
+  // Build the movement path: non-destroyed indices to the left of sewers (right->left)
+  const path = [];
+  for (let i = sewersIndex - 1; i >= newFrontIndex; i--) {
+    if (!destroyedSpaces[i]) path.push(i);
+  }
 
-    // Edge case: if no non-destroyed slot, the old sewers card escapes immediately
-    if (path.length === 0 && previousCard) {
+  // Edge case: if no non-destroyed slot, the old sewers card escapes immediately
+  if (path.length === 0 && previousCard) {
+    await new Promise(resolve => { showPopup('Villain Escape', previousCard, resolve); });
+    await handleVillainEscape(previousCard);
+    addHRToTopWithInnerHTML();
+    previousCard = null;
+  }
+
+  // Bubble-left along non-destroyed slots
+  for (const j of path) {
+    if (previousCard == null) break;
+
+    if (city[j] === null) {
+      city[j] = previousCard;
+      previousCard = null;
+      break;
+    } else {
+      const temp = city[j];
+      city[j] = previousCard;
+      previousCard = temp;
+
+      // Escape check at the new front
+      if (j === newFrontIndex && previousCard) {
+        onscreenConsole.log(`<span class="console-highlights">${previousCard.name}</span> escapes from ${citySpaceLabels[newFrontIndex]}!`);
         await new Promise(resolve => { showPopup('Villain Escape', previousCard, resolve); });
         await handleVillainEscape(previousCard);
         addHRToTopWithInnerHTML();
         previousCard = null;
+      }
     }
-
-    // Bubble-left along non-destroyed slots
-    for (const j of path) {
-        if (previousCard == null) break;
-
-        if (city[j] === null) {
-            city[j] = previousCard;
-            previousCard = null;
-            break;
-        } else {
-            const temp = city[j];
-            city[j] = previousCard;
-            previousCard = temp;
-
-            // Escape check at the new front
-            if (j === newFrontIndex && previousCard) {
-                onscreenConsole.log(`<span class="console-highlights">${previousCard.name}</span> escapes from ${citySpaceLabels[newFrontIndex]}!`);
-                await new Promise(resolve => { showPopup('Villain Escape', previousCard, resolve); });
-                await handleVillainEscape(previousCard);
-                addHRToTopWithInnerHTML();
-                previousCard = null;
-            }
-        }
-    }
+  }
 }
-
 
 function handleBystander(bystanderCard) {
     let sewersIndex = city.length - 1;
@@ -3931,8 +4075,9 @@ async function processVillainCard() {
             }
             
             // Moved to the very end, after all other processing
-            if (pendingHeroKO && schemeTwistChainDepth === 0 && !finalTwist) {
+            if (pendingHeroKO && schemeTwistChainDepth === 0 && !finalTwist && !schemeTwistTuckComplete) {
                 pendingHeroKO = false;
+				schemeTwistTuckComplete = true;
                 await showHeroSelectPopup();
             }
         } catch (error) {
@@ -4415,16 +4560,23 @@ document.getElementById('modal-overlay').style.display = 'block';
 
 // Helper to find controls associated with a popup
 function getAssociatedControls(popup) {
-    // You can customize this based on your popup-control relationships
     const controls = [];
-    
-    // Example: Find controls with data-popup-id matching the popup's id
     const popupId = popup.id;
+    
     if (popupId) {
+        // Find controls with data-popup-id matching the popup's id
         controls.push(...document.querySelectorAll(`[data-popup-id="${popupId}"]`));
+        
+        // Add stats and score content for win/draw/defeat popups
+        if (popupId === 'win-popup' || popupId === 'draw-popup' || popupId === 'defeat-popup') {
+            const statsContent = document.getElementById('stats-content');
+            const scoreContent = document.getElementById('score-content');
+            
+            if (statsContent) controls.push(statsContent);
+            if (scoreContent) controls.push(scoreContent);
+        }
     }
     
-    // Add any other control selection logic here
     return controls.filter(control => !!control);
 }
 
@@ -6048,7 +6200,7 @@ function updateEvilWinsTracker() {
       evilWinsText.innerHTML = `${KOdHeroes + carriedOffHeroes}/9 Non Grey Heroes KO'd or Carried Off`;
       break;
 
-        case "Bathe the Earth in Cosmic Rays":
+        case "Bathe Earth in Cosmic Rays":
       evilWinsText.innerHTML = `${KOdHeroes + carriedOffHeroes}/6 Non Grey Heroes in KO Pile`;
       break;
 
@@ -6396,7 +6548,7 @@ function confirmActions() {
                             });
                         }
                     } else {
-                        console.log(`Unable to use ability.`);
+                        console.log(`Unable to use conditional ability.`);
                     }
                 }
             }).then(() => {
@@ -6511,6 +6663,9 @@ async function endTurn() {
         await showDrawPopup();
         if (gameIsOver) return;
     }
+
+    mastermindCosmicThreatResolved = false;
+    mastermindCosmicThreat = 0;
 
     onscreenConsole.log("Turn ended.");
     turnCount += 1;
@@ -6650,6 +6805,7 @@ secondDocOc = false;
 deadpoolRare = false;
 schemeTwistChainDepth = 0;  // Tracks nested Scheme Twists
 pendingHeroKO = false; 
+schemeTwistTuckComplete = false;
 
 playerHand.forEach(card => {
     if (card.temporaryTeleport === true) {
@@ -6989,40 +7145,11 @@ function recalculateVillainAttack(villainCard) {
     return Math.max(0, finalAttack);
 }
 
-// Combined defeat function with flag for instant defeat
-async function defeatVillain(cityIndex, isInstantDefeat = false) {
-    playSFX('attack');
-    
-    // Get fresh references
-    const villainCard = city[cityIndex];
-    if (!villainCard) {
-        console.error('Villain disappeared during attack');
-        onscreenConsole.log(`Error: Villain could not be targeted.`);
-        return;
-    }
-
-       // Find the card container - using a more specific selector
-    const cityCell = document.querySelector(`[data-city-index="${cityIndex}"]`);
-    if (!cityCell) {
-        console.error('City cell not found for index:', cityIndex);
-        return;
-    }
-    
-    const cardContainer = document.querySelector(`.card-container[data-city-index="${cityIndex}"]`);
-    if (!cardContainer) {
-        console.error('Card container not found in city cell:', cityIndex);
-        return;
-    }
-
-    // Store the card image source for the animation
-    const cardImage = cardContainer.querySelector('.card-image');
-    if (!cardImage) {
-        console.error('Card image not found');
-        return;
-    }
-
-    // Create the split animation
-    const rect = cardContainer.getBoundingClientRect();
+// -------------------------------
+// Cosmetic defeat animation helper
+// -------------------------------
+function animateDefeatFromRect(imgSrc, rect) {
+  return new Promise((resolve) => {
     const splitContainer = document.createElement('div');
     splitContainer.className = 'split-container';
     splitContainer.style.position = 'fixed';
@@ -7031,584 +7158,615 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
     splitContainer.style.width = `${rect.width}px`;
     splitContainer.style.height = `${rect.height}px`;
     splitContainer.style.zIndex = '1000';
-    
-    // Create halves
-    const leftHalf = document.createElement('div');
-    leftHalf.className = 'half-card left-half';
-    leftHalf.style.backgroundImage = `url(${cardImage.src})`;
-    leftHalf.style.backgroundSize = 'cover';
-    leftHalf.style.backgroundPosition = 'center';
-    
-    const rightHalf = document.createElement('div');
-    rightHalf.className = 'half-card right-half';
-    rightHalf.style.backgroundImage = `url(${cardImage.src})`;
-    rightHalf.style.backgroundSize = 'cover';
-    rightHalf.style.backgroundPosition = 'center';
-    
+
+    const makeHalf = (side) => {
+      const half = document.createElement('div');
+      half.className = `half-card ${side}-half`;
+      half.style.backgroundImage = `url(${imgSrc})`;
+      half.style.backgroundSize = 'cover';
+      half.style.backgroundPosition = 'center';
+      return half;
+    };
+
+    const leftHalf = makeHalf('left');
+    const rightHalf = makeHalf('right');
     splitContainer.appendChild(leftHalf);
     splitContainer.appendChild(rightHalf);
     document.body.appendChild(splitContainer);
-    
-    // Add jolt animation to original card
-    cardContainer.classList.add('jolt');
-    
-    // After jolt animation, split the card
-    setTimeout(() => {
-        // Hide original card
-        cardImage.style.visibility = 'hidden';
-        
-        // Add split animation to halves
-        leftHalf.classList.add('split');
-        rightHalf.classList.add('split');
-        
-        // Remove the split container after animation completes
-        setTimeout(() => {
-            if (splitContainer.parentNode) {
-                document.body.removeChild(splitContainer);
-            }
-            
-            // Continue with the rest of your defeat logic
-            city[cityIndex] = null;
-            updateGameBoard();
-            
-        }, 900);
-    }, 100);
 
-
-
-    // Store location and make copy
-    currentVillainLocation = cityIndex;
-    const villainCopy = createVillainCopy(villainCard);
-    const villainAttack = isInstantDefeat ? 0 : recalculateVillainAttack(villainCard);
-
-    // Map city indices to reserve attack variables
-    const reserveAttackVars = [
-        bridgeReserveAttack,    // cityIndex 0 - Bridge
-        streetsReserveAttack,   // cityIndex 1 - Streets
-        rooftopsReserveAttack,  // cityIndex 2 - Rooftops
-        bankReserveAttack,      // cityIndex 3 - Bank
-        sewersReserveAttack,    // cityIndex 4 - Sewers
-        mastermindReserveAttack // cityIndex 5 - Mastermind
-    ];
-
-    // Handle point deduction (skip for instant defeat)
-    if (!isInstantDefeat) {
-        try {
-            if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) || 
-                villainCard.keyword1 === "Bribe" || villainCard.keyword2 === "Bribe" || villainCard.keyword3 === "Bribe") {
-                const result = await showCounterPopup(villainCopy, villainAttack);
-                
-                // Use reserved points first, then regular points
-                let attackNeeded = result.attackUsed || 0;
-                let recruitNeeded = result.recruitUsed || 0;
-                
-                // Use reserved attack points for this location first
-                const reservedAttackAvailable = reserveAttackVars[cityIndex] || 0;
-                const reservedAttackUsed = Math.min(attackNeeded, reservedAttackAvailable);
-                
-                // Deduct from reserved points
-                if (reservedAttackUsed > 0) {
-                    switch(cityIndex) {
-                        case 0: bridgeReserveAttack -= reservedAttackUsed; break;
-                        case 1: streetsReserveAttack -= reservedAttackUsed; break;
-                        case 2: rooftopsReserveAttack -= reservedAttackUsed; break;
-                        case 3: bankReserveAttack -= reservedAttackUsed; break;
-                        case 4: sewersReserveAttack -= reservedAttackUsed; break;
-                        case 5: mastermindReserveAttack -= reservedAttackUsed; break;
-                    }
-                    attackNeeded -= reservedAttackUsed;
-               }
-                
-                // Deduct remaining points from regular pools
-                totalAttackPoints -= attackNeeded;
-                totalRecruitPoints -= recruitNeeded;
-                
-                onscreenConsole.log(`You chose to use ${result.attackUsed} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> points to attack <span class="console-highlights">${villainCopy.name}</span>.`);
-            } else {
-                if (!negativeZoneAttackAndRecruit) {
-                    // Use reserved attack points for this location first
-                    const reservedAttackAvailable = reserveAttackVars[cityIndex] || 0;
-                    const reservedAttackUsed = Math.min(villainAttack, reservedAttackAvailable);
-                    
-                    // Deduct from reserved points
-                    if (reservedAttackUsed > 0) {
-                        switch(cityIndex) {
-                            case 0: bridgeReserveAttack -= reservedAttackUsed; break;
-                            case 1: streetsReserveAttack -= reservedAttackUsed; break;
-                            case 2: rooftopsReserveAttack -= reservedAttackUsed; break;
-                            case 3: bankReserveAttack -= reservedAttackUsed; break;
-                            case 4: sewersReserveAttack -= reservedAttackUsed; break;
-                            case 5: mastermindReserveAttack -= reservedAttackUsed; break;
-                        }
-                  }
-                    
-                    // Deduct remaining from regular attack points
-                    totalAttackPoints -= (villainAttack - reservedAttackUsed);
-                } else {
-                    totalRecruitPoints -= villainAttack;
-                }
-            }
-        } catch (error) {
-            console.error('Error handling point deduction:', error);
-        }
-    }
-
-    // Update the reserve display
-    updateReserveAttackAndRecruit();
-    
-    // Collect and execute operations (bystander rescues and fight effects)
-    const operations = await collectDefeatOperations(villainCopy);
-    
-    // Let player choose order if there are multiple operations
-    if (operations.length > 1) {
-        await executeOperationsInPlayerOrder(operations, villainCopy);
-    } else if (operations.length === 1) {
-        await operations[0].execute();
-    }
-    
-    // Continue with post-defeat logic
-    await handlePostDefeat(villainCard, villainCopy, villainAttack, cityIndex, isInstantDefeat);
-}
-
-// Helper function to create a deep copy of villain data
-function createVillainCopy(villainCard) {
-    return {
-        id: villainCard.id,
-        name: villainCard.name,
-        type: villainCard.type,
-        rarity: villainCard.rarity,
-        team: villainCard.team,
-        class1: villainCard.class1,
-        class2: villainCard.class2,
-        color: villainCard.color,
-        cost: villainCard.cost,
-        attack: villainCard.attack,
-        recruit: villainCard.recruit,
-        attackIcon: villainCard.attackIcon,
-        recruitIcon: villainCard.recruitIcon,
-        bonusAttack: villainCard.bonusAttack,
-        bonusRecruit: villainCard.bonusRecruit,
-        multiplier: villainCard.multiplier,
-        multiplierAttribute: villainCard.multiplierAttribute,
-        multiplierLocation: villainCard.multiplierLocation,
-        unconditionalAbility: villainCard.unconditionalAbility,
-        conditionalAbility: villainCard.conditionalAbility,
-        conditionType: villainCard.conditionType,
-        condition: villainCard.condition,
-        invulnerability: villainCard.invulnerability,
-        image: villainCard.image,
-        originalAttack: villainCard.originalAttack,
-        bystander: [...(villainCard.bystander || [])],
-        fightEffect: villainCard.fightEffect,
-        shattered: villainCard.shattered,
-        fightCondition: villainCard.fightCondition,
-        captureCode: villainCard.captureCode,
-        alwaysLeads: villainCard.alwaysLeads
-    };
-}
-
-async function collectDefeatOperations(villainCopy) {
-    const operations = [];
-
-    // Add bystander rescues as individual operations
-    if (Array.isArray(villainCopy.bystander)) {
-        villainCopy.bystander.forEach(bystander => {
-            if (bystander) {
-                operations.push({
-                    name: `Rescue ${bystander.name}`,
-                    image: bystander.image,
-                    execute: async () => {
-                        onscreenConsole.log(`<span class="console-highlights">${bystander.name}</span> rescued.`);
-                        victoryPile.push(bystander);
-                        bystanderBonuses();
-                        await rescueBystanderAbility(bystander);
-                    }
-                });
-            }
-        });
-    }
-
-    // Add fight effect if present (player can choose when this happens)
-    if (villainCopy.fightEffect && villainCopy.fightEffect !== "None") {
-        const fightEffectFunction = window[villainCopy.fightEffect];
-        if (typeof fightEffectFunction === 'function') {
-            operations.push({
-                name: `Trigger ${villainCopy.name}'s Fight Effect`,
-                image: villainCopy.image,
-                execute: async () => {
-                    // Ask to negate if player can reveal Mr. Fantastic
-                    let negate = false;
-                    if (typeof promptNegateFightEffectWithMrFantastic === 'function') {
-                        negate = await promptNegateFightEffectWithMrFantastic();
-                    }
-                    if (negate) {
-                        return;
-                    }
-                    // Not negated: run the fight effect as normal
-                    await fightEffectFunction(villainCopy);
-                }
-            });
-        }
-    }
-
-    return operations;
-}
-
-async function executeOperationsInPlayerOrder(operations, villainCopy) {
-    const remainingOperations = [...operations];
-    
-    while (remainingOperations.length > 0) {
-
-        // Show popup for player to choose next rescue
-        const choice = await showOperationSelectionPopup({
-            title: 'Choose Order',
-            instructions: 'Select next action to resolve:',
-            items: remainingOperations,
-            confirmText: 'CONFIRM SELECTION'
-        });
-
-        if (!choice) {
-            // If player cancels, execute remaining in default order
-            for (const op of remainingOperations) {
-                await op.execute();
-            }
-            break;
-        }
-
-        // Execute selected rescue and remove from remaining
-        const selectedIndex = remainingOperations.findIndex(op => op.name === choice.name);
-        const [selectedOperation] = remainingOperations.splice(selectedIndex, 1);
-        await selectedOperation.execute();
-        updateGameBoard();
-    }
-}
-
-async function showOperationSelectionPopup(options) {
-    return new Promise((resolve) => {
-        try {
-            // Get the popup elements (reusing your existing popup structure)
-            const popup = document.getElementById('card-choice-one-location-popup');
-            const modalOverlay = document.getElementById('modal-overlay');
-            const cardsList = document.getElementById('cards-to-choose-from');
-            const confirmButton = document.getElementById('card-choice-confirm-button');
-            const popupTitle = popup.querySelector('h2');
-            const instructionsDiv = document.getElementById('context');
-            const heroImage = document.getElementById('hero-one-location-image');
-            const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-
-            // Initialize UI
-            popupTitle.textContent = options.title || 'Choose Order';
-            instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
-            cardsList.innerHTML = '';
-            confirmButton.style.display = 'inline-block';
-            confirmButton.disabled = true;
-            confirmButton.textContent = options.confirmText || 'CONFIRM';
-            modalOverlay.style.display = 'block';
-            popup.style.display = 'block';
-
-            let selectedOperation = null;
-            let activeImage = null;
-
-            // Cleanup function
-            const cleanup = () => {
-                confirmButton.onclick = null;
-                const listItems = cardsList.querySelectorAll('li');
-                listItems.forEach(li => {
-                    li.onmouseover = null;
-                    li.onmouseout = null;
-                    li.onclick = null;
-                });
-            };
-
-            // Update the confirm button state
-            function updateConfirmButton() {
-                confirmButton.disabled = selectedOperation === null;
-            }
-
-            // Update instructions with styled selection
-            function updateInstructions() {
-                if (selectedOperation === null) {
-                    instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
-                } else {
-                    instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedOperation.name}</span> will be resolved next.`;
-                }
-            }
-
-            // Show operation image
-            function updateOperationImage(operation) {
-                if (operation) {
-                    heroImage.src = operation.image;
-                    heroImage.style.display = 'block';
-                    oneChoiceHoverText.style.display = 'none';
-                    activeImage = operation.image;
-                } else {
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    oneChoiceHoverText.style.display = 'block';
-                    activeImage = null;
-                }
-            }
-
-            // Toggle operation selection
-            function toggleOperationSelection(operation, listItem) {
-                if (selectedOperation === operation) {
-                    // Deselect if same operation clicked
-                    selectedOperation = null;
-                    listItem.classList.remove('selected');
-                    updateOperationImage(null);
-                } else {
-                    // Clear previous selection if any
-                    if (selectedOperation) {
-                        const prevListItem = document.querySelector('li.selected');
-                        if (prevListItem) prevListItem.classList.remove('selected');
-                    }
-                    // Select new operation
-                    selectedOperation = operation;
-                    listItem.classList.add('selected');
-                    updateOperationImage(operation);
-                }
-
-                updateConfirmButton();
-                updateInstructions();
-            }
-
-            // Populate the list with available operations
-            options.items.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.textContent = item.name;
-                li.setAttribute('data-operation-id', index);
-
-                li.onmouseover = () => {
-                    if (!activeImage) {
-                        heroImage.src = item.image;
-                        heroImage.style.display = 'block';
-                        oneChoiceHoverText.style.display = 'none';
-                    }
-                };
-
-                li.onmouseout = () => {
-                    if (!activeImage) {
-                        heroImage.src = '';
-                        heroImage.style.display = 'none';
-                        oneChoiceHoverText.style.display = 'block';
-                    }
-                };
-
-                li.onclick = () => toggleOperationSelection(item, li);
-
-                cardsList.appendChild(li);
-            });
-
-            // Handle confirmation
-            confirmButton.onclick = async () => {
-                if (selectedOperation) {
-                    try {
-                        closePopup();
-                        cleanup();
-                        resolve(selectedOperation);
-                    } catch (error) {
-                        cleanup();
-                        throw error;
-                    }
-                }
-            };
-
-            function closePopup() {
-                // Reset UI
-                popupTitle.textContent = 'Hero Ability!';
-                instructionsDiv.textContent = 'Context';
-                cardsList.innerHTML = '';
-                confirmButton.style.display = 'none';
-                confirmButton.disabled = true;
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-
-                // Hide popup
-                popup.style.display = 'none';
-                modalOverlay.style.display = 'none';
-            }
-
-            // Close popup when clicking outside (optional)
-            modalOverlay.onclick = () => {
-                closePopup();
-                cleanup();
-                resolve(null);
-            };
-
-        } catch (error) {
-            console.error('Error in operation selection popup:', error);
-            resolve(null);
-        }
+    // Kick the CSS animation
+    requestAnimationFrame(() => {
+      leftHalf.classList.add('split');
+      rightHalf.classList.add('split');
+      setTimeout(() => {
+        if (splitContainer.parentNode) document.body.removeChild(splitContainer);
+        resolve();
+      }, 900); // match your CSS split duration
     });
+  });
 }
 
-// Updated handlePostDefeat to handle instant defeat flag
-async function handlePostDefeat(villainCard, villainCopy, villainAttack, cityIndex, isInstantDefeat = false) {
+// ---------------------------------
+// Draw multiple villain cards serially
+// ---------------------------------
+async function drawVillainCardsSequential(count) {
+  for (let i = 0; i < count; i++) {
+    await drawVillainCard();
+  }
+}
 
-    // Handle Baby Hope first
-    if (villainCard.babyHope === true) {
-        delete villainCard.babyHope;
-        villainCard.attack = villainCard.originalAttack;
-        const BabyHopeCard = { 
-            name: "Baby Hope", 
-            type: "Baby", 
-            victoryPoints: 6, 
-            image: 'Visual Assets/Other/babyHope.webp'
-        };
-        victoryPile.push(BabyHopeCard);
-        updateGameBoard();
-    }
+// ---------------------------------
+// Main: Defeat a villain (serial & deterministic)
+// ---------------------------------
+async function defeatVillain(cityIndex, isInstantDefeat = false) {
+  playSFX('attack');
 
-    // Rest of the post-defeat handling
-    if (villainCard.plutoniumCaptured && villainCard.plutoniumCaptured.length > 0) {
-        for (const plutonium of villainCard.plutoniumCaptured) {
-            villainDeck.push(plutonium);
+  // Get fresh references
+  const villainCard = city[cityIndex];
+  if (!villainCard) {
+    console.error('Villain disappeared during attack');
+    onscreenConsole.log(`Error: Villain could not be targeted.`);
+    return;
+  }
+
+  const cityCell = document.querySelector(`[data-city-index="${cityIndex}"]`);
+  if (!cityCell) {
+    console.error('City cell not found for index:', cityIndex);
+    return;
+  }
+
+  const cardContainer = document.querySelector(`.card-container[data-city-index="${cityIndex}"]`);
+  if (!cardContainer) {
+    console.error('Card container not found in city cell:', cityIndex);
+    return;
+  }
+
+  const cardImage = cardContainer.querySelector('.card-image');
+  if (!cardImage) {
+    console.error('Card image not found');
+    return;
+  }
+
+  // Snapshot geometry BEFORE mutating game state; animation is cosmetic-only
+  const rect = cardContainer.getBoundingClientRect();
+  const animationPromise = animateDefeatFromRect(cardImage.src, rect);
+
+  // ---- GAME STATE CHANGES HAPPEN FIRST ----
+  currentVillainLocation = cityIndex;
+  const villainCopy = createVillainCopy(villainCard);
+  const villainAttack = isInstantDefeat ? 0 : recalculateVillainAttack(villainCard);
+
+  // Clear the city slot now so subsequent draws/movement see a free space
+  city[cityIndex] = null;
+
+  // Map city indices to reserve attack variables
+  const reserveAttackVars = [
+    bridgeReserveAttack,    // 0 - Bridge
+    streetsReserveAttack,   // 1 - Streets
+    rooftopsReserveAttack,  // 2 - Rooftops
+    bankReserveAttack,      // 3 - Bank
+    sewersReserveAttack,    // 4 - Sewers
+    mastermindReserveAttack // 5 - Mastermind
+  ];
+
+  // Handle point deduction (skip for instant defeat)
+  if (!isInstantDefeat) {
+    try {
+      if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
+          villainCard.keyword1 === "Bribe" || villainCard.keyword2 === "Bribe" || villainCard.keyword3 === "Bribe") {
+
+        const result = await showCounterPopup(villainCopy, villainAttack);
+
+        let attackNeeded = result.attackUsed || 0;
+        let recruitNeeded = result.recruitUsed || 0;
+
+        // Use reserved attack points for this location first
+        const reservedAttackAvailable = reserveAttackVars[cityIndex] || 0;
+        const reservedAttackUsed = Math.min(attackNeeded, reservedAttackAvailable);
+
+        // Deduct from reserved points
+        if (reservedAttackUsed > 0) {
+          switch (cityIndex) {
+            case 0: bridgeReserveAttack -= reservedAttackUsed; break;
+            case 1: streetsReserveAttack -= reservedAttackUsed; break;
+            case 2: rooftopsReserveAttack -= reservedAttackUsed; break;
+            case 3: bankReserveAttack -= reservedAttackUsed; break;
+            case 4: sewersReserveAttack -= reservedAttackUsed; break;
+            case 5: mastermindReserveAttack -= reservedAttackUsed; break;
+          }
+          attackNeeded -= reservedAttackUsed;
         }
-        villainCard.plutoniumCaptured = [];
-        shuffle(villainDeck);
-        onscreenConsole.log(`Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled back into Villain Deck.`);
-    }
 
-    // Handle X-Cutioner Heroes
-    if (Array.isArray(villainCard.XCutionerHeroes) && villainCard.XCutionerHeroes.length > 0) {
-        for (const hero of villainCard.XCutionerHeroes) {
-            playerDiscardPile.push(hero);
-            onscreenConsole.log(`You have rescued <span class="console-highlights">${hero.name}</span>. They have been added to your Discard pile.`);
-        }
-        villainCard.XCutionerHeroes.length = 0;
-    }
+        // Deduct remaining points from regular pools
+        totalAttackPoints -= attackNeeded;
+        totalRecruitPoints -= recruitNeeded;
 
-    // Handle extra bystanders
-    if (rescueExtraBystanders > 0) {
-        for (let i = 0; i < rescueExtraBystanders; i++) {
-            rescueBystander();
-        }
-    }
+        onscreenConsole.log(`You chose to use ${result.attackUsed} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> points to attack <span class="console-highlights">${villainCopy.name}</span>.`);
+      } else {
+        if (!negativeZoneAttackAndRecruit) {
+          const reservedAttackAvailable = reserveAttackVars[cityIndex] || 0;
+          const reservedAttackUsed = Math.min(villainAttack, reservedAttackAvailable);
 
-    if (villainCard.name === 'Dracula') {
-        villainCard.attack = 3;
-        villainCard.cost = 0;
-    }
+          if (reservedAttackUsed > 0) {
+            switch (cityIndex) {
+              case 0: bridgeReserveAttack -= reservedAttackUsed; break;
+              case 1: streetsReserveAttack -= reservedAttackUsed; break;
+              case 2: rooftopsReserveAttack -= reservedAttackUsed; break;
+              case 3: bankReserveAttack -= reservedAttackUsed; break;
+              case 4: sewersReserveAttack -= reservedAttackUsed; break;
+              case 5: mastermindReserveAttack -= reservedAttackUsed; break;
+            }
+          }
 
-    const burrowingVillain = (
-        villainCard.keyword1 === 'Burrow' || 
-        villainCard.keyword2 === 'Burrow' || 
-        villainCard.keyword3 === 'Burrow'
-    );
-
-    const inStreetsNow = cityIndex === 1;
-    const streetsFree = ((city[1] === '' || city[1] === null) && destroyedSpaces[1] === false);
-
-
-        // Handle burrowing (applies to both regular and instant defeats)
-    if (burrowingVillain) {
-        if (inStreetsNow) {
-            victoryPile.push(villainCard);
-            onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> is in the Streets and cannot burrow. They have been defeated!`);
-        } else if (streetsFree) {
-            city[1] = villainCard;
-            onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`);
+          totalAttackPoints -= (villainAttack - reservedAttackUsed);
         } else {
-            victoryPile.push(villainCard);
-            onscreenConsole.log(`The Streets are ${destroyedSpaces[1] === false ? 'occupied' : 'destroyed'} so <span class="console-highlights">${villainCard.name}</span> cannot burrow and has been defeated!`);
+          totalRecruitPoints -= villainAttack;
         }
+      }
+    } catch (error) {
+      console.error('Error handling point deduction:', error);
+    }
+  }
+
+  // Update the reserve display
+  updateReserveAttackAndRecruit();
+
+  // Collect and execute operations (bystander rescues and fight effects)
+  const operations = await collectDefeatOperations(villainCopy);
+
+  // Let player choose order if there are multiple operations
+  if (operations.length > 1) {
+    await executeOperationsInPlayerOrder(operations, villainCopy);
+  } else if (operations.length === 1) {
+    await operations[0].execute();
+  }
+
+  // Post-defeat (burrow, bonuses, HYDRA draws, etc.)
+  await handlePostDefeat(villainCard, villainCopy, villainAttack, cityIndex, isInstantDefeat);
+
+  // Wait for the cosmetic animation to finish (keeps UI silky)
+  await animationPromise;
+}
+
+// ---------------------------------
+// Helper: deep copy of villain data (unchanged)
+// ---------------------------------
+function createVillainCopy(villainCard) {
+  return {
+    id: villainCard.id,
+    name: villainCard.name,
+    type: villainCard.type,
+    rarity: villainCard.rarity,
+    team: villainCard.team,
+    class1: villainCard.class1,
+    class2: villainCard.class2,
+    color: villainCard.color,
+    cost: villainCard.cost,
+    attack: villainCard.attack,
+    recruit: villainCard.recruit,
+    attackIcon: villainCard.attackIcon,
+    recruitIcon: villainCard.recruitIcon,
+    bonusAttack: villainCard.bonusAttack,
+    bonusRecruit: villainCard.bonusRecruit,
+    multiplier: villainCard.multiplier,
+    multiplierAttribute: villainCard.multiplierAttribute,
+    multiplierLocation: villainCard.multiplierLocation,
+    unconditionalAbility: villainCard.unconditionalAbility,
+    conditionalAbility: villainCard.conditionalAbility,
+    conditionType: villainCard.conditionType,
+    condition: villainCard.condition,
+    invulnerability: villainCard.invulnerability,
+    image: villainCard.image,
+    originalAttack: villainCard.originalAttack,
+    bystander: [...(villainCard.bystander || [])],
+    fightEffect: villainCard.fightEffect,
+    shattered: villainCard.shattered,
+    fightCondition: villainCard.fightCondition,
+    captureCode: villainCard.captureCode,
+    alwaysLeads: villainCard.alwaysLeads
+  };
+}
+
+// ---------------------------------
+// Collect operations to run after defeat (unchanged)
+// ---------------------------------
+async function collectDefeatOperations(villainCopy) {
+  const operations = [];
+
+  // Bystander rescues
+  if (Array.isArray(villainCopy.bystander)) {
+    villainCopy.bystander.forEach(bystander => {
+      if (bystander) {
+        operations.push({
+          name: `Rescue ${bystander.name}`,
+          image: bystander.image,
+          execute: async () => {
+            onscreenConsole.log(`<span class="console-highlights">${bystander.name}</span> rescued.`);
+            victoryPile.push(bystander);
+            bystanderBonuses();
+            await rescueBystanderAbility(bystander);
+          }
+        });
+      }
+    });
+  }
+
+  // Fight effect (optional order)
+  if (villainCopy.fightEffect && villainCopy.fightEffect !== "None") {
+    const fightEffectFunction = window[villainCopy.fightEffect];
+    if (typeof fightEffectFunction === 'function') {
+      operations.push({
+        name: `Trigger ${villainCopy.name}'s Fight Effect`,
+        image: villainCopy.image,
+        execute: async () => {
+          let negate = false;
+          if (typeof promptNegateFightEffectWithMrFantastic === 'function') {
+            negate = await promptNegateFightEffectWithMrFantastic();
+          }
+          if (!negate) {
+            await fightEffectFunction(villainCopy);
+          }
+        }
+      });
+    }
+  }
+
+  return operations;
+}
+
+// ---------------------------------
+// Let player choose operation order (unchanged)
+// ---------------------------------
+async function executeOperationsInPlayerOrder(operations, villainCopy) {
+  const remainingOperations = [...operations];
+
+  while (remainingOperations.length > 0) {
+    const choice = await showOperationSelectionPopup({
+      title: 'Choose Order',
+      instructions: 'Select next action to resolve:',
+      items: remainingOperations,
+      confirmText: 'CONFIRM SELECTION'
+    });
+
+    if (!choice) {
+      for (const op of remainingOperations) {
+        await op.execute();
+      }
+      break;
+    }
+
+    const selectedIndex = remainingOperations.findIndex(op => op.name === choice.name);
+    const [selectedOperation] = remainingOperations.splice(selectedIndex, 1);
+    await selectedOperation.execute();
+    updateGameBoard();
+  }
+}
+
+// ---------------------------------
+// Operation selection popup (unchanged)
+// ---------------------------------
+async function showOperationSelectionPopup(options) {
+  return new Promise((resolve) => {
+    try {
+      const popup = document.getElementById('card-choice-one-location-popup');
+      const modalOverlay = document.getElementById('modal-overlay');
+      const cardsList = document.getElementById('cards-to-choose-from');
+      const confirmButton = document.getElementById('card-choice-confirm-button');
+      const popupTitle = popup.querySelector('h2');
+      const instructionsDiv = document.getElementById('context');
+      const heroImage = document.getElementById('hero-one-location-image');
+      const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+
+      popupTitle.textContent = options.title || 'Choose Order';
+      instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
+      cardsList.innerHTML = '';
+      confirmButton.style.display = 'inline-block';
+      confirmButton.disabled = true;
+      confirmButton.textContent = options.confirmText || 'CONFIRM';
+      modalOverlay.style.display = 'block';
+      popup.style.display = 'block';
+
+      let selectedOperation = null;
+      let activeImage = null;
+
+      const cleanup = () => {
+        confirmButton.onclick = null;
+        const listItems = cardsList.querySelectorAll('li');
+        listItems.forEach(li => {
+          li.onmouseover = null;
+          li.onmouseout = null;
+          li.onclick = null;
+        });
+      };
+
+      function updateConfirmButton() {
+        confirmButton.disabled = selectedOperation === null;
+      }
+
+      function updateInstructions() {
+        if (selectedOperation === null) {
+          instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
+        } else {
+          instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedOperation.name}</span> will be resolved next.`;
+        }
+      }
+
+      function updateOperationImage(operation) {
+        if (operation) {
+          heroImage.src = operation.image;
+          heroImage.style.display = 'block';
+          oneChoiceHoverText.style.display = 'none';
+          activeImage = operation.image;
+        } else {
+          heroImage.src = '';
+          heroImage.style.display = 'none';
+          oneChoiceHoverText.style.display = 'block';
+          activeImage = null;
+        }
+      }
+
+      function toggleOperationSelection(operation, listItem) {
+        if (selectedOperation === operation) {
+          selectedOperation = null;
+          listItem.classList.remove('selected');
+          updateOperationImage(null);
+        } else {
+          if (selectedOperation) {
+            const prevListItem = document.querySelector('li.selected');
+            if (prevListItem) prevListItem.classList.remove('selected');
+          }
+          selectedOperation = operation;
+          listItem.classList.add('selected');
+          updateOperationImage(operation);
+        }
+
+        updateConfirmButton();
+        updateInstructions();
+      }
+
+      options.items.forEach((item, index) => {
+        const li = document.createElement('li');
+        li.textContent = item.name;
+        li.setAttribute('data-operation-id', index);
+
+        li.onmouseover = () => {
+          if (!activeImage) {
+            heroImage.src = item.image;
+            heroImage.style.display = 'block';
+            oneChoiceHoverText.style.display = 'none';
+          }
+        };
+
+        li.onmouseout = () => {
+          if (!activeImage) {
+            heroImage.src = '';
+            heroImage.style.display = 'none';
+            oneChoiceHoverText.style.display = 'block';
+          }
+        };
+
+        li.onclick = () => toggleOperationSelection(item, li);
+        cardsList.appendChild(li);
+      });
+
+      confirmButton.onclick = async () => {
+        if (selectedOperation) {
+          try {
+            closePopup();
+            cleanup();
+            resolve(selectedOperation);
+          } catch (error) {
+            cleanup();
+            throw error;
+          }
+        }
+      };
+
+      function closePopup() {
+        popupTitle.textContent = 'Hero Ability!';
+        instructionsDiv.textContent = 'Context';
+        cardsList.innerHTML = '';
+        confirmButton.style.display = 'none';
+        confirmButton.disabled = true;
+        heroImage.src = '';
+        heroImage.style.display = 'none';
+        oneChoiceHoverText.style.display = 'block';
+        activeImage = null;
+        popup.style.display = 'none';
+        modalOverlay.style.display = 'none';
+      }
+
+      modalOverlay.onclick = () => {
+        closePopup();
+        cleanup();
+        resolve(null);
+      };
+
+    } catch (error) {
+      console.error('Error in operation selection popup:', error);
+      resolve(null);
+    }
+  });
+}
+
+// ---------------------------------
+// Post-defeat handling (burrow, bonuses, HYDRA draws)
+// ---------------------------------
+async function handlePostDefeat(villainCard, villainCopy, villainAttack, cityIndex, isInstantDefeat = false) {
+  // Handle Baby Hope first
+  if (villainCard.babyHope === true) {
+    delete villainCard.babyHope;
+    villainCard.attack = villainCard.originalAttack;
+    const BabyHopeCard = {
+      name: "Baby Hope",
+      type: "Baby",
+      victoryPoints: 6,
+      image: 'Visual Assets/Other/babyHope.webp'
+    };
+    victoryPile.push(BabyHopeCard);
+    updateGameBoard();
+  }
+
+  // Plutonium back into deck (shuffle)
+  if (villainCard.plutoniumCaptured && villainCard.plutoniumCaptured.length > 0) {
+    for (const plutonium of villainCard.plutoniumCaptured) {
+      villainDeck.push(plutonium);
+    }
+    villainCard.plutoniumCaptured = [];
+    shuffle(villainDeck);
+    onscreenConsole.log(`Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled back into Villain Deck.`);
+  }
+
+  // X-Cutioner Heroes
+  if (Array.isArray(villainCard.XCutionerHeroes) && villainCard.XCutionerHeroes.length > 0) {
+    for (const hero of villainCard.XCutionerHeroes) {
+      playerDiscardPile.push(hero);
+      onscreenConsole.log(`You have rescued <span class="console-highlights">${hero.name}</span>. They have been added to your Discard pile.`);
+    }
+    villainCard.XCutionerHeroes.length = 0;
+  }
+
+  // Extra bystanders
+  if (rescueExtraBystanders > 0) {
+    for (let i = 0; i < rescueExtraBystanders; i++) {
+      rescueBystander();
+    }
+  }
+
+  if (villainCard.name === 'Dracula') {
+    villainCard.attack = 3;
+    villainCard.cost = 0;
+  }
+
+  const burrowingVillain = (
+    villainCard.keyword1 === 'Burrow' ||
+    villainCard.keyword2 === 'Burrow' ||
+    villainCard.keyword3 === 'Burrow'
+  );
+
+  const inStreetsNow = cityIndex === 1;
+  const streetsFree = ((city[1] === '' || city[1] === null) && destroyedSpaces[1] === false);
+
+  // Burrow logic
+  if (burrowingVillain) {
+    if (inStreetsNow) {
+      victoryPile.push(villainCard);
+      onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> is in the Streets and cannot burrow. They have been defeated!`);
+    } else if (streetsFree) {
+      city[1] = villainCard;
+      onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`);
     } else {
+      victoryPile.push(villainCard);
+      onscreenConsole.log(`The Streets are ${destroyedSpaces[1] === false ? 'occupied' : 'destroyed'} so <span class="console-highlights">${villainCard.name}</span> cannot burrow and has been defeated!`);
+    }
+  } else {
+    if (!villainCard.skrulled) {
         victoryPile.push(villainCard);
         onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> has been defeated.`);
+    }    
+  }
+
+  if (villainCard.killbot === true) {
+    bystanderBonuses();
+  }
+  addHRToTopWithInnerHTML();
+
+  // Note: DO NOT clear city[cityIndex] here — it's already cleared in defeatVillain()
+
+  // Location bonuses
+  try {
+    if (thingCrimeStopperRescue && cityIndex == 3) {
+      onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> in the Bank. Rescuing a Bystander.`);
+      await rescueBystander();
     }
 
-    if (villainCard.killbot === true) {
-        bystanderBonuses();
-    }
-    addHRToTopWithInnerHTML();
- 
-    city[cityIndex] = null;
-    if (villainCard.bystander) {
-        villainCard.bystander = [];
+    if (sewerRooftopDefeats && (cityIndex === 2 || cityIndex === 4)) {
+      onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? 'in the Sewers' : 'on the Rooftops'}. Drawing two cards.`);
+      extraDraw();
+      extraDraw();
     }
 
-    // Handle location bonuses
+    if (sewerRooftopBonusRecruit > 0 && (cityIndex === 2 || cityIndex === 4)) {
+      onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? 'in the Sewers' : 'on the Rooftops'}. +${sewerRooftopBonusRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`);
+      totalRecruitPoints += sewerRooftopBonusRecruit;
+      cumulativeRecruitPoints += sewerRooftopBonusRecruit;
+    }
+  } catch (error) {
+    console.error('Error processing location bonuses:', error);
+  }
+
+  // Professor X Mind Control
+  if (hasProfessorXMindControl) {
     try {
-        if (thingCrimeStopperRescue && cityIndex == 3) {
-            onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> in the Bank. Rescuing a Bystander.`);
-            await rescueBystander();
-        }
-
-        if (sewerRooftopDefeats && (cityIndex === 2 || cityIndex === 4)) {
-            onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? 'in the Sewers' : 'on the Rooftops'}. Drawing two cards.`);
-            extraDraw();
-            extraDraw();
-        }
-
-        if (sewerRooftopBonusRecruit > 0 && (cityIndex === 2 || cityIndex === 4)) {
-            onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? 'in the Sewers' : 'on the Rooftops'}. +${sewerRooftopBonusRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`);
-            totalRecruitPoints += sewerRooftopBonusRecruit;
-            cumulativeRecruitPoints += sewerRooftopBonusRecruit;
-        }
+      await handleMindControlOption(villainCard);
     } catch (error) {
-        console.error('Error processing location bonuses:', error);
+      console.error('Error in mind control popup:', error);
     }
+  }
 
-    // Handle Professor X Mind Control
-    if (hasProfessorXMindControl) {
-        try {
-            await handleMindControlOption(villainCard);
-        } catch (error) {
-            console.error('Error in mind control popup:', error);
-        }
-    }
+  // Final cleanup
+  defeatBonuses();
+  currentVillainLocation = null;
+  removeCosmicThreatBuff(cityIndex);
 
-    // Final cleanup
-    defeatBonuses();
-    currentVillainLocation = null;
-    removeCosmicThreatBuff(cityIndex);
-    updateGameBoard();
+  // Endless Armies of HYDRA: draw TWO villain cards serially (no race conditions)
+  if (villainCard.name === "Endless Armies of HYDRA") {
+	  onscreenConsole.log(`Fight! <span class="console-highlights">Endless Armies of HYDRA</span> forces you to play the top two cards of the Villain Deck.`);
+    await drawVillainCardsSequential(2);
+  }
+
+  if (villainCard.wasSkrulled === true) {
+    victoryPile.pop(villainCard);
+  }
+
+  // One redraw at the end of post-defeat processing
+  updateGameBoard();
 }
 
-// Handle Professor X Mind Control option
+// ---------------------------------
+// Professor X Mind Control (unchanged)
+// ---------------------------------
 async function handleMindControlOption(villainCard) {
-    return new Promise((resolve) => {
-        const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-            "DO YOU WISH TO GAIN THIS VILLAIN?",
-            "GAIN AS A HERO",
-            "NO THANKS!"
-        );
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      "DO YOU WISH TO GAIN THIS VILLAIN?",
+      "GAIN AS A HERO",
+      "NO THANKS!"
+    );
 
-        document.getElementById('heroAbilityHoverText').style.display = 'none';
+    document.getElementById('heroAbilityHoverText').style.display = 'none';
 
-        const cardImage = document.getElementById('hero-ability-may-card');
-        cardImage.src = 'Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_MindControl.webp';
-        cardImage.style.display = 'block';
+    const cardImage = document.getElementById('hero-ability-may-card');
+    cardImage.src = 'Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_MindControl.webp';
+    cardImage.style.display = 'block';
 
-        confirmButton.onclick = () => {
-            const cardCopy = JSON.parse(JSON.stringify(villainCard));
-            cardCopy.type = "Hero";
-            cardCopy.color = "Grey";
-            cardCopy.cost = villainCard.attack;
-            cardCopy.keyword1 = "None";
-            cardCopy.keyword2 = "None";
-            cardCopy.keyword3 = "None";
-            cardCopy.wasAVillain = true;
-            
-            playerDiscardPile.push(cardCopy);
-            
-            onscreenConsole.log(`You have chosen to add <span class="console-highlights">${villainCard.name}</span> to your discard pile as a grey Hero.`);
-            updateGameBoard();
-            
-            hideHeroAbilityMayPopup();
-            document.getElementById('heroAbilityHoverText').style.display = 'block';
-            resolve(true);
-        };
+    confirmButton.onclick = () => {
+      const cardCopy = JSON.parse(JSON.stringify(villainCard));
+      cardCopy.type = "Hero";
+      cardCopy.color = "Grey";
+      cardCopy.cost = villainCard.attack;
+      cardCopy.keyword1 = "None";
+      cardCopy.keyword2 = "None";
+      cardCopy.keyword3 = "None";
+      cardCopy.wasAVillain = true;
 
-        denyButton.onclick = () => {
-            onscreenConsole.log(`You declined to copy ${villainCard.name}.`);
-            hideHeroAbilityMayPopup();
-            document.getElementById('heroAbilityHoverText').style.display = 'block';
-            resolve(false);
-        };
-    });
+      playerDiscardPile.push(cardCopy);
+
+      onscreenConsole.log(`You have chosen to add <span class="console-highlights">${villainCard.name}</span> to your discard pile as a grey Hero.`);
+      updateGameBoard();
+
+      hideHeroAbilityMayPopup();
+      document.getElementById('heroAbilityHoverText').style.display = 'block';
+      resolve(true);
+    };
+
+    denyButton.onclick = () => {
+      onscreenConsole.log(`You declined to copy ${villainCard.name}.`);
+      hideHeroAbilityMayPopup();
+      document.getElementById('heroAbilityHoverText').style.display = 'block';
+      resolve(false);
+    };
+  });
 }
 
 // Updated original functions to use the combined function
@@ -8798,11 +8956,25 @@ if (delayEndGame) {
     return;
 }
 
+    const gameEndTime = new Date();
+    const timePlayed = gameEndTime - gameStartTime; // Difference in milliseconds
+    
+    // Format and display the time
+    const formattedTime = formatTime(timePlayed);
+    document.getElementById('time-total').textContent = formattedTime;
+
+generateStatsScreen();
+generateGameScore();
+
     const drawPopup = document.getElementById('draw-popup');
     const modalOverlay = document.getElementById('modal-overlay');
     const drawText = document.getElementById('draw-context');
+    const score = document.getElementById('score-content');
+    const stats = document.getElementById('stats-content');
     drawPopup.style.display = 'block';
     modalOverlay.style.display = 'block';
+    score.style.display = 'block';
+    stats.style.display = 'block';
 playSFX('game-draw');
 
     const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
@@ -8896,20 +9068,6 @@ if (selectedScheme) {
         }
     }
 
-    const totalVictoryPoints = calculateVictoryPoints(victoryPile);
-    document.getElementById('villainDRAWvictoryPointsTotal').innerText = totalVictoryPoints;
-
-    const totalTurnsTaken = turnCount;
-    document.getElementById('villainDRAWtotalTurnsTaken').innerText = totalTurnsTaken;
-   
-const averageVPPerTurn = totalTurnsTaken > 0 
-    ? Math.ceil((totalVictoryPoints / totalTurnsTaken) * 10) / 10 
-    : 0.0;
-document.getElementById('villainDRAWaverageVPPerTurn').innerText = averageVPPerTurn;
-
-const numberOfEscapes = escapedVillainsDeck.filter(item => item.type !== 'Bystander').length;
-document.getElementById('villainDRAWnumberOfEscapes').innerText = numberOfEscapes;
-
 gameIsOver = true;
 }
 
@@ -8918,6 +9076,33 @@ function closeDrawPopup() {
     const modalOverlay = document.getElementById('modal-overlay');
     drawPopup.style.display = 'none';
     modalOverlay.style.display = 'none';
+    const score = document.getElementById('score-content');
+    const stats = document.getElementById('stats-content');
+    score.style.display = 'none';
+    stats.style.display = 'none';
+}
+
+function generateGameScore() {
+    const totalVictoryPoints = calculateVictoryPoints(victoryPile);
+    document.getElementById('ENDGAMEvictoryPointsTotal').innerText = totalVictoryPoints;
+
+    const totalTurnsTaken = turnCount;
+    document.getElementById('ENDGAMEtotalTurnsTaken').innerText = totalTurnsTaken;
+   
+const averageVPPerTurn = totalTurnsTaken > 0 
+    ? Math.ceil((totalVictoryPoints / totalTurnsTaken) * 10) / 10 
+    : 0.0;
+document.getElementById('ENDGAMEaverageVPPerTurn').innerText = averageVPPerTurn;
+
+const numberOfEscapes = escapedVillainsDeck.filter(item => item.type !== 'Bystander').length;
+document.getElementById('ENDGAMEnumberOfEscapes').innerText = numberOfEscapes;
+
+const minusSchemes = schemeTwistCount * 3;
+const minusVillains = escapedVillainsDeck.filter(item => item.type === 'Villain').length;
+const minusBystanders = escapedVillainsDeck.filter(item => item.type === 'Bystander').length;;
+
+const traditionalScore = Math.max(0, totalVictoryPoints - minusSchemes - minusVillains - minusBystanders);
+document.getElementById('traditional-score').innerText = traditionalScore;
 }
 
 function returnHome() {
@@ -8988,25 +9173,25 @@ async function checkDefeat() {
 
 
 function showDefeatPopup() {
+    const gameEndTime = new Date();
+    const timePlayed = gameEndTime - gameStartTime; // Difference in milliseconds
+    
+    // Format and display the time
+    const formattedTime = formatTime(timePlayed);
+    document.getElementById('time-total').textContent = formattedTime;
+
+    generateStatsScreen();
+    generateGameScore();
+
     const defeatPopup = document.getElementById('defeat-popup');
     const modalOverlay = document.getElementById('modal-overlay');
+    const score = document.getElementById('score-content');
+    const stats = document.getElementById('stats-content');
     defeatPopup.style.display = 'block';
     modalOverlay.style.display = 'block';
+    score.style.display = 'block';
+    stats.style.display = 'block';
     playSFX('evil-wins');
-
-    const totalVictoryPoints = calculateVictoryPoints(victoryPile);
-    document.getElementById('LOSSvictoryPointsTotal').innerText = totalVictoryPoints;
-
-    const totalTurnsTaken = turnCount;
-    document.getElementById('LOSStotalTurnsTaken').innerText = totalTurnsTaken;
-   
-    const averageVPPerTurn = totalTurnsTaken > 0 
-        ? (totalVictoryPoints / totalTurnsTaken).toFixed(1) 
-        : "0.0";
-    document.getElementById('LOSSaverageVPPerTurn').innerText = averageVPPerTurn;
-
-    const numberOfEscapes = escapedVillainsDeck.filter(item => item.type !== 'Bystander').length;
-    document.getElementById('LOSSnumberOfEscapes').innerText = numberOfEscapes;
 
     document.getElementById('player-deck-card-back').addEventListener('click', openPlayerDeckPopup);
     document.getElementById('hero-deck-card-back').addEventListener('click', openHeroDeckPopup);
@@ -9027,8 +9212,12 @@ document.getElementById('defeat-return-home-button').addEventListener('click', (
 function closeDefeatPopup() {
     const defeatPopup = document.getElementById('defeat-popup');
 const modalOverlay = document.getElementById('modal-overlay');
+    const score = document.getElementById('score-content');
+    const stats = document.getElementById('stats-content');
     defeatPopup.style.display = 'none';
 modalOverlay.style.display = 'none';
+    score.style.display = 'none';
+    stats.style.display = 'none';
 }
 
 function showFinishTurnPopup() {
@@ -9072,9 +9261,20 @@ if (delayEndGame) {
     delayedWin = true;
     return;
 }
+    const gameEndTime = new Date();
+    const timePlayed = gameEndTime - gameStartTime; // Difference in milliseconds
+    
+    // Format and display the time
+    const formattedTime = formatTime(timePlayed);
+    document.getElementById('time-total').textContent = formattedTime;
+
+    generateStatsScreen();
+    generateGameScore();
 
 const winPopup = document.getElementById('win-popup');
 const modalOverlay = document.getElementById('modal-overlay');
+    const score = document.getElementById('score-content');
+    const stats = document.getElementById('stats-content');
 
 const winText = document.getElementById('win-context');
 
@@ -9110,7 +9310,7 @@ if (selectedScheme) {
             winText.innerHTML = `You've stopped ${mastermind.name} from unleashing Killbots on Earth's leadership. The threat is contained and global order is intact. Excellent work!`;
             break;
 
-        case "Secret Invasion of the Skrull SHapeshifters":
+        case "Secret Invasion of the Skrull Shapeshifters":
             winText.innerHTML = `You've stopped ${mastermind.name} from replacing Earth's heroes with Skrull imposters. All abducted heroes have been freed and returned to the fight. Excellent work!`;
             break;
 
@@ -9181,22 +9381,10 @@ if (selectedScheme) {
         }
     }
 
-const totalVictoryPoints = calculateVictoryPoints(victoryPile);
-    document.getElementById('WINvictoryPointsTotal').innerText = totalVictoryPoints;
-
-    const totalTurnsTaken = turnCount;
-    document.getElementById('WINtotalTurnsTaken').innerText = totalTurnsTaken;
-   
-    const averageVPPerTurn = totalTurnsTaken > 0 
-    ? (totalVictoryPoints / totalTurnsTaken).toFixed(1) 
-    : "0.0"; // Handle division by zero case
-document.getElementById('WINaverageVPPerTurn').innerText = averageVPPerTurn;
-
-const numberOfEscapes = escapedVillainsDeck.filter(item => item.type !== 'Bystander').length;
-document.getElementById('WINnumberOfEscapes').innerText = numberOfEscapes;
-
-    winPopup.style.display = 'block';
+winPopup.style.display = 'block';
 modalOverlay.style.display = 'block';
+    score.style.display = 'block';
+    stats.style.display = 'block';
 playSFX('good-wins');
 
 gameIsOver = true;
@@ -11447,12 +11635,261 @@ initFontSelector();
   }, { passive: false, capture: true }); // capture so our check runs early without blocking defaults
 })();
 
+// Helpers for icons
+const createTeamIconHTML = (value) => {
+    if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
+        return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="stats-card-icons">';
+    }
+    return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="stats-card-icons">`;
+};
 
+const createClassIconHTML = (value) => {
+    if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') return '';
+    return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="stats-card-icons">`;
+};
 
+function generateStatsScreen() {
+    // Combine all arrays
+    const combinedCards = [...playerDeck, ...cardsPlayedThisTurn, ...playerDiscardPile, ...playerHand];
+    
+    // Categorize cards
+    const categories = {
+        heroes: {},
+        shield: [],
+        wounds: [],
+        other: []
+    };
 
+    combinedCards.forEach(card => {
+        // Check for SHIELD cards
+        if (card.name === "SHIELD Agent" || card.name === "SHIELD Officer" || card.name === "SHIELD Trooper") {
+            categories.shield.push(card);
+        }
+        // Check for Wounds
+        else if (card.type === "Wound") {
+            categories.wounds.push(card);
+        }
+        // Check for Heroes
+        else if (card.heroName) {
+            if (!categories.heroes[card.heroName]) {
+                categories.heroes[card.heroName] = {};
+            }
+            if (!categories.heroes[card.heroName][card.name]) {
+                categories.heroes[card.heroName][card.name] = [];
+            }
+            categories.heroes[card.heroName][card.name].push(card);
+        }
+        // Everything else
+        else {
+            categories.other.push(card);
+        }
+    });
 
+    // Calculate MVP(s)
+    const heroTotals = {};
+    Object.keys(categories.heroes).forEach(heroName => {
+        heroTotals[heroName] = Object.values(categories.heroes[heroName]).reduce((total, cards) => total + cards.length, 0);
+    });
+    
+    const maxCards = Math.max(...Object.values(heroTotals));
+    const mvpHeroes = Object.keys(heroTotals).filter(heroName => heroTotals[heroName] === maxCards);
+    
+    // Set the hero image based on MVP
+    if (mvpHeroes.length > 0) {
+        // Use the first MVP hero for the image (or you could choose randomly)
+        setEndGameHeroImage(mvpHeroes[0]);
+    } else if (Object.keys(categories.heroes).length > 0) {
+        // If no MVP but there are heroes, use the first one alphabetically
+        const firstHero = Object.keys(categories.heroes).sort()[0];
+        setEndGameHeroImage(firstHero);
+    } else {
+        // No heroes found, set a default image
+        setEndGameHeroImage('default');
+    }
+    
+    // Rest of your existing HTML building code...
+    let html = '';
 
+    html += `<div class="end-game-your-cards-header">YOUR CARDS:</div>`;
 
+    // Heroes (alphabetically)
+    const heroNames = Object.keys(categories.heroes).sort();
+    heroNames.forEach(heroName => {
+        const heroCards = categories.heroes[heroName];
+        const totalHeroCards = heroTotals[heroName];
+        const isMVP = mvpHeroes.includes(heroName);
+        const mvpText = isMVP ? (mvpHeroes.length > 1 ? " - Tied MVP" : " - MVP") : "";
+        
+        html += `<div class="category-section">`;
+        html += `<div class="hero-header">`;
+        html += `<span class="hero-name-container">`;
+        html += createTeamIconHTML(heroCards[Object.keys(heroCards)[0]][0].team);
+        html += `<span class="hero-name-text">${heroName}${mvpText}</span>`;
+        html += `</span>`;
+        html += `<span class="hero-count">&nbsp;x${totalHeroCards}</span>`;
+        html += `</div>`;
+        html += `<hr>`;
+        
+        // Sort card names alphabetically within hero
+        const cardNames = Object.keys(heroCards).sort();
+        cardNames.forEach(cardName => {
+            const cards = heroCards[cardName];
+            const card = cards[0];
+            
+            html += `<div class="card-line">`;
+            
+            if (card.class1) html += createClassIconHTML(card.class1);
+            if (card.class2) html += createClassIconHTML(card.class2);
+            if (card.class3) html += createClassIconHTML(card.class3);
+            
+            html += `<span class="card-name">${cardName}</span>`;
+            html += `<span class="card-count">&nbsp;x${cards.length}</span>`;
+            html += `</div>`;
+        });
+        
+        html += `</div>`;
+    });
 
+    // SHIELD Cards
+    if (categories.shield.length > 0) {
+        html += `<div class="category-section">`;
+        html += `<div class="category-header">`;
+        html += `<span class="hero-name-container">`;
+        html += createTeamIconHTML("SHIELD");
+        html += `<span class="hero-name-text">SHIELD</span>`;
+        html += `</span>`;
+        html += `<span class="hero-count">&nbsp;x${categories.shield.length}</span>`;
+        html += `</div>`;
+        html += `<hr>`;
+        
+        // Group SHIELD cards by name
+        const shieldGroups = {};
+        categories.shield.forEach(card => {
+            if (!shieldGroups[card.name]) shieldGroups[card.name] = [];
+            shieldGroups[card.name].push(card);
+        });
+        
+        Object.keys(shieldGroups).sort().forEach(cardName => {
+            const cards = shieldGroups[cardName];
+            const card = cards[0];
+            
+            html += `<div class="card-line">`;
+            
+            // Class icons for SHIELD cards
+            if (card.class1) html += createClassIconHTML(card.class1);
+            if (card.class2) html += createClassIconHTML(card.class2);
+            if (card.class3) html += createClassIconHTML(card.class3);
+            
+            html += `<span class="card-name">${cardName}</span>`;
+            html += `<span class="card-count">&nbsp;x${cards.length}</span>`;
+            html += `</div>`;
+        });
+        
+        html += `</div>`;
+    }
 
+        // Other cards
+    if (categories.other.length > 0) {
+        html += `<div class="category-section">`;
+        html += `<div class="category-header">`;
+        html += `<span class="hero-name-container">`;
+        html += `<span class="hero-name-text">OTHER</span>`;
+        html += `</span>`;
+        html += `<span class="hero-count">&nbsp;x${categories.other.length}</span>`;  // <-- Move count here
+        html += `</div>`;
+        html += `<hr>`;
+        
+        const otherGroups = {};
+        categories.other.forEach(card => {
+            if (!otherGroups[card.name]) otherGroups[card.name] = [];
+            otherGroups[card.name].push(card);
+        });
+        
+        Object.keys(otherGroups).sort().forEach(cardName => {
+            const cards = otherGroups[cardName];
+            const card = cards[0];
+            
+            html += `<div class="card-line">`;
+            
+            // Class icons for other cards
+            if (card.class1) html += createClassIconHTML(card.class1);
+            if (card.class2) html += createClassIconHTML(card.class2);
+            if (card.class3) html += createClassIconHTML(card.class3);
+            
+            html += `<span class="card-name">${cardName}</span>`;
+            html += `<span class="card-count">&nbsp;x${cards.length}</span>`;
+            html += `</div>`;
+        });
+        
+        html += `</div>`;
+    }
 
+        // Wounds
+    if (categories.wounds.length > 0) {
+        html += `<div class="category-section">`;
+        html += `<div class="category-header">`;
+        html += `<span class="hero-name-container">`;
+        html += `<span class="hero-name-text">WOUNDS</span>`;
+        html += `</span>`;
+        html += `<span class="hero-count">&nbsp;x${categories.wounds.length}</span>`;
+        html += `</div>`;
+        html += `</div>`; // No individual wound lines, just the header with count
+        html += `<hr>`;
+    }
+
+    document.getElementById('stats-content').innerHTML = html;
+}
+
+function setEndGameHeroImage(heroName, customImagePath = '') {
+    const heroImageElement = document.getElementById('endGameHeroImage');
+    if (!heroImageElement) return;
+    
+    let imagePath = customImagePath;
+    
+    // If no custom path provided, use the mapping
+    if (!imagePath) {
+        const heroImageMap = {
+            'black widow': 'Visual Assets/Heroes/Reskinned Core/Core_BlackWidow_DangerousRescue.webp',
+            'captain america': 'Visual Assets/Heroes/Reskinned Core/Core_CaptainAmerica_ADayUnlikeAnyOther.webp',
+            'cyclops': 'Visual Assets/Heroes/Reskinned Core/Core_Cyclops_OpticBlast.webp',
+            'deadpool': 'Visual Assets/Heroes/Reskinned Core/Core_Deadpool_HereHoldThisForASecond.webp',
+            'emma frost': 'Visual Assets/Heroes/Reskinned Core/Core_EmmaFrost_ShadowedThoughts.webp',
+            'gambit': 'Visual Assets/Heroes/Reskinned Core/Core_Gambit_CardShark.webp',
+            'hawkeye': 'Visual Assets/Heroes/Reskinned Core/Core_Hawkeye_QuickDraw.webp',
+            'hulk': 'Visual Assets/Heroes/Reskinned Core/Core_Hulk_HulkSmash.webp',
+            'iron man': 'Visual Assets/Heroes/Reskinned Core/Core_IronMan_ArcReactor.webp',
+            'nick fury': 'Visual Assets/Heroes/Reskinned Core/Core_NickFury_LegendaryCommander.webp',
+            'rogue': 'Visual Assets/Heroes/Reskinned Core/Core_Rogue_StealAbilities.webp',
+            'spider-man': 'Visual Assets/Heroes/Reskinned Core/Core_SpiderMan_WebShooters.webp',
+            'storm': 'Visual Assets/Heroes/Reskinned Core/Core_Storm_TidalWave.webp',
+            'thor': 'Visual Assets/Heroes/Reskinned Core/Core_Thor_GodOfThunder.webp',
+            'wolverine': 'Visual Assets/Heroes/Reskinned Core/Core_Wolverine_FrenziedSlashing.webp',
+            'angel': 'Visual Assets/Heroes/Dark City/DarkCity_Angel_DropOffAFriend.webp',
+            'bishop': 'Visual Assets/Heroes/Dark City/DarkCity_Bishop_FirepowerFromTheFuture.webp',
+            'blade': 'Visual Assets/Heroes/Dark City/DarkCity_Blade_StalkThePrey.webp',
+            'cable': 'Visual Assets/Heroes/Dark City/DarkCity_Cable_RapidResponseForce.webp',
+            'colossus': 'Visual Assets/Heroes/Dark City/DarkCity_Colossus_Invulnerability.webp',
+            'daredevil': 'Visual Assets/Heroes/Dark City/DarkCity_Daredevil_RadarSense.webp',
+            'domino': 'Visual Assets/Heroes/Dark City/DarkCity_Domino_LuckyBreak.webp',
+            'elektra': 'Visual Assets/Heroes/Dark City/DarkCity_Elektra_Ninjitsu.webp',
+            'forge': 'Visual Assets/Heroes/Dark City/DarkCity_Forge_DirtyWork.webp',
+            'ghost rider': 'Visual Assets/Heroes/Dark City/DarkCity_GhostRider_HellOnWheels.webp',
+            'iceman': 'Visual Assets/Heroes/Dark City/DarkCity_Iceman_IceSlide.webp',
+            'iron fist': 'Visual Assets/Heroes/Dark City/DarkCity_IronFist_WieldTheIronFist.webp',
+            'jean grey': 'Visual Assets/Heroes/Dark City/DarkCity_JeanGrey_TelekineticMastery.webp',
+            'nightcrawler': 'Visual Assets/Heroes/Dark City/DarkCity_Nightcrawler_AlongForTheRide.webp',
+            'professor x': 'Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_TelepathicProbe.webp',
+            'punisher': 'Visual Assets/Heroes/Dark City/DarkCity_Punisher_HostileInterrogation.webp',
+            'x-force wolverine': 'Visual Assets/Heroes/Dark City/DarkCity_X-ForceWolverine_SuddenAmbush.webp',
+            'human torch': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_HumanTorch_FlameOn.webp',
+            'invisible woman': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_InvisibleWoman_InvisibleBarrier.webp',
+            'mr. fantastic': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_TwistingEquations.webp',
+            'silver surfer': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_SilverSurfer_WarpSpeed.webp',
+            'thing': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_Thing_ItsClobberinTime.webp'
+        };
+        
+        imagePath = heroImageMap[heroName.toLowerCase()] || 'Visual Assets/CardBack.webp';
+    }
+    
+    heroImageElement.style.backgroundImage = `url('${imagePath}')`;
+}

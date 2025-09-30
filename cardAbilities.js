@@ -1,5 +1,5 @@
 // cardAbilities.js
-//v1
+//30.09.2025 20.55
 
 function koBonuses() {
 playSFX('ko');
@@ -8745,18 +8745,11 @@ function ambushBystander() {
     }
 }
 
-function extraVillainDraw() {
+async function extraVillainDraw() {
 let sewersIndex = city.length - 1;
     onscreenConsole.log(`Ambush! <span class="console-highlights">${city[sewersIndex].name}</span> forces you to play the top card of the Villain Deck.`);
 
-drawVillainCard();
-}
-
-function villainDrawX2() {
-let sewersIndex = city.length - 1;
-     onscreenConsole.log(`Fight! Play the top two cards of the Villain Deck.`);
-drawVillainCard();
-drawVillainCard();
+await drawVillainCard();
 }
 
 function chooseHeroesToKOFromDiscardPile() {
@@ -10413,20 +10406,20 @@ function showHeroSelectionSkrullPopup(heroes) {
 }
 
 function unskrull(villainCard) {
-    if (!villainCard) {
-        console.error("Error: villainCard is undefined or null");
-        return;
-    }
+    if (!villainCard) return;
 
+    // Transform back to hero
     villainCard.attack = villainCard.originalAttack;
     villainCard.skrulled = false;
+    villainCard.wasSkrulled = true;
     villainCard.fightEffect = '';
-villainCard.type = 'Hero';
-villainCard.overlayTextAttack = '';
+    villainCard.type = 'Hero';
+    villainCard.overlayTextAttack = '';
 
+    // Since we never added it to victory pile, just add to discard
     playerDiscardPile.push(villainCard);
-    victoryPile.pop(villainCard);
-    onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> has been defeated and rescued from the Skrulls. They have been added to your discard pile.`);
+    
+    onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> has been rescued from the Skrulls and added to your discard pile.`);
     updateGameBoard();
 }
 
