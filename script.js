@@ -1,4 +1,4 @@
-//30.09.2025 20.55
+//02.10.2025 07.50
 
 console.log('Script loaded');
 console.log(window.henchmen);
@@ -601,6 +601,7 @@ let stackedTwistNextToMastermind = 0;
 let popupMinimized = false;
 let deadpoolRare = false;
 let gameIsOver = false;
+let mastermindDefeated = false;
 
 window.victoryPile = [];
 
@@ -3337,10 +3338,12 @@ async function drawVillainCard() {
     return;
   }
 
+if (isFirstTurn) {
   const highCostHeroCount = hq.filter(hero => hero.cost >= 7).length;
-  if (isFirstTurn && highCostHeroCount >= 2) {
+  if (highCostHeroCount >= 2) {
     await mulliganChoice();
   }
+}
 
   const drawCount = isFirstTurn ? 3 : 1;
   isFirstTurn = false;
@@ -3726,7 +3729,7 @@ mastermindPermBuffDynamicPrev = mastermindPermBuffDynamicNow;
 
 function handleMasterStrike(masterStrikeCard) {
     updateGameBoard();
-    
+   
     return new Promise(async (resolve) => {
         // First handle Cable cards if any exist
         const cableCards = playerHand.filter(card => card.name === 'Cable - Disaster Survivalist');
@@ -3734,14 +3737,25 @@ function handleMasterStrike(masterStrikeCard) {
         if (cableCards.length > 0) {
             await processCableCards(cableCards);
         }
+
+        // Your added check
+        if (mastermindDefeated === true) {
+            await new Promise(popupResolve => {
+				const mastermind = getSelectedMastermind();
+				playSFX('master-strike');
+    			koPile.push(masterStrikeCard);
+                showPopup('Post Defeat Master Strike', masterStrikeCard, popupResolve);
+				onscreenConsole.log(`Master Strike! You've already defeated <span class="console-highlights">${mastermind.name}</span> though! Nothing happens.`); 
+            });
+            resolve();
+            return; // This prevents the Master Strike effect from running
+        }
         
         // Then always handle the Master Strike effect
         await handleMasterStrikeEffect(masterStrikeCard);
         
         resolve();
-
     });
-
 }
 
 async function processCableCards(cableCards) {
@@ -4279,7 +4293,12 @@ const closeButton = document.getElementById('close-x');
         popupImage.style.display = 'block';
         popupContext.innerHTML = mastermind.masterStrikeConsoleLog;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
-    } else if (type === 'Scheme Twist') {
+    } else if (type === 'Post Defeat Master Strike') {
+		popupTitle.innerText = `Master Strike`;
+        popupImage.style.display = 'block';
+        popupContext.innerHTML = `You've already defeated <span class="console-highlights">${mastermind.name}</span>! Nothing happens.`;
+        popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+	 } else if (type === 'Scheme Twist') {
         popupTitle.innerText = `Scheme Twist`;
         popupImage.style.display = 'block';
         if (selectedScheme.variableTwist === false) {
@@ -9252,6 +9271,7 @@ function checkWinCondition() {
     
     if (mastermindTacticsCount >= requiredTactics) {
         showFinishTurnPopup();
+		mastermindDefeated = true;
     }
 }
 
@@ -11892,4 +11912,5 @@ function setEndGameHeroImage(heroName, customImagePath = '') {
     }
     
     heroImageElement.style.backgroundImage = `url('${imagePath}')`;
+
 }
