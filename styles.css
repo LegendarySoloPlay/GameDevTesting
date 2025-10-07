@@ -5703,7 +5703,7 @@ hr {
     flex-direction: column;
     align-items: center;
     gap: 0.5vh;
-    height: 97%;
+    height: 95%;
 }
 
 .card-choice-popup-preview {
@@ -5762,6 +5762,11 @@ hr {
     max-height: 5vh;
 }
 
+.card-choice-popup-buttonhousing button:disabled {
+    background-color: var(--disabledAccent);
+    cursor: not-allowed;
+}
+
 .card-choice-popup-buttonhousing button:hover {
     background-color: var(--hoverAccent);
     color: var(--contrastText);
@@ -5776,57 +5781,85 @@ hr {
     overflow: hidden;
 }
 
-.card-choice-popup-selectionrow1label {
-    width: 100%;
-    text-align: center;
-    margin-top: 1vh;
-    height: 7%;
-    font-family: 'Roboto Condensed';
-    text-transform: uppercase;
-    font-weight: bold;
-    font-size: clamp(9pt, 2.5vh, 1.5em);
-    color: var(--accent);
+.card-choice-popup-selection-container::before,
+.card-choice-popup-selection-container::after {
     display: none;
 }
 
-.card-choice-popup-selectionrow1 {
-    left: 1px;
+/* Add container wrappers for each row with gradients */
+.card-choice-popup-selectionrow1-container,
+.card-choice-popup-selectionrow2-container {
+    position: relative;
     height: 40%;
     margin-top: 1vh;
-    justify-content: center; /* Default to center when no scroll needed */
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    gap: 0.5vw;
-    overflow-y: hidden;
-    padding: 0 2vw;
-    position: relative;
-    
-    scrollbar-width: thin; /* Firefox - show thin scrollbar */
-    scrollbar-color: var(--accent) transparent; /* Firefox scrollbar color */
-    
-    /* Default cursor when no scroll needed */
-    cursor: default;
+    overflow: hidden; /* Contain the gradients */
 }
 
-.card-choice-popup-selectionrow2label {
-    width: 100%;
-    text-align: center;
-    margin-top: 1vh;
-    height: 7%;
-    font-family: 'Roboto Condensed';
-    text-transform: uppercase;
-    font-weight: bold;
-    font-size: clamp(9pt, 2.5vh, 1.5em);
-    color: var(--accent);
-    display: none;
+.card-choice-popup-selectionrow1-container {
+    top: 50%;
+    transform: translateY(-50%);
 }
 
+/* Individual row gradients */
+.row1-gradients,
+.row2-gradients {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.gradient-left,
+.gradient-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4vw;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.gradient-left {
+    left: 0;
+    background: linear-gradient(to right, var(--panel-backgrounds) 10%, transparent 100%);
+}
+
+.gradient-right {
+    right: -2px;
+    background: linear-gradient(to left, var(--panel-backgrounds) 10%, transparent 100%);
+}
+
+/* Row 1 gradient states */
+.card-choice-popup-selectionrow1-container.row1-scrollable .gradient-left,
+.card-choice-popup-selectionrow1-container.row1-scrollable .gradient-right {
+    opacity: 1;
+}
+
+.card-choice-popup-selectionrow1-container.row1-at-start .gradient-left,
+.card-choice-popup-selectionrow1-container.row1-at-end .gradient-right {
+    opacity: 0;
+}
+
+/* Row 2 gradient states */
+.card-choice-popup-selectionrow2-container.row2-scrollable .gradient-left,
+.card-choice-popup-selectionrow2-container.row2-scrollable .gradient-right {
+    opacity: 1;
+}
+
+.card-choice-popup-selectionrow2-container.row2-at-start .gradient-left,
+.card-choice-popup-selectionrow2-container.row2-at-end .gradient-right {
+    opacity: 0;
+}
+
+/* Update the row styles to work with new containers */
+.card-choice-popup-selectionrow1,
 .card-choice-popup-selectionrow2 {
     left: 1px;
-    height: 40%;
-    margin-top: 1vh;
-    justify-content: center; /* Default to center when no scroll needed */
+    height: 100%; /* Fill container */
+    justify-content: center;
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -5835,11 +5868,22 @@ hr {
     padding: 0 2vw;
     position: relative;
     
-    scrollbar-width: thin; /* Firefox - show thin scrollbar */
-    scrollbar-color: var(--accent) transparent; /* Firefox scrollbar color */
-    
-    /* Default cursor when no scroll needed */
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
     cursor: default;
+}
+
+.card-choice-popup-selectionrow1label, .card-choice-popup-selectionrow2label {
+    width: 100%;
+    text-align: center;
+    margin-top: 1vh;
+    height: 5%;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    color: var(--accent);
+    display: none;
 }
 
 @media (max-height: 600px) {
@@ -5883,57 +5927,10 @@ hr {
     cursor: grab; /* Show grab cursor only when scrollable */
 }
 
-/* Gradient overlays - applied to container for both rows */
-.card-choice-popup-selection-container::before,
-.card-choice-popup-selection-container::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 4vw;
-    pointer-events: none;
-    z-index: 2;
-    transition: opacity 0.3s ease;
-    opacity: 0; /* Hidden by default */
-}
-
-.card-choice-popup-selection-container::before {
-    left: -2px; /* Extend slightly beyond the left edge */
-    background: linear-gradient(to right, var(--panel-backgrounds) 10%, transparent 100%);
-}
-
-.card-choice-popup-selection-container::after {
-    right: -2px; /* Extend slightly beyond the right edge */
-    background: linear-gradient(to left, var(--panel-backgrounds) 10%, transparent 100%);
-}
-
-/* Show gradients only when rows are scrollable */
-.card-choice-popup-selection-container.row1-scrollable::before,
-.card-choice-popup-selection-container.row1-scrollable::after,
-.card-choice-popup-selection-container.row2-scrollable::before,
-.card-choice-popup-selection-container.row2-scrollable::after {
-    opacity: 1;
-}
-
-/* Hide gradients when at scroll boundaries for both rows */
-.card-choice-popup-selection-container.row1-at-start::before,
-.card-choice-popup-selection-container.row1-at-end::after,
-.card-choice-popup-selection-container.row2-at-start::before,
-.card-choice-popup-selection-container.row2-at-end::after {
-    opacity: 0;
-}
-
-/* When both rows are visible, adjust gradients to cover both */
-.card-choice-popup-selection-container.both-rows-visible::before,
-.card-choice-popup-selection-container.both-rows-visible::after {
-    height: 82%; /* Account for both rows + margin */
-    top: 9%; /* Start after first row label area */
-}
-
 .popup-card {
     display: inline-block;
     cursor: pointer;
-    height: 100%;
+    height: 96%;
     flex: 0 0 auto;
     position: relative;
     -webkit-user-select: none;
@@ -5995,4 +5992,15 @@ hr {
 .card-choice-popup-selectionrow1.scrollable:active,
 .card-choice-popup-selectionrow2.scrollable:active {
     cursor: grabbing;
+}
+
+.row-divider-text {
+    font-weight: bold;
+    margin-left: 0.6vw;
+    margin-right: 0.6vw;
+    align-self: center;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-size: clamp(8pt, 2vh, 1.2em);
+    font-family: 'Roboto Condensed';
 }

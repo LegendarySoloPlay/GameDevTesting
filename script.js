@@ -4185,7 +4185,9 @@ function showHeroSelectPopup() {
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -4208,8 +4210,11 @@ function showHeroSelectPopup() {
             return;
         }
 
+         const row1 = selectionRow1; // row1 is selectionRow1
+        const row2Visible = false; // Since we're hiding row2 in this popup
+
         // Initialize scroll gradient detection on the container
-        setupScrollGradients(selectionContainer, selectionRow1);
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
 
         // Create card elements for each eligible hero
         eligible.forEach(({ hero, hqIndex }) => {
@@ -4347,86 +4352,77 @@ function showHeroSelectPopup() {
     });
 }
 
-// Helper function for scroll gradients (now on container)
-function setupScrollGradients(container, scrollElement) {
-    function updateGradients() {
-        const scrollLeft = scrollElement.scrollLeft;
-        const maxScrollLeft = scrollElement.scrollWidth - scrollElement.clientWidth;
-        
-        container.classList.toggle('at-start', scrollLeft <= 10);
-        container.classList.toggle('at-end', scrollLeft >= maxScrollLeft - 10);
-    }
+// Helper function for independent scroll gradients
+function setupIndependentScrollGradients(row1Element, row2Element = null) {
+    // Setup row 1 gradients
+    const row1Container = row1Element.parentElement;
     
-    // Initial update
-    updateGradients();
-    
-    // Update on scroll
-    scrollElement.addEventListener('scroll', updateGradients);
-    
-    // Update on resize
-    window.addEventListener('resize', updateGradients);
-}
-
-// Helper function for scroll gradients (supports multiple rows)
-function setupScrollGradients(container, row1Element, row2Element = null) {
-    function updateScrollStates() {
-        // Check if row1 is scrollable
-        const row1IsScrollable = row1Element.scrollWidth > row1Element.clientWidth + 5; // Small buffer
+    function updateRow1Gradients() {
+        const row1IsScrollable = row1Element.scrollWidth > row1Element.clientWidth + 5;
         const row1ScrollLeft = row1Element.scrollLeft;
         const row1MaxScrollLeft = row1Element.scrollWidth - row1Element.clientWidth;
         
         // Update row1 classes
         row1Element.classList.toggle('scrollable', row1IsScrollable);
-        container.classList.toggle('row1-scrollable', row1IsScrollable);
-        container.classList.toggle('row1-at-start', row1ScrollLeft <= 10);
-        container.classList.toggle('row1-at-end', row1ScrollLeft >= row1MaxScrollLeft - 10);
+        row1Container.classList.toggle('row1-scrollable', row1IsScrollable);
+        row1Container.classList.toggle('row1-at-start', row1ScrollLeft <= 10);
+        row1Container.classList.toggle('row1-at-end', row1ScrollLeft >= row1MaxScrollLeft - 10);
         
-        // Update alignment based on scrollability
+        // Update alignment
         if (row1IsScrollable) {
             row1Element.style.justifyContent = 'flex-start';
         } else {
             row1Element.style.justifyContent = 'center';
         }
+    }
+    
+    // Setup row 2 gradients if it exists
+    let updateRow2Gradients = null;
+    let row2Container = null;
+    
+    if (row2Element && row2Element.style.display !== 'none') {
+        row2Container = row2Element.parentElement;
         
-        // Handle row2 if it exists and is visible
-        if (row2Element && row2Element.style.display !== 'none') {
+        updateRow2Gradients = function() {
             const row2IsScrollable = row2Element.scrollWidth > row2Element.clientWidth + 5;
             const row2ScrollLeft = row2Element.scrollLeft;
             const row2MaxScrollLeft = row2Element.scrollWidth - row2Element.clientWidth;
             
             // Update row2 classes
             row2Element.classList.toggle('scrollable', row2IsScrollable);
-            container.classList.toggle('row2-scrollable', row2IsScrollable);
-            container.classList.toggle('row2-at-start', row2ScrollLeft <= 10);
-            container.classList.toggle('row2-at-end', row2ScrollLeft >= row2MaxScrollLeft - 10);
-            container.classList.toggle('both-rows-visible', true);
+            row2Container.classList.toggle('row2-scrollable', row2IsScrollable);
+            row2Container.classList.toggle('row2-at-start', row2ScrollLeft <= 10);
+            row2Container.classList.toggle('row2-at-end', row2ScrollLeft >= row2MaxScrollLeft - 10);
             
-            // Update alignment based on scrollability
+            // Update alignment
             if (row2IsScrollable) {
                 row2Element.style.justifyContent = 'flex-start';
             } else {
                 row2Element.style.justifyContent = 'center';
             }
-        } else {
-            // Single row mode
-            container.classList.remove('both-rows-visible', 'row2-scrollable', 'row2-at-start', 'row2-at-end');
-        }
+        };
     }
     
-    // Initial update
-    updateScrollStates();
+    // Initial updates
+    updateRow1Gradients();
+    if (updateRow2Gradients) updateRow2Gradients();
     
-    // Update on scroll for both rows
-    row1Element.addEventListener('scroll', updateScrollStates);
-    if (row2Element) {
-        row2Element.addEventListener('scroll', updateScrollStates);
+    // Event listeners
+    row1Element.addEventListener('scroll', updateRow1Gradients);
+    if (row2Element && updateRow2Gradients) {
+        row2Element.addEventListener('scroll', updateRow2Gradients);
     }
     
-    // Update on resize
-    window.addEventListener('resize', updateScrollStates);
+    window.addEventListener('resize', () => {
+        updateRow1Gradients();
+        if (updateRow2Gradients) updateRow2Gradients();
+    });
     
-    // Also update after a short delay to ensure images are loaded
-    setTimeout(updateScrollStates, 100);
+    // Delayed update for image loading
+    setTimeout(() => {
+        updateRow1Gradients();
+        if (updateRow2Gradients) updateRow2Gradients();
+    }, 100);
 }
 
 function setupDragScrolling(element) {
@@ -4490,16 +4486,14 @@ function setupDragScrolling(element) {
     });
 }
 
-// Usage in your popup function:
 function initializeCardSelection() {
-    const selectionContainer = document.querySelector('.card-choice-popup-selection-container');
     const row1 = document.querySelector('.card-choice-popup-selectionrow1');
     const row2 = document.querySelector('.card-choice-popup-selectionrow2');
     
-    if (selectionContainer && row1) {
+    if (row1) {
         // Check if row2 is visible
         const row2Visible = row2 && row2.style.display !== 'none';
-        setupScrollGradients(selectionContainer, row1, row2Visible ? row2 : null);
+        setupIndependentScrollGradients(row1, row2Visible ? row2 : null);
         
         // Set up drag scrolling for both rows
         setupDragScrolling(row1);
@@ -8347,142 +8341,190 @@ function getSelectedScheme() {
 
 function showHeroKOPopup() {
     return new Promise((resolve) => {
-        const heroKOPopup = document.getElementById('hero-KO-popup');
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
         const modalOverlay = document.getElementById('modal-overlay');
-        const heroOptions = document.getElementById('hero-KO-options');
-        const heroImage = document.getElementById('hero-ko-image');
-        const hoverText = document.getElementById('KOHoverText');
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const selectionContainer = document.querySelector('.card-choice-popup-selection-container');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
 
-        // Remove existing confirm button if present
-        const existingConfirm = document.getElementById('hero-KO-confirm');
-        if (existingConfirm) heroKOPopup.removeChild(existingConfirm);
+        // Set popup content
+        titleElement.textContent = 'VILLAIN ESCAPE KO';
+        instructionsElement.textContent = 'A VILLAIN HAS ESCAPED! WHICH HERO DO THEY KO?';
 
-        const confirmButton = document.createElement('button');
-        confirmButton.id = 'hero-KO-confirm';
-        confirmButton.textContent = 'CONFIRM';
-        confirmButton.style.display = 'inline-block';
-        confirmButton.style.width = '50%';
-        confirmButton.style.marginTop = '2vh';
-        confirmButton.disabled = true;
+        // Hide row labels and row2
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
-        heroImage.style.display = 'none';
-        hoverText.style.display = 'block';
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
 
-        heroOptions.innerHTML = '';
         let selectedHQIndex = null;
-        let activeImage = null;
+        let selectedCardImage = null;
+        let isDragging = false;
 
-        heroKOPopup.appendChild(confirmButton);
+        updateGameBoard();
 
-		updateGameBoard();
-
-        // Build list retaining original HQ indices
+        // Build a list of eligible heroes with their HQ indices
         const eligible = hq
             .map((hero, hqIndex) => ({ hero, hqIndex }))
-            .filter(x => x.hero && x.hero.cost <= 6);
+            .filter(x => x.hero && x.hero.type === 'Hero' && x.hero.cost <= 6);
 
         if (eligible.length === 0) {
             onscreenConsole.log('No Heroes available with a cost of 6 or less.');
-            // Ensure UI is closed if it was open
-            heroKOPopup.style.display = 'none';
-            modalOverlay.style.display = 'none';
             resolve();
             return;
         }
 
-        const createTeamIconHTML = (value) => {
-            if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-            }
-            return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-        };
-        const createClassIconHTML = (value) => {
-            if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') return '';
-            return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-        };
+        const row1 = selectionRow1; // row1 is selectionRow1
+        const row2Visible = false; // Since we're hiding row2 in this popup
 
-        // Populate hero options
+        // Initialize scroll gradient detection on the container
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+        // Create card elements for each eligible hero
         eligible.forEach(({ hero, hqIndex }) => {
-            const heroButton = document.createElement('button');
-            heroButton.classList.add('hero-option');
-            heroButton.setAttribute('data-hq-index', String(hqIndex));
-
-            const teamIcon = createTeamIconHTML(hero.team);
-            const class1Icon = createClassIconHTML(hero.class1);
-            const class2Icon = createClassIconHTML(hero.class2);
-            const class3Icon = createClassIconHTML(hero.class3);
-
-            heroButton.innerHTML = `<span style="white-space: nowrap;">HQ-${hqIndex + 1} | ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${hero.name}</span>`;
-
-            // Hover
-            heroButton.onmouseover = () => {
-                if (!activeImage) {
-                    heroImage.src = hero.image;
-                    heroImage.style.display = 'block';
-                    hoverText.style.display = 'none';
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-hq-index', String(hqIndex));
+            
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = hero.image;
+            cardImage.alt = hero.name;
+            cardImage.className = 'popup-card-image';
+            
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview
+                previewElement.innerHTML = '';
+                const previewImage = document.createElement('img');
+                previewImage.src = hero.image;
+                previewImage.alt = hero.name;
+                previewImage.className = 'popup-card-preview-image';
+                previewElement.appendChild(previewImage);
+                
+                // Only change background if no card is selected
+                if (selectedHQIndex === null) {
+                    previewElement.style.backgroundColor = 'var(--accent)';
                 }
             };
-            heroButton.onmouseout = () => {
-                if (!activeImage) {
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    hoverText.style.display = 'block';
+
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                // Only clear preview if no card is selected AND we're not hovering over another card
+                if (selectedHQIndex === null) {
+                    setTimeout(() => {
+                        if (!selectionRow1.querySelector(':hover') && !isDragging) {
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                        }
+                    }, 50);
                 }
             };
 
-            // Select
-            heroButton.onclick = () => {
-                const thisHQIndex = Number(heroButton.getAttribute('data-hq-index'));
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
+
+            // Selection click handler
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                const thisHQIndex = Number(cardElement.getAttribute('data-hq-index'));
+                
                 if (selectedHQIndex === thisHQIndex) {
                     // Deselect
                     selectedHQIndex = null;
-                    heroButton.classList.remove('selected');
-                    activeImage = null;
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    hoverText.style.display = 'block';
-                    confirmButton.disabled = true;
+                    cardImage.classList.remove('selected');
+                    selectedCardImage = null;
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                    
+                    // Update instructions and confirm button
+                    instructionsElement.textContent = 'A VILLAIN HAS ESCAPED! WHICH HERO DO THEY KO?';
+                    document.getElementById('card-choice-popup-confirm').disabled = true;
                 } else {
-                    // Deselect previous by HQ index
-                    if (selectedHQIndex !== null) {
-                        const prevButton = heroOptions.querySelector(`button[data-hq-index="${selectedHQIndex}"]`);
-                        if (prevButton) prevButton.classList.remove('selected');
+                    // Deselect previous
+                    if (selectedCardImage) {
+                        selectedCardImage.classList.remove('selected');
                     }
+                    
+                    // Select new
                     selectedHQIndex = thisHQIndex;
-                    heroButton.classList.add('selected');
-                    activeImage = hero.image;
-                    heroImage.src = hero.image;
-                    heroImage.style.display = 'block';
-                    hoverText.style.display = 'none';
-                    confirmButton.disabled = false;
+                    selectedCardImage = cardImage;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = hero.image;
+                    previewImage.alt = hero.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                    
+                    // Update instructions and confirm button
+                    instructionsElement.innerHTML = `Selected: <span class="console-highlights">${hero.name}</span> will be KO'd.`;
+                    document.getElementById('card-choice-popup-confirm').disabled = false;
                 }
-            };
+            });
 
-            heroOptions.appendChild(heroButton);
+            cardElement.appendChild(cardImage);
+            selectionRow1.appendChild(cardElement);
         });
 
-        // Confirm
-        confirmButton.onclick = () => {
+        // Drag scrolling functionality
+        setupDragScrolling(selectionRow1);
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+
+        // Disable confirm initially and hide unnecessary buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'KO HERO';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'none';
+
+        // Confirm button handler
+        confirmButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
             if (selectedHQIndex === null) return;
 
-            // Optional: log the actual hero being KO’d
-            const hero = hq[selectedHQIndex];
-            koHeroInHQ(selectedHQIndex); // <-- pass true HQ index
-
-            // Cleanup & close
-            heroKOPopup.removeChild(confirmButton);
-            heroKOPopup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-
-            requestAnimationFrame(() => {
+            setTimeout(() => {
+                const hero = hq[selectedHQIndex];
+                if (hero) {
+                    onscreenConsole.log(
+                        `<span class="console-highlights">${hero.name}</span> has been KO'd from the HQ.`
+                    );
+                }
+                koHeroInHQ(selectedHQIndex);
                 updateGameBoard();
+                closeCardChoicePopup();
                 resolve();
-            });
+            }, 100);
         };
 
         // Show popup
         modalOverlay.style.display = 'block';
-        heroKOPopup.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
     });
 }
 
@@ -8579,7 +8621,9 @@ function showDiscardCardPopup(escapedVillain) {
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -8605,7 +8649,7 @@ function showDiscardCardPopup(escapedVillain) {
         genericCardSort(availableCards);
 
         // Initialize scroll gradient detection on the container
-        setupScrollGradients(selectionContainer, selectionRow1);
+        setupIndependentScrollGradients(row1, row2Visible ? row2 : null);
 
         // Create card elements for each available card
         availableCards.forEach(card => {
@@ -12415,6 +12459,7 @@ function closeCardChoicePopup() {
     const instructions = document.querySelector('.card-choice-popup-instructions');
     const row1Title = document.querySelector('.card-choice-popup-selectionrow1label');
     const row1 = document.querySelector('.card-choice-popup-selectionrow1');
+    const row1container = document.querySelector('.card-choice-popup-selectionrow1-container');
     const row2Title = document.querySelector('.card-choice-popup-selectionrow2label');
     const row2 = document.querySelector('.card-choice-popup-selectionrow2');
     const preview = document.querySelector('.card-choice-popup-preview');
@@ -12432,7 +12477,11 @@ function closeCardChoicePopup() {
     }
     if (row1) {
         row1.innerHTML = '';
-        row1.style.height = '40%';
+    }
+    if (row1container) {
+        row1container.style.height = '40%';
+        row1container.style.top = '0';
+        row1container.style.transform = 'none';
     }
     if (row2Title) {
         row2Title.textContent = 'ROW 2';

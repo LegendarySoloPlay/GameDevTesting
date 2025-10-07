@@ -5069,197 +5069,239 @@ updateGameBoard();
 }
 
 function HenchmenKOHeroYouHave() {
-    return new Promise((resolve, reject) => {
-        // Combine heroes from the player's hand and cards played this turn
-        const combinedCards = [
-            ...playerHand.filter(card => card.type === 'Hero'), // Heroes in hand (always included)
-            ...cardsPlayedThisTurn.filter(card => 
-                card.type === 'Hero' && 
-                !card.isCopied && 
-                !card.sidekickToDestroy
-            )
-        ];
+    updateGameBoard();
+    return new Promise((resolve) => {
+        // Get heroes from hand and played cards separately
+        const handHeroes = playerHand.filter(card => card.type === 'Hero');
+        const playedHeroes = cardsPlayedThisTurn.filter(card => 
+            card.type === 'Hero' && 
+            !card.isCopied && 
+            !card.sidekickToDestroy
+        );
         
-        // Check if there are any heroes in the combined list
-        if (combinedCards.length === 0) {
+        // Check if there are any heroes available
+        if (handHeroes.length === 0 && playedHeroes.length === 0) {
             console.log('No heroes in hand or played to KO.');
             onscreenConsole.log(`<span class="console-highlights">Sentinel's</span> Fight effect negated. No Heroes available to KO.`);
-            resolve(); // Resolve immediately if there are no heroes to KO
+            resolve();
             return;
         }
 
-        // Sort the cards BEFORE creating the selection list
-        genericCardSort(combinedCards);
-
-        // Get the popup elements
-        const popup = document.getElementById('card-choice-one-location-popup');
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
         const modalOverlay = document.getElementById('modal-overlay');
-        const cardsList = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const selectionRow2 = document.querySelector('.card-choice-popup-selectionrow2');
+        const selectionRow1Label = document.querySelector('.card-choice-popup-selectionrow1label');
+        const selectionRow2Label = document.querySelector('.card-choice-popup-selectionrow2label');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
 
-        // Initialize UI
-        popupTitle.textContent = 'FIGHT EFFECT!';
-        instructionsDiv.textContent = 'Select a hero to KO.';
-        cardsList.innerHTML = '';
-        confirmButton.style.display = 'inline-block'; // Always visible
-        confirmButton.disabled = true; // Disabled by default
-        confirmButton.innerHTML = "Confirm";
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+        // Set popup content
+        titleElement.textContent = 'FIGHT EFFECT';
+        instructionsElement.textContent = 'Select a hero to KO:';
+
+        // Show both rows and labels
+        selectionRow1Label.style.display = 'block';
+        selectionRow2Label.style.display = 'block';
+        selectionRow2.style.display = 'flex';
+        selectionRow1Label.textContent = 'Hand';
+        selectionRow2Label.textContent = 'Played Cards';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+
+        // Reset row heights to default
+        selectionRow1.style.height = '';
+        selectionRow2.style.height = '';
+
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        selectionRow2.innerHTML = '';
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
 
         let selectedCard = null;
-        let activeImage = null; // Track the currently locked image
+        let selectedLocation = null; // 'hand' or 'played'
+        let selectedCardImage = null;
+        let isDragging = false;
 
-        // Update the confirm button state
-        function updateConfirmButton() {
+        // Sort the arrays for display
+        genericCardSort(handHeroes);
+        genericCardSort(playedHeroes);
+
+        // Update the confirm button state and instructions
+        function updateUI() {
+            const confirmButton = document.getElementById('card-choice-popup-confirm');
             confirmButton.disabled = selectedCard === null;
-            // No need to show/hide the button anymore since it's always visible
-        }
-
-        // Update instructions based on selection
-        function updateInstructions() {
+            
             if (selectedCard === null) {
-                instructionsDiv.textContent = 'Select a hero to KO.';
+                instructionsElement.textContent = 'Select a hero to KO:';
             } else {
-                instructionsDiv.innerHTML= `Selected: <span class="console-highlights">${selectedCard.card.name}</span> will be KO'd.`;
+                instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd.`;
             }
         }
 
-        // Show/hide hero image
-        function updateHeroImage(card) {
-            if (card) {
-                heroImage.src = card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-                activeImage = card.image;
-            } else {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-            }
-        }
+        const row1 = selectionRow1;
+        const row2Visible = true;
 
-        // Toggle card selection
-        function toggleCardSelection(card, cardIndex, listItem) {
-            if (selectedCard && selectedCard.index === cardIndex) {
-                // Deselect if clicking the same card
-                selectedCard = null;
-                listItem.classList.remove('selected');
-                updateHeroImage(null);
-            } else {
-                // Deselect previous selection if any
-                if (selectedCard) {
-                    const prevListItem = document.querySelector(`[data-card-id="${selectedCard.index}"]`);
-                    if (prevListItem) prevListItem.classList.remove('selected');
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '40%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '0';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'none';
+
+        // Initialize scroll gradient detection on the container
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+        // Create card element helper function
+        function createCardElement(card, location, row) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-card-id', card.id);
+            cardElement.setAttribute('data-location', location);
+            
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = card.image;
+            cardImage.alt = card.name;
+            cardImage.className = 'popup-card-image';
+            
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview
+                previewElement.innerHTML = '';
+                const previewImage = document.createElement('img');
+                previewImage.src = card.image;
+                previewImage.alt = card.name;
+                previewImage.className = 'popup-card-preview-image';
+                previewElement.appendChild(previewImage);
+                
+                // Only change background if no card is selected
+                if (selectedCard === null) {
+                    previewElement.style.backgroundColor = 'var(--accent)';
                 }
-                // Select new card
-                selectedCard = {
-                    card: card,
-                    index: cardIndex,
-                    isFromHand: cardIndex < playerHand.filter(c => c.type === 'Hero').length
-                };
-                listItem.classList.add('selected');
-                updateHeroImage(card);
-            }
+            };
 
-            updateConfirmButton();
-            updateInstructions();
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                // Only clear preview if no card is selected AND we're not hovering over another card
+                if (selectedCard === null) {
+                    setTimeout(() => {
+                        const isHoveringAnyCard = selectionRow1.querySelector(':hover') || selectionRow2.querySelector(':hover');
+                        if (!isHoveringAnyCard && !isDragging) {
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                        }
+                    }, 50);
+                }
+            };
+
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
+
+            // Selection click handler
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                if (selectedCard === card && selectedLocation === location) {
+                    // Deselect
+                    selectedCard = null;
+                    selectedLocation = null;
+                    cardImage.classList.remove('selected');
+                    selectedCardImage = null;
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                } else {
+                    // Deselect previous
+                    if (selectedCardImage) {
+                        selectedCardImage.classList.remove('selected');
+                    }
+                    
+                    // Select new
+                    selectedCard = card;
+                    selectedLocation = location;
+                    selectedCardImage = cardImage;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = card.image;
+                    previewImage.alt = card.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                }
+
+                updateUI();
+            });
+
+            cardElement.appendChild(cardImage);
+            row.appendChild(cardElement);
         }
 
-        // Handle the confirm action
-        confirmButton.onclick = () => {
-            if (!selectedCard) return;
+        // Populate row1 with Hand heroes
+        handHeroes.forEach(card => {
+            createCardElement(card, 'hand', selectionRow1);
+        });
 
-            const { card, index, isFromHand } = selectedCard;
-            console.log(`${card.name} has been KO'd.`);
-            onscreenConsole.log(`<span class="console-highlights">${card.name}</span> has been KO'd.`);
-            koBonuses();
-            
-            // Find the actual card in the original arrays using the card object reference
-            if (isFromHand) {
-                // Find the index in the original playerHand array
-                const handIndex = playerHand.findIndex(c => c === card);
-                if (handIndex !== -1) {
-                    playerHand.splice(handIndex, 1);
+        // Populate row2 with Played Cards heroes
+        playedHeroes.forEach(card => {
+            createCardElement(card, 'played', selectionRow2);
+        });
+
+        // Set up drag scrolling for both rows
+        setupDragScrolling(selectionRow1);
+        setupDragScrolling(selectionRow2);
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+
+        // Configure buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'KO HERO';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'none';
+
+        // Confirm button handler
+        confirmButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedCard === null || selectedLocation === null) return;
+
+            setTimeout(() => {
+                // Remove card from the correct location using ID lookup
+                if (selectedLocation === 'hand') {
+                    const index = playerHand.findIndex(card => card.id === selectedCard.id);
+                    if (index !== -1) {
+                        playerHand.splice(index, 1);
+                    }
+                } else if (selectedLocation === 'played') {
+                    selectedCard.markedToDestroy = true;
                 }
-            } else {
-                // Find the index in the original cardsPlayedThisTurn array
-            card.markedToDestroy = true;
-            }
-            
-            // Add the card to the KO pile
-            koPile.push(card);
-            
-            closePopup();
-            updateGameBoard();
-            resolve();
+                
+                // Add the card to the KO pile
+                koPile.push(selectedCard);
+                
+                console.log(`${selectedCard.name} has been KO'd.`);
+                onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`);
+                koBonuses();
+                
+                updateGameBoard();
+                closeCardChoicePopup();
+                resolve();
+            }, 100);
         };
 
-        function closePopup() {
-            // Reset popup elements to default state
-            popupTitle.textContent = 'Hero Ability!';
-            instructionsDiv.textContent = 'Context';
-            confirmButton.disabled = true;
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-            
-            // Hide the popup
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
-
-        // Populate the list with the sorted heroes from the player's hand and played cards
-        combinedCards.forEach((card, index) => {
-            console.log('Adding card to selection list:', card);
-            const li = document.createElement('li');
-            const createTeamIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-
-            const createClassIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-            
-            const teamIcon = createTeamIconHTML(card.team);
-            const class1Icon = createClassIconHTML(card.class1);
-            const class2Icon = createClassIconHTML(card.class2);
-            const class3Icon = createClassIconHTML(card.class3);
-            
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
-            li.setAttribute('data-card-id', index);
-
-            li.onmouseover = () => {
-                if (!activeImage) { // Only change if no selection is locked
-                    heroImage.src = card.image;
-                    heroImage.style.display = 'block';
-                    oneChoiceHoverText.style.display = 'none';
-                }
-            };
-
-            li.onmouseout = () => {
-                if (!activeImage) { // Only hide if no selection is locked
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    oneChoiceHoverText.style.display = 'block';
-                }
-            };
-
-            li.onclick = () => toggleCardSelection(card, index, li);
-            cardsList.appendChild(li);
-        });
+        // Show popup
+        modalOverlay.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
     });
 }
 
@@ -5488,201 +5530,222 @@ function DrOctopusNextDraw2() {
 
 
 function topTwoCardsKOChoice() {
-  return new Promise((resolve) => {
-    let holdingArray = [];
+    updateGameBoard();
+    return new Promise((resolve) => {
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const selectionContainer = document.querySelector('.card-choice-popup-selection-container');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
 
-    // Draw up to 2 cards with reshuffle if needed
-    for (let i = 0; i < 2; i++) {
-      if (playerDeck.length === 0) {
-        if (playerDiscardPile.length > 0) {
-          playerDeck = shuffle(playerDiscardPile);
-          playerDiscardPile = [];
-        } else {
-          console.log("No cards left in deck or discard pile.");
-          onscreenConsole.log(`<span class="console-highlights">Doombot Legion</span> Fight effect negated. No cards available to look at or KO.`);
-          resolve(false);
-          return;
+        // Set popup content
+        titleElement.textContent = 'Doombot Legion - Fight Effect';
+        instructionsElement.textContent = 'Select a card to KO (other returns to deck):';
+
+        // Hide row labels and row2
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+
+        let holdingArray = [];
+        let selectedCard = null;
+        let selectedCardImage = null;
+        let isDragging = false;
+
+        // Draw up to 2 cards with reshuffle if needed
+        for (let i = 0; i < 2; i++) {
+            if (playerDeck.length === 0) {
+                if (playerDiscardPile.length > 0) {
+                    playerDeck = shuffle(playerDiscardPile);
+                    playerDiscardPile = [];
+                } else {
+                    console.log("No cards left in deck or discard pile.");
+                    onscreenConsole.log(`<span class="console-highlights">Doombot Legion</span> Fight effect negated. No cards available to look at or KO.`);
+                    resolve(false);
+                    return;
+                }
+            }
+
+            const topCard = playerDeck.pop();
+            if (topCard) holdingArray.push(topCard);
         }
-      }
 
-      const topCard = playerDeck.pop();
-      if (topCard) holdingArray.push(topCard);
-    }
+        // Handle cases with fewer than 2 cards
+        if (holdingArray.length < 2) {
+            if (holdingArray.length === 1) {
+                const singleCard = holdingArray[0];
+                koPile.push(singleCard);
+                onscreenConsole.log(`<span class="console-highlights">Doombot Legion</span> Fight effect carried out: Only 1 card was available. <span class="console-highlights">${singleCard.name}</span> has been KO'd.`);
+                koBonuses();
+                updateGameBoard();
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+            return;
+        }
 
-    // Handle cases with fewer than 2 cards
-    if (holdingArray.length < 2) {
-      if (holdingArray.length === 1) {
-        const singleCard = holdingArray[0];
-        koPile.push(singleCard);
-        onscreenConsole.log(`<span class="console-highlights">Doombot Legion</span> Fight effect carried out: Only 1 card was available. <span class="console-highlights">${singleCard.name}</span> has been KO'd.`);
-koBonuses();
-        updateGameBoard();
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-      return;
-    }
+        const [card1, card2] = holdingArray;
 
-    // Use the correct popup structure that matches your HTML
-    const popup = document.getElementById('card-choice-one-location-popup');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const cardsList = document.getElementById('cards-to-choose-from');
-    const confirmButton = document.getElementById('card-choice-confirm-button');
-    const context = document.getElementById('context');
-    const heroImage = document.getElementById('hero-one-location-image');
-    const hoverText = document.getElementById('oneChoiceHoverText');
+        const row1 = selectionRow1;
+        const row2Visible = false;
 
-    // Initialize UI - No cancel option
-    const popupTitle = popup.querySelector('h2');
-    popupTitle.textContent = 'Doombot Legion - Fight Effect';
-    context.innerHTML = 'Select a card to KO (other returns to deck):';
-    cardsList.innerHTML = '';
-    confirmButton.style.display = 'inline-block';
-    confirmButton.disabled = true;
-    confirmButton.textContent = 'KO Selected';
-    modalOverlay.style.display = 'block';
-    popup.style.display = 'block';
-    heroImage.style.display = 'none';
-    hoverText.style.display = 'block';
+        // Initialize scroll gradient detection on the container
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
 
-    const [card1, card2] = holdingArray;
-    let selectedCard = null;
-    let activeImage = null;
+        // Create card elements for both cards
+        holdingArray.forEach((card, index) => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-card-index', String(index));
+            
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = card.image;
+            cardImage.alt = card.name;
+            cardImage.className = 'popup-card-image';
+            
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview
+                previewElement.innerHTML = '';
+                const previewImage = document.createElement('img');
+                previewImage.src = card.image;
+                previewImage.alt = card.name;
+                previewImage.className = 'popup-card-preview-image';
+                previewElement.appendChild(previewImage);
+                
+                // Only change background if no card is selected
+                if (selectedCard === null) {
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                }
+            };
 
-    // Update confirm button state
-    function updateConfirmButton() {
-      confirmButton.disabled = selectedCard === null;
-    }
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                // Only clear preview if no card is selected AND we're not hovering over another card
+                if (selectedCard === null) {
+                    setTimeout(() => {
+                        if (!selectionRow1.querySelector(':hover') && !isDragging) {
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                        }
+                    }, 50);
+                }
+            };
 
-    // Update instructions
-    function updateInstructions() {
-      if (!selectedCard) {
-        context.innerHTML = 'Select a card to KO (other returns to deck):';
-      } else {
-        const otherCard = selectedCard === card1 ? card2 : card1;
-        context.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd. <span class="console-highlights">${otherCard.name}</span> will return to deck.`;
-      }
-    }
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
 
-    // Update hero image display
-    function updateHeroImage(card) {
-      if (card) {
-        heroImage.src = card.image;
-        heroImage.style.display = 'block';
-        hoverText.style.display = 'none';
-        activeImage = card.image;
-      } else {
-        heroImage.src = '';
-        heroImage.style.display = 'none';
-        hoverText.style.display = 'block';
-        activeImage = null;
-      }
-    }
+            // Selection click handler
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
 
-    // Toggle selection
-    function toggleSelection(card, listItem) {
-      if (selectedCard === card) {
-        // Deselect
-        selectedCard = null;
-        listItem.classList.remove('selected');
-        updateHeroImage(null);
-      } else {
-        // Select new card
-        selectedCard = card;
-        document.querySelectorAll('#cards-to-choose-from li').forEach(li => {
-          li.classList.remove('selected');
+                const thisCardIndex = Number(cardElement.getAttribute('data-card-index'));
+                const thisCard = holdingArray[thisCardIndex];
+                
+                if (selectedCard === thisCard) {
+                    // Deselect
+                    selectedCard = null;
+                    cardImage.classList.remove('selected');
+                    selectedCardImage = null;
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                    
+                    // Update instructions and confirm button
+                    instructionsElement.textContent = 'Select a card to KO (other returns to deck):';
+                    document.getElementById('card-choice-popup-confirm').disabled = true;
+                } else {
+                    // Deselect previous
+                    if (selectedCardImage) {
+                        selectedCardImage.classList.remove('selected');
+                    }
+                    
+                    // Select new
+                    selectedCard = thisCard;
+                    selectedCardImage = cardImage;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = card.image;
+                    previewImage.alt = card.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                    
+                    // Update instructions
+                    const otherCard = selectedCard === card1 ? card2 : card1;
+                    instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd. <span class="console-highlights">${otherCard.name}</span> will return to deck.`;
+                    
+                    // Update confirm button state
+                    document.getElementById('card-choice-popup-confirm').disabled = false;
+                }
+            });
+
+            cardElement.appendChild(cardImage);
+            selectionRow1.appendChild(cardElement);
         });
-        listItem.classList.add('selected');
-        updateHeroImage(card);
-      }
-      updateConfirmButton();
-      updateInstructions();
-    }
 
-    // Create list items for both cards
-    [card1, card2].forEach(card => {
-      const li = document.createElement('li');
-                const createTeamIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
+        // Drag scrolling functionality
+        setupDragScrolling(selectionRow1);
 
-    const createClassIconHTML = (value) => {
-        if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-            return '';
-        }
-        return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-    
-    const teamIcon = createTeamIconHTML(card.team);
-    const class1Icon = createClassIconHTML(card.class1);
-    const class2Icon = createClassIconHTML(card.class2);
-    const class3Icon = createClassIconHTML(card.class3);
-    
-    // Combine all icons
-    const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
-    
-    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
-      li.dataset.cardId = card.id;
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
 
-      li.onmouseover = () => {
-        if (!activeImage) {
-          heroImage.src = card.image;
-          heroImage.style.display = 'block';
-          hoverText.style.display = 'none';
-        }
-      };
+        // Disable confirm initially and hide unnecessary buttons
+        confirmButton.disabled = true;
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'none';
 
-      li.onmouseout = () => {
-        if (!activeImage) {
-          heroImage.src = '';
-          heroImage.style.display = 'none';
-          hoverText.style.display = 'block';
-        }
-      };
+        // Confirm button handler
+        confirmButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedCard === null) return;
 
-      li.onclick = () => toggleSelection(card, li);
-      cardsList.appendChild(li);
+            setTimeout(() => {
+                const cardToKO = selectedCard;
+                const cardToReturn = selectedCard === card1 ? card2 : card1;
+                
+                koPile.push(cardToKO);
+                playerDeck.push(cardToReturn);
+                cardToReturn.revealed = true;
+                
+                onscreenConsole.log(`<span class="console-highlights">Doombot Legion</span> Fight effect: KO'd <span class="console-highlights">${cardToKO.name}</span>, returned <span class="console-highlights">${cardToReturn.name}</span> to deck.`);
+                koBonuses();
+                
+                updateGameBoard();
+                closeCardChoicePopup();
+                resolve(true);
+            }, 100);
+        };
+
+        // Show popup
+        modalOverlay.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
     });
-
-    // Handle confirmation - REQUIRED ACTION
-    confirmButton.onclick = () => {
-      if (!selectedCard) return;
-      
-      const cardToKO = selectedCard;
-      const cardToReturn = selectedCard === card1 ? card2 : card1;
-      
-      koPile.push(cardToKO);
-      playerDeck.push(cardToReturn);
-	cardToReturn.revealed = true;
-      
-      onscreenConsole.log(`<span class="console-highlights">Doombot Legion</span> Fight effect: KO'd <span class="console-highlights">${cardToKO.name}</span>, returned <span class="console-highlights">${cardToReturn.name}</span> to deck.`);
-koBonuses();
-      
-      closePopup();
-      updateGameBoard();
-      resolve(true);
-    };
-
-    function closePopup() {
-      // Reset UI
-      popupTitle.textContent = 'Fight Effect!';
-      context.textContent = 'Context';
-      confirmButton.style.display = 'none';
-      confirmButton.disabled = true;
-      heroImage.src = '';
-      heroImage.style.display = 'none';
-      hoverText.style.display = 'block';
-      activeImage = null;
-
-      // Hide popup
-      popup.style.display = 'none';
-      modalOverlay.style.display = 'none';
-    }
-  });
 }
 
 

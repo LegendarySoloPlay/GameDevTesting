@@ -5148,191 +5148,239 @@ async function PhalanxTechOrKOAttack() {
 
 
 function handlePhalanxNoTechRevealed() {
+    updateGameBoard();
     return new Promise((resolve) => {
-        const cardsYouHave = [
-            ...playerHand,
-            ...cardsPlayedThisTurn.filter(card => 
-                !card.isCopied && 
-                !card.sidekickToDestroy
-            )
-        ];
-        const AttackCardsYouHave = cardsYouHave.filter(item => item.attackIcon === true);
-
-        if (AttackCardsYouHave.length === 0) {
-            console.log('No available Heroes.');
+        // Get Attack cards from hand and played cards separately
+        const handAttackCards = playerHand.filter(card => card.attackIcon === true);
+        const playedAttackCards = cardsPlayedThisTurn.filter(card => 
+            card.attackIcon === true && 
+            !card.isCopied && 
+            !card.sidekickToDestroy
+        );
+        
+        // Check if there are any Attack cards available
+        if (handAttackCards.length === 0 && playedAttackCards.length === 0) {
+            console.log('No available Heroes with Attack icons.');
             onscreenConsole.log(`You do not have any Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'> icon.`);
-            document.getElementById('modal-overlay').style.display = 'none';
             resolve(false);
             return;
         }
 
-        // Get popup elements
-        const popup = document.getElementById('card-choice-one-location-popup');
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
         const modalOverlay = document.getElementById('modal-overlay');
-        const cardsList = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const selectionRow2 = document.querySelector('.card-choice-popup-selectionrow2');
+        const selectionRow1Label = document.querySelector('.card-choice-popup-selectionrow1label');
+        const selectionRow2Label = document.querySelector('.card-choice-popup-selectionrow2label');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
 
-        // Initialize UI
-        popupTitle.textContent = 'Fight Effect!';
-        instructionsDiv.innerHTML = `Choose one of your Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='card-icons'> icon to KO.`;
-        cardsList.innerHTML = '';
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Confirm';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+        // Set popup content
+        titleElement.textContent = 'PHALANX - FIGHT EFFECT';
+        instructionsElement.innerHTML = `Choose one of your Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='card-icons'> icon to KO.`;
+
+        // Show both rows and labels
+        selectionRow1Label.style.display = 'block';
+        selectionRow2Label.style.display = 'block';
+        selectionRow2.style.display = 'flex';
+        selectionRow1Label.textContent = 'Hand';
+        selectionRow2Label.textContent = 'Played Cards';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+
+        // Reset row heights to default
+        selectionRow1.style.height = '';
+        selectionRow2.style.height = '';
+
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        selectionRow2.innerHTML = '';
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
 
         let selectedCard = null;
-        let selectedIndex = null;
-        let activeImage = null;
+        let selectedLocation = null; // 'hand' or 'played'
+        let selectedCardImage = null;
+        let isDragging = false;
 
-        // Update confirm button state
-        function updateConfirmButton() {
+        // Sort the arrays for display
+        genericCardSort(handAttackCards);
+        genericCardSort(playedAttackCards);
+
+        // Update the confirm button state and instructions
+        function updateUI() {
+            const confirmButton = document.getElementById('card-choice-popup-confirm');
             confirmButton.disabled = selectedCard === null;
-        }
-
-        // Update instructions with styled card name
-        function updateInstructions() {
+            
             if (selectedCard === null) {
-                instructionsDiv.innerHTML = `Choose one of your Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='card-icons'> icon to KO.`;
+                instructionsElement.innerHTML = `Choose one of your Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='card-icons'> icon to KO.`;
             } else {
-                const location = playerHand.includes(selectedCard) ? '(from Hand)' : '(from Played Cards)';
-                instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> ${location} will be KO'd.`;
+                const location = selectedLocation === 'hand' ? '(from Hand)' : '(from Played Cards)';
+                instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> ${location} will be KO'd.`;
             }
         }
 
-        // Show/hide hero image
-        function updateHeroImage(card) {
-            if (card) {
-                heroImage.src = card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-                activeImage = card.image;
-            } else {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-            }
-        }
+        const row1 = selectionRow1;
+        const row2Visible = true;
 
-        // Toggle card selection
-        function toggleCardSelection(card, listItem) {
-            if (selectedCard === card) {
-                // Deselect if same card clicked
-                selectedCard = null;
-                selectedIndex = null;
-                listItem.classList.remove('selected');
-                updateHeroImage(null);
-            } else {
-                // Clear previous selection if any
-                if (selectedCard) {
-                    const prevListItem = document.querySelector('li.selected');
-                    if (prevListItem) prevListItem.classList.remove('selected');
-                }
-                // Select new card
-                selectedCard = card;
-                listItem.classList.add('selected');
-                updateHeroImage(card);
-            }
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '40%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '0';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'none';
 
-            updateConfirmButton();
-            updateInstructions();
-        }
+        // Initialize scroll gradient detection on the container
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
 
-        // Sort the cards for display
-        genericCardSort(AttackCardsYouHave);
-
-        // Populate the list with eligible heroes
-        AttackCardsYouHave.forEach((card) => {
-            console.log('Adding card to selection list:', card);
-            const li = document.createElement('li');
-            const location = playerHand.includes(card) ? '(Hand)' : '(Played Cards)';
-            const createTeamIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-
-            const createClassIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
+        // Create card element helper function
+        function createCardElement(card, location, row) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-card-id', card.id);
+            cardElement.setAttribute('data-location', location);
             
-            const teamIcon = createTeamIconHTML(card.team);
-            const class1Icon = createClassIconHTML(card.class1);
-            const class2Icon = createClassIconHTML(card.class2);
-            const class3Icon = createClassIconHTML(card.class3);
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = card.image;
+            cardImage.alt = card.name;
+            cardImage.className = 'popup-card-image';
             
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} ${location}</span>`;
-
-            li.setAttribute('data-card-id', card.id);
-
-            li.onmouseover = () => {
-                if (!activeImage) {
-                    heroImage.src = card.image;
-                    heroImage.style.display = 'block';
-                    oneChoiceHoverText.style.display = 'none';
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview
+                previewElement.innerHTML = '';
+                const previewImage = document.createElement('img');
+                previewImage.src = card.image;
+                previewImage.alt = card.name;
+                previewImage.className = 'popup-card-preview-image';
+                previewElement.appendChild(previewImage);
+                
+                // Only change background if no card is selected
+                if (selectedCard === null) {
+                    previewElement.style.backgroundColor = 'var(--accent)';
                 }
             };
 
-            li.onmouseout = () => {
-                if (!activeImage) {
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    oneChoiceHoverText.style.display = 'block';
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                // Only clear preview if no card is selected AND we're not hovering over another card
+                if (selectedCard === null) {
+                    setTimeout(() => {
+                        const isHoveringAnyCard = selectionRow1.querySelector(':hover') || selectionRow2.querySelector(':hover');
+                        if (!isHoveringAnyCard && !isDragging) {
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                        }
+                    }, 50);
                 }
             };
 
-            li.onclick = () => toggleCardSelection(card, li);
-            cardsList.appendChild(li);
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
+
+            // Selection click handler
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                if (selectedCard === card && selectedLocation === location) {
+                    // Deselect
+                    selectedCard = null;
+                    selectedLocation = null;
+                    cardImage.classList.remove('selected');
+                    selectedCardImage = null;
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                } else {
+                    // Deselect previous
+                    if (selectedCardImage) {
+                        selectedCardImage.classList.remove('selected');
+                    }
+                    
+                    // Select new
+                    selectedCard = card;
+                    selectedLocation = location;
+                    selectedCardImage = cardImage;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = card.image;
+                    previewImage.alt = card.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                }
+
+                updateUI();
+            });
+
+            cardElement.appendChild(cardImage);
+            row.appendChild(cardElement);
+        }
+
+        // Populate row1 with Hand Attack cards
+        handAttackCards.forEach(card => {
+            createCardElement(card, 'hand', selectionRow1);
         });
 
-        // Handle confirmation
-        confirmButton.onclick = () => {
-            if (selectedCard) {
-                // Find the card by ID in the original arrays, not by index
-                const indexInCardsPlayed = cardsPlayedThisTurn.findIndex(c => c.id === selectedCard.id);
-                const indexInHand = playerHand.findIndex(c => c.id === selectedCard.id);
+        // Populate row2 with Played Cards Attack cards
+        playedAttackCards.forEach(card => {
+            createCardElement(card, 'played', selectionRow2);
+        });
 
-                if (indexInCardsPlayed !== -1) {
+        // Set up drag scrolling for both rows
+        setupDragScrolling(selectionRow1);
+        setupDragScrolling(selectionRow2);
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+
+        // Configure buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'KO HERO';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'none';
+
+        // Confirm button handler
+        confirmButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedCard === null || selectedLocation === null) return;
+
+            setTimeout(() => {
+                // Remove card from the correct location using ID lookup
+                if (selectedLocation === 'hand') {
+                    const index = playerHand.findIndex(card => card.id === selectedCard.id);
+                    if (index !== -1) {
+                        playerHand.splice(index, 1);
+                    }
+                } else if (selectedLocation === 'played') {
                     selectedCard.markedToDestroy = true;
-                } else if (indexInHand !== -1) {
-                    playerHand.splice(indexInHand, 1);
                 }
-
+                
+                // Add the card to the KO pile
                 koPile.push(selectedCard);
-
+                
                 onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`);
                 koBonuses();
-                closePopup();
+                
                 updateGameBoard();
+                closeCardChoicePopup();
                 resolve(true);
-            }
-        }
+            }, 100);
+        };
 
-        function closePopup() {
-            // Reset UI
-            popupTitle.textContent = 'Hero Ability!';
-            instructionsDiv.textContent = 'Context';
-            confirmButton.style.display = 'none';
-            confirmButton.disabled = true;
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-
-            // Hide popup
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
+        // Show popup
+        modalOverlay.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
     });
 }
 
@@ -5406,245 +5454,226 @@ function bystanderRadiationScientist() {
             return;
         }
 
-        const popup = document.getElementById("card-ko-popup");
-        const modalOverlay = document.getElementById("modal-overlay");
-        const discardPileList = document.getElementById("discard-pile-cards");
-        const handList = document.getElementById("hand-cards");
-        const confirmButton = document.getElementById("close-ko-button");
-        const hoverText = document.getElementById("card-ko-card-popupHoverText");
-        const KOImage = document.getElementById("card-ko-popup-image");
-        const context = document.getElementById("card-ko-popup-h2");
-        popup.zIndex = 1003;
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const selectionRow2 = document.querySelector('.card-choice-popup-selectionrow2');
+        const selectionRow1Label = document.querySelector('.card-choice-popup-selectionrow1label');
+        const selectionRow2Label = document.querySelector('.card-choice-popup-selectionrow2label');
+        const selectionContainer = document.querySelector('.card-choice-popup-selection-container');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
 
-        document.getElementById("card-list-hand").innerHTML = 'Cards You Have';
+        // Set popup content
+        titleElement.textContent = 'RADIATION SCIENTIST';
+        instructionsElement.innerHTML = `<span class="console-highlights">Radiation Scientist</span> - You may KO one of your Heroes or a Hero from your discard pile.`;
 
-        // Initialize UI
-        context.innerHTML = `<span class="console-highlights">Radiation Scientist</span> - You may KO one of your Heroes or a Hero from your discard pile.`;
-        discardPileList.innerHTML = "";
-        handList.innerHTML = "";
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Confirm KO';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+        // Show both rows and labels
+        selectionRow1Label.style.display = 'block';
+        selectionRow2Label.style.display = 'block';
+        selectionRow2.style.display = 'flex';
+        selectionRow1Label.textContent = 'Played Cards & Hand';
+        selectionRow2Label.textContent = 'Discard Pile';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+
+        // Reset row heights to default
+        selectionRow1.style.height = '';
+        selectionRow2.style.height = '';
+
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        selectionRow2.innerHTML = '';
+        previewElement.innerHTML = '';
         
+        // Set Radiation Scientist image in preview
+        const previewImage = document.createElement('img');
+        previewImage.src = "Visual Assets/Other/Bystanders/radiationScientist.webp";
+        previewImage.alt = "Radiation Scientist";
+        previewImage.className = 'popup-card-preview-image';
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = 'var(--accent)';
+
         let selectedCard = null;
         let selectedLocation = null; // 'hand', 'played', or 'discard'
-        let activeImage = null; // Declare activeImage variable
-        
-        KOImage.style.display = 'block';
-        hoverText.style.display = 'none';
-        KOImage.src = 'Visual Assets/Other/Bystanders/radiationScientist.webp';
-        activeImage = 'Visual Assets/Other/Bystanders/radiationScientist.webp';
-
-        // Update the confirm button state
-        function updateConfirmButton() {
-            confirmButton.disabled = selectedCard === null;
-        }
-
-        // Update instructions
-        function updateInstructions() {
-            if (selectedCard === null) {
-                context.innerHTML = `<span class="console-highlights">Radiation Scientist</span> - You may KO one of your Heroes or a Hero from your discard pile.`;
-            } else {
-                context.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd.`;
-            }
-        }
-
-        // Show/hide card image
-        function updateCardImage(card) {
-            if (card) {
-                KOImage.src = card.image;
-                KOImage.style.display = 'block';
-                hoverText.style.display = 'none';
-                activeImage = card.image;
-            } else {
-                KOImage.style.display = 'block';
-                hoverText.style.display = 'none';
-                KOImage.src = 'Visual Assets/Other/Bystanders/radiationScientist.webp';
-                activeImage = 'Visual Assets/Other/Bystanders/radiationScientist.webp';
-            }
-        }
-
-        // Toggle card selection
-        function toggleCardSelection(card, location, listItem) {
-            if (selectedCard === card) {
-                // Deselect if same card clicked
-                selectedCard = null;
-                selectedLocation = null;
-                listItem.classList.remove('selected');
-                updateCardImage(null);
-            } else {
-                // Clear previous selection if any
-                if (selectedCard) {
-                    const prevListItem = document.querySelector('li.selected');
-                    if (prevListItem) prevListItem.classList.remove('selected');
-                }
-                // Select new card
-                selectedCard = card;
-                selectedLocation = location;
-                listItem.classList.add('selected');
-                updateCardImage(card);
-            }
-
-            updateConfirmButton();
-            updateInstructions();
-        }
+        let selectedCardImage = null;
+        let isDragging = false;
 
         // Sort the arrays for display
-        genericCardSort(discardHeroes);
         genericCardSort(handHeroes);
         genericCardSort(playedHeroes);
+        genericCardSort(discardHeroes);
 
-        // Populate discard pile
-        discardHeroes.forEach((card) => {
-            const li = document.createElement("li");
-            const createTeamIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-
-            const createClassIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
+        // Update the confirm button state and instructions
+        function updateUI() {
+            const confirmButton = document.getElementById('card-choice-popup-confirm');
+            confirmButton.disabled = selectedCard === null;
             
-            const teamIcon = createTeamIconHTML(card.team);
-            const class1Icon = createClassIconHTML(card.class1);
-            const class2Icon = createClassIconHTML(card.class2);
-            const class3Icon = createClassIconHTML(card.class3);
-            
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} (Discard Pile)</span>`;
-
-            li.setAttribute('data-card-id', card.id);
-
-            li.onmouseover = () => {
-                if (!activeImage || activeImage === 'Visual Assets/Other/Bystanders/radiationScientist.webp') {
-                    KOImage.src = card.image;
-                    KOImage.style.display = 'block';
-                    hoverText.style.display = 'none';
-                }
-            };
-
-            li.onmouseout = () => {
-                if (!activeImage || activeImage === 'Visual Assets/Other/Bystanders/radiationScientist.webp') {
-                    KOImage.src = 'Visual Assets/Other/Bystanders/radiationScientist.webp';
-                    KOImage.style.display = 'block';
-                    hoverText.style.display = 'none';
-                }
-            };
-
-            li.onclick = () => toggleCardSelection(card, 'discard', li);
-            discardPileList.appendChild(li);
-        });
-
-        // Populate hand with location indicators
-        handHeroes.forEach((card) => {
-            const li = document.createElement("li");
-            const createTeamIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-
-            const createClassIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-            
-            const teamIcon = createTeamIconHTML(card.team);
-            const class1Icon = createClassIconHTML(card.class1);
-            const class2Icon = createClassIconHTML(card.class2);
-            const class3Icon = createClassIconHTML(card.class3);
-            
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} (Hand)</span>`;
-
-            li.setAttribute('data-card-id', card.id);
-
-            li.onmouseover = () => {
-                if (!activeImage || activeImage === 'Visual Assets/Other/Bystanders/radiationScientist.webp') {
-                    KOImage.src = card.image;
-                    KOImage.style.display = 'block';
-                    hoverText.style.display = 'none';
-                }
-            };
-
-            li.onmouseout = () => {
-                if (!activeImage || activeImage === 'Visual Assets/Other/Bystanders/radiationScientist.webp') {
-                    KOImage.src = 'Visual Assets/Other/Bystanders/radiationScientist.webp';
-                    KOImage.style.display = 'block';
-                    hoverText.style.display = 'none';
-                }
-            };
-
-            li.onclick = () => toggleCardSelection(card, 'hand', li);
-            handList.appendChild(li);
-        });
-
-        // Populate played cards - FIXED: Create a separate section for played cards
-        // Check if we need to create a separate list for played cards
-        if (playedHeroes.length > 0) {
-            // Create a heading for played cards
-            const playedHeading = document.createElement('div');
-            playedHeading.innerHTML = '<strong>Played Cards</strong>';
-            handList.appendChild(playedHeading);
-            
-            playedHeroes.forEach((card) => {
-                const li = document.createElement("li");
-                const createTeamIconHTML = (value) => {
-                    if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                        return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                    }
-                    return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-                };
-
-                const createClassIconHTML = (value) => {
-                    if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                        return '';
-                    }
-                    return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-                };
-                
-                const teamIcon = createTeamIconHTML(card.team);
-                const class1Icon = createClassIconHTML(card.class1);
-                const class2Icon = createClassIconHTML(card.class2);
-                const class3Icon = createClassIconHTML(card.class3);
-                
-                li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} (Played Cards)</span>`;
-
-                li.setAttribute('data-card-id', card.id);
-
-                li.onmouseover = () => {
-                    if (!activeImage || activeImage === 'Visual Assets/Other/Bystanders/radiationScientist.webp') {
-                        KOImage.src = card.image;
-                        KOImage.style.display = 'block';
-                        hoverText.style.display = 'none';
-                    }
-                };
-
-                li.onmouseout = () => {
-                    if (!activeImage || activeImage === 'Visual Assets/Other/Bystanders/radiationScientist.webp') {
-                        KOImage.src = 'Visual Assets/Other/Bystanders/radiationScientist.webp';
-                        KOImage.style.display = 'block';
-                        hoverText.style.display = 'none';
-                    }
-                };
-
-                li.onclick = () => toggleCardSelection(card, 'played', li);
-                handList.appendChild(li);
-            });
+            if (selectedCard === null) {
+                instructionsElement.innerHTML = `<span class="console-highlights">Radiation Scientist</span> - You may KO one of your Heroes or a Hero from your discard pile.`;
+            } else {
+                instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd.`;
+            }
         }
 
-        // Handle confirmation
-        confirmButton.onclick = () => {
-            if (selectedCard && selectedLocation) {
+        const row1 = selectionRow1; // row1 is selectionRow1
+        const row2Visible = true; // Since we're hiding row2 in this popup
+
+        // Initialize scroll gradient detection on the container
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+        // Create card element helper function
+        function createCardElement(card, location, row) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-card-id', card.id);
+            cardElement.setAttribute('data-location', location);
+            
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = card.image;
+            cardImage.alt = card.name;
+            cardImage.className = 'popup-card-image';
+            
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview to show card image
+                previewElement.innerHTML = '';
+                const hoverPreviewImage = document.createElement('img');
+                hoverPreviewImage.src = card.image;
+                hoverPreviewImage.alt = card.name;
+                hoverPreviewImage.className = 'popup-card-preview-image';
+                previewElement.appendChild(hoverPreviewImage);
+                previewElement.style.backgroundColor = 'var(--accent)';
+            };
+
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                // If no card is selected, return to Radiation Scientist image
+                if (selectedCard === null) {
+                    setTimeout(() => {
+                        if (!selectionRow1.querySelector(':hover') && !selectionRow2.querySelector(':hover') && !isDragging) {
+                            previewElement.innerHTML = '';
+                            const scientistImage = document.createElement('img');
+                            scientistImage.src = "Visual Assets/Other/Bystanders/radiationScientist.webp";
+                            scientistImage.alt = "Radiation Scientist";
+                            scientistImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(scientistImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    }, 50);
+                }
+            };
+
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
+
+            // Selection click handler
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                if (selectedCard === card && selectedLocation === location) {
+                    // Deselect
+                    selectedCard = null;
+                    selectedLocation = null;
+                    cardImage.classList.remove('selected');
+                    selectedCardImage = null;
+                    
+                    // Return to Radiation Scientist image
+                    previewElement.innerHTML = '';
+                    const scientistImage = document.createElement('img');
+                    scientistImage.src = "Visual Assets/Other/Bystanders/radiationScientist.webp";
+                    scientistImage.alt = "Radiation Scientist";
+                    scientistImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(scientistImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                } else {
+                    // Deselect previous
+                    if (selectedCardImage) {
+                        selectedCardImage.classList.remove('selected');
+                    }
+                    
+                    // Select new
+                    selectedCard = card;
+                    selectedLocation = location;
+                    selectedCardImage = cardImage;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview to show selected card
+                    previewElement.innerHTML = '';
+                    const selectedPreviewImage = document.createElement('img');
+                    selectedPreviewImage.src = card.image;
+                    selectedPreviewImage.alt = card.name;
+                    selectedPreviewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(selectedPreviewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                }
+
+                updateUI();
+            });
+
+            cardElement.appendChild(cardImage);
+            row.appendChild(cardElement);
+        }
+
+        if (playedHeroes.length > 0) {
+                const playedLabel = document.createElement('span');
+                playedLabel.textContent = 'Played Cards: ';
+                playedLabel.className = 'row-divider-text';
+                selectionRow1.appendChild(playedLabel);
+        }
+
+        // Populate row1 with Played Cards and Hand
+        playedHeroes.forEach(card => {
+            createCardElement(card, 'played', selectionRow1);
+        });
+
+        if (handHeroes.length > 0) {
+                const handLabel = document.createElement('span');
+                handLabel.textContent = 'Hand: ';
+                handLabel.className = 'row-divider-text';
+                selectionRow1.appendChild(handLabel);
+        }
+
+        handHeroes.forEach(card => {
+            createCardElement(card, 'hand', selectionRow1);
+        });
+
+        // Populate row2 with Discard Pile
+        discardHeroes.forEach(card => {
+            createCardElement(card, 'discard', selectionRow2);
+        });
+
+        // Set up drag scrolling for both rows
+        setupDragScrolling(selectionRow1);
+        setupDragScrolling(selectionRow2);
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+
+        // Configure buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'KO HERO';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'inline-block';
+        noThanksButton.textContent = 'NO THANKS';
+
+        // Confirm button handler
+        confirmButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedCard === null || selectedLocation === null) return;
+
+            setTimeout(() => {
                 // Perform the KO from the correct location using ID lookup
                 if (selectedLocation === 'discard') {
                     const index = playerDiscardPile.findIndex(card => card.id === selectedCard.id);
@@ -5660,51 +5689,33 @@ function bystanderRadiationScientist() {
                 
                 koPile.push(selectedCard);
                 onscreenConsole.log(`<span class="console-highlights">Radiation Scientist</span> - you KO'd <span class="console-highlights">${selectedCard.name}</span>.`);
-                                
+                
                 koBonuses();
-                document.getElementById("card-list-hand").innerHTML = 'Hand';
-                closePopup();
+                closeCardChoicePopup();
                 updateGameBoard();
                 resolve(true);
-            }
+            }, 100);
         };
 
-        // Handle cancellation
-        const closeButton = document.getElementById('no-thanks-button');
-        closeButton.style.display = 'inline-block';
-        closeButton.onclick = () => {
+        // No thanks button handler
+        noThanksButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
             onscreenConsole.log(`<span class="console-highlights">Radiation Scientist</span> - You chose not to KO any cards.`);
-            document.getElementById("card-list-hand").innerHTML = 'Hand';
-            closePopup();
+            closeCardChoicePopup();
             resolve(false);
         };
 
-        const closeXButton = document.getElementById('card-ko-popup-close');
-        closeXButton.onclick = () => {
-            onscreenConsole.log(`<span class="console-highlights">Radiation Scientist</span> - You chose not to KO any cards.`);
-            document.getElementById("card-list-hand").innerHTML = 'Hand';
-            closePopup();
-            resolve(false);
-        };
-
-        function closePopup() {
-            context.innerHTML = `<span class="console-highlights">Radiation Scientist</span> - You may KO one of your Heroes or a Hero from your discard pile.`;
-            confirmButton.style.display = 'none';
-            confirmButton.disabled = true;
-            KOImage.src = '';
-            KOImage.style.display = 'none';
-            hoverText.style.display = 'block';
-            activeImage = null;
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-            popup.style.zIndex = 1000;
-        }
+        // Show popup
+        modalOverlay.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
     });
 }
 
 function bystanderParamedic() {
-return new Promise((resolve) => {
-    onscreenConsole.log(`<span class="console-highlights">Paramedic</span><span class="bold-spans">'s</span> ability activated!`);
+    return new Promise((resolve) => {
+        onscreenConsole.log(`<span class="console-highlights">Paramedic</span><span class="bold-spans">'s</span> ability activated!`);
+        
         // Get wounds from both locations
         const discardPile = playerDiscardPile.filter(card => card.type === 'Wound');
         const hand = playerHand.filter(card => card.type === 'Wound');
@@ -5716,117 +5727,203 @@ return new Promise((resolve) => {
             return;
         }
 
-        // Get the popup elements
-        const popup = document.getElementById('card-ko-popup');
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
         const modalOverlay = document.getElementById('modal-overlay');
-        const discardPileList = document.getElementById('discard-pile-cards');
-        const handList = document.getElementById('hand-cards');
-        const confirmButton = document.getElementById('close-ko-button');
-        const hoverText = document.getElementById('card-ko-card-popupHoverText');
-        const KOImage = document.getElementById('card-ko-popup-image');
-        const context = document.getElementById('card-ko-popup-h2');
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const selectionRow2 = document.querySelector('.card-choice-popup-selectionrow2');
+        const selectionRow1Label = document.querySelector('.card-choice-popup-selectionrow1label');
+        const selectionRow2Label = document.querySelector('.card-choice-popup-selectionrow2label');
+        const selectionContainer = document.querySelector('.card-choice-popup-selection-container');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
 
-        // Initialize UI
-        context.innerHTML = `<span class="console-highlights">Paramedic</span> - You may KO a Wound from your hand or discard pile.`;
-        discardPileList.innerHTML = '';
-        handList.innerHTML = '';
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'KO Wound';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+        // Set popup content
+        titleElement.textContent = 'PARAMEDIC';
+        instructionsElement.innerHTML = `<span class="console-highlights">Paramedic</span> - You may KO a Wound from your hand or discard pile.`;
 
-        // Set Hulk image
-        KOImage.src = "Visual Assets/Other/Bystanders/paramedic.webp";
-        KOImage.style.display = 'block';
-        hoverText.style.display = 'none';
+        // Show both rows and labels
+        selectionRow1Label.style.display = 'block';
+        selectionRow2Label.style.display = 'block';
+        selectionRow2.style.display = 'flex';
+        selectionRow1Label.textContent = 'Hand';
+        selectionRow2Label.textContent = 'Discard Pile';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+
+        // Reset row heights to default
+        selectionRow1.style.height = '';
+        selectionRow2.style.height = '';
+
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        selectionRow2.innerHTML = '';
+        previewElement.innerHTML = '';
+        
+        // Set Paramedic image in preview
+        const previewImage = document.createElement('img');
+        previewImage.src = "Visual Assets/Other/Bystanders/paramedic.webp";
+        previewImage.alt = "Paramedic";
+        previewImage.className = 'popup-card-preview-image';
+        previewElement.appendChild(previewImage);
+        previewElement.style.backgroundColor = 'var(--accent)';
 
         let selectedWound = null;
         let selectedLocation = null; // 'Hand' or 'Discard Pile'
-        let activeImage = null;
+        let selectedCardImage = null;
+        let isDragging = false;
 
-        // Update the confirm button state
-        function updateConfirmButton() {
+        // Update the confirm button state and instructions
+        function updateUI() {
+            const confirmButton = document.getElementById('card-choice-popup-confirm');
             confirmButton.disabled = selectedWound === null;
-        }
-
-        // Update instructions with styled card name
-        function updateInstructions() {
+            
             if (selectedWound === null) {
-                context.innerHTML = `<span class="console-highlights">Paramedic</span> - You may KO a Wound from your hand or discard pile.`;
+                instructionsElement.innerHTML = `<span class="console-highlights">Paramedic</span> - You may KO a Wound from your hand or discard pile.`;
             } else {
-                context.innerHTML = `Selected: <span class="console-highlights">${selectedWound.name}</span> will be KO'd from your ${selectedLocation}.`;
+                instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedWound.name}</span> will be KO'd from your ${selectedLocation}.`;
             }
         }
 
-        // Toggle wound selection
-        function toggleWoundSelection(wound, location, listItem) {
-            if (selectedWound === wound && selectedLocation === location) {
-                // Deselect if same wound clicked
-                selectedWound = null;
-                selectedLocation = null;
-                listItem.classList.remove('selected');
-            } else {
-                // Clear previous selection if any
-                if (selectedWound) {
-                    const prevListItem = document.querySelector('li.selected');
-                    if (prevListItem) prevListItem.classList.remove('selected');
-                }
-                // Select new wound
-                selectedWound = wound;
-                selectedLocation = location;
-                listItem.classList.add('selected');
-            }
+        const row1 = selectionRow1; // row1 is selectionRow1
+        const row2Visible = true; // Since we're hiding row2 in this popup
 
-            updateConfirmButton();
-            updateInstructions();
+        // Initialize scroll gradient detection on the container
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+        // Create card element helper function
+        function createCardElement(wound, location, row) {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-card-id', wound.id);
+            cardElement.setAttribute('data-location', location);
+            
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = wound.image;
+            cardImage.alt = wound.name;
+            cardImage.className = 'popup-card-image';
+            
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview to show wound image
+                previewElement.innerHTML = '';
+                const hoverPreviewImage = document.createElement('img');
+                hoverPreviewImage.src = wound.image;
+                hoverPreviewImage.alt = wound.name;
+                hoverPreviewImage.className = 'popup-card-preview-image';
+                previewElement.appendChild(hoverPreviewImage);
+                previewElement.style.backgroundColor = 'var(--accent)';
+            };
+
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                // If no card is selected, return to Paramedic image
+                if (selectedWound === null) {
+                    setTimeout(() => {
+                        if (!selectionRow1.querySelector(':hover') && !selectionRow2.querySelector(':hover') && !isDragging) {
+                            previewElement.innerHTML = '';
+                            const paramedicImage = document.createElement('img');
+                            paramedicImage.src = "Visual Assets/Other/Bystanders/paramedic.webp";
+                            paramedicImage.alt = "Paramedic";
+                            paramedicImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(paramedicImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    }, 50);
+                }
+            };
+
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
+
+            // Selection click handler
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                if (selectedWound === wound && selectedLocation === location) {
+                    // Deselect
+                    selectedWound = null;
+                    selectedLocation = null;
+                    cardImage.classList.remove('selected');
+                    selectedCardImage = null;
+                    
+                    // Return to Paramedic image
+                    previewElement.innerHTML = '';
+                    const paramedicImage = document.createElement('img');
+                    paramedicImage.src = "Visual Assets/Other/Bystanders/paramedic.webp";
+                    paramedicImage.alt = "Paramedic";
+                    paramedicImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(paramedicImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                } else {
+                    // Deselect previous
+                    if (selectedCardImage) {
+                        selectedCardImage.classList.remove('selected');
+                    }
+                    
+                    // Select new
+                    selectedWound = wound;
+                    selectedLocation = location;
+                    selectedCardImage = cardImage;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview to show selected wound
+                    previewElement.innerHTML = '';
+                    const selectedPreviewImage = document.createElement('img');
+                    selectedPreviewImage.src = wound.image;
+                    selectedPreviewImage.alt = wound.name;
+                    selectedPreviewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(selectedPreviewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                }
+
+                updateUI();
+            });
+
+            cardElement.appendChild(cardImage);
+            row.appendChild(cardElement);
         }
 
-        // Populate discard pile list
-        discardPile.forEach((wound) => {
-            const li = document.createElement('li');
-            li.textContent = wound.name;
-            li.setAttribute('data-card-id', wound.id);
-
-            li.onmouseover = () => {
-                KOImage.src = wound.image;
-                KOImage.style.display = 'block';
-            };
-
-            li.onmouseout = () => {
-                if (!activeImage) {
-                    KOImage.src = "Visual Assets/Other/Bystanders/paramedic.webp";
-                }
-            };
-
-            li.onclick = () => toggleWoundSelection(wound, 'Discard Pile', li);
-            discardPileList.appendChild(li);
+        // Populate hand wounds (row1)
+        hand.forEach(wound => {
+            createCardElement(wound, 'Hand', selectionRow1);
         });
 
-        // Populate hand list
-        hand.forEach((wound) => {
-            const li = document.createElement('li');
-            li.textContent = wound.name;
-            li.setAttribute('data-card-id', wound.id);
-
-            li.onmouseover = () => {
-                KOImage.src = wound.image;
-                KOImage.style.display = 'block';
-            };
-
-            li.onmouseout = () => {
-                if (!activeImage) {
-                    KOImage.src = "Visual Assets/Other/Bystanders/paramedic.webp";
-                }
-            };
-
-            li.onclick = () => toggleWoundSelection(wound, 'Hand', li);
-            handList.appendChild(li);
+        // Populate discard pile wounds (row2)
+        discardPile.forEach(wound => {
+            createCardElement(wound, 'Discard Pile', selectionRow2);
         });
 
-        // Handle confirmation
-        confirmButton.onclick = () => {
-            if (selectedWound && selectedLocation) {
+        // Set up drag scrolling for both rows
+        setupDragScrolling(selectionRow1);
+        setupDragScrolling(selectionRow2);
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+
+        // Configure buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'KO WOUND';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'inline-block';
+        noThanksButton.textContent = 'NO THANKS';
+
+        // Confirm button handler
+        confirmButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedWound === null || selectedLocation === null) return;
+
+            setTimeout(() => {
                 // Remove wound from its location
                 if (selectedLocation === 'Discard Pile') {
                     const index = playerDiscardPile.indexOf(selectedWound);
@@ -5839,46 +5936,26 @@ return new Promise((resolve) => {
                 // Add to KO pile and gain attack
                 koPile.push(selectedWound);
                 onscreenConsole.log(`<span class="console-highlights">Paramedic</span> - You KO'd a <span class="console-highlights">${selectedWound.name}</span> from your ${selectedLocation}.`);
-koBonuses();
+                koBonuses();
 
-                closePopup();
+                closeCardChoicePopup();
                 updateGameBoard();
                 resolve(true);
-            }
+            }, 100);
         };
 
-        function closePopup() {
-            // Reset UI
-            context.innerHTML = `Do you wish to KO a card from your Discard Pile or Hand to rescue a Bystander?`;
-            confirmButton.style.display = 'none';
-            confirmButton.disabled = true;
-            KOImage.src = '';
-            KOImage.style.display = 'none';
-            hoverText.style.display = 'block';
-            activeImage = null;
-
-            // Hide popup
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
-
-        // Handle cancellation
-        const closeButton = document.getElementById('no-thanks-button');
-        closeButton.style.display = 'inline-block';
-        closeButton.onclick = () => {
-            console.log(`<span class="console-highlights">Paramedic</span> - No Wound was KO'd.`);
+        // No thanks button handler
+        noThanksButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
             onscreenConsole.log(`<span class="console-highlights">Paramedic</span> - You chose not to KO any Wounds.`);
-            closePopup();
+            closeCardChoicePopup();
             resolve(false);
         };
 
-        const closeXButton = document.getElementById('card-ko-popup-close');
-            closeXButton.onclick = () => {
-            console.log(`<span class="console-highlights">Paramedic</span> - No Wound was KO'd.`);
-            onscreenConsole.log(`<span class="console-highlights">Paramedic</span> - You chose not to KO any Wounds.`);
-            closePopup();
-            resolve(false);
-        };
+        // Show popup
+        modalOverlay.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
     });
 }
 
