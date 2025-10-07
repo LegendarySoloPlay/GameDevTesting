@@ -107,18 +107,216 @@ cumulativeAttackPoints += bystandersRescuedThisTurn;
 updateGameBoard();
 }
 
-function moonKnight() {
+function moonKnightClimbingClaws() {
+onscreenConsole.log(`<img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`);
+onscreenConsole.log(`You get +1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
 
+totalRecruitPoints += 1;
+cumulativeRecruitPoints += 1;
+updateGameBoard();
 }
 
-function scarletSpider() {
+function moonKnightCrescentMoonDarts() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to reveal.`);
+  return;
+  }
 
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  if (topCardPlayerDeck.class1 === "Instinct" || topCardPlayerDeck.class2 === "Instinct" || topCardPlayerDeck.class3 === "Instinct" || topCardPlayerDeck.class1 === "Tech" || topCardPlayerDeck.class2 === "Tech" || topCardPlayerDeck.class3 === "Tech") {
+	  playSFX('card-draw');
+    playerDeck.pop(); // Removes the last card from the deck
+    playerHand.push(topCardPlayerDeck); // Adds the card to the player's hand
+    extraCardsDrawnThisTurn++;
+    updateGameBoard();
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. It has been drawn.`);
+  } else {
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. It is not a <img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> or <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero and has been returned to the top of your deck.`);
+    topCardPlayerDeck.revealed = true;
+    updateGameBoard();
+  }
 }
 
-function spiderWoman() {
+function scarletSpiderFlipOut() {
+onscreenConsole.log(`<img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`);
 
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to draw.`);
+  return;
+  }
+  
+  extraDraw();
 }
 
-function symbioteSpiderMan() {
+function scarletSpiderPerfectHunter() {
 
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to draw.`);
+  return;
+  }
+  
+  extraDraw();
+}
+
+function scarletSpiderLeapFromAbove() {
+onscreenConsole.log(`<img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`);
+onscreenConsole.log(`You get +2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
+
+totalAttackPoints += 2;
+cumulativeAttackPoints += 2;
+updateGameBoard();
+}
+
+function scarletSpiderStingOfTheSpider() {
+onscreenConsole.log(`Whenever you put a card on top of your deck this turn, you may draw that card.`);
+stingOfTheSpider = true;
+updateGameBoard();
+}
+
+function spiderWomanBioelectricShock() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to reveal.`);
+  return;
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  if (topCardPlayerDeck.attackIcon === "true" || topCardPlayerDeck.attackIcon === true) {
+	  playSFX('card-draw');
+    playerDeck.pop(); // Removes the last card from the deck
+    playerHand.push(topCardPlayerDeck); // Adds the card to the player's hand
+    extraCardsDrawnThisTurn++;
+    updateGameBoard();
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span> which has a <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> icon. It has been drawn.`);
+  } else {
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. It does not have a <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> icon and has been returned to the top of your deck.`);
+    topCardPlayerDeck.revealed = true;
+    updateGameBoard();
+  }
+}
+
+function spiderWomanVenomBlast() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to reveal.`);
+  return;
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  if (topCardPlayerDeck.recruitIcon === "true" || topCardPlayerDeck.recruitIcon === true) {
+	  playSFX('card-draw');
+    playerDeck.pop(); // Removes the last card from the deck
+    playerHand.push(topCardPlayerDeck); // Adds the card to the player's hand
+    extraCardsDrawnThisTurn++;
+    updateGameBoard();
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span> which has a <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> icon. It has been drawn.`);
+  } else {
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. It does not have a <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> icon and has been returned to the top of your deck.`);
+    topCardPlayerDeck.revealed = true;
+    updateGameBoard();
+  }
+}
+
+function symbioteSpiderManDarkStrength() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to reveal.`);
+  return;
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  if (topCardPlayerDeck.cost === 1 || topCardPlayerDeck.cost === 2) {
+    totalAttackPoints += 2;
+    cumulativeAttackPoints += 2;
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span> which has a <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> of ${topCardPlayerDeck.cost}. You get +2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
+  topCardPlayerDeck.revealed = true;
+  updateGameBoard();
+  } else {
+    onscreenConsole.log(`You revealed <span class="console-highlights">${topCardPlayerDeck.name}</span>. It does not have a <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> of 1 or 2.`);
+    topCardPlayerDeck.revealed = true;
+    updateGameBoard();
+  }
+}
+
+function symbioteSpiderManShadowedSpider() {
+const lowCostPlayedHeroes = cardsPlayedThisTurn
+    .slice(0, -1) // Exclude the last item
+    .filter(card => 
+        (card.cost === 1 || card.cost === 2) &&
+        !card.isCopied &&
+        !card.sidekickToDestroy &&
+        !card.markedToDestroy
+    );
+    
+if (lowCostPlayedHeroes.length === 0) {
+  onscreenConsole.log(`You haven't played any Heroes with a <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> of 1 or 2 this turn.`);
+updateGameBoard();
+} else {
+onscreenConsole.log(`You have played ${lowCostPlayedHeroes.length} Hero${lowCostPlayedHeroes.length === 1 ? 'es' : '' with a <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> of 1 or 2 this turn. You get +${lowCostPlayedHeroes.length} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
+updateGameBoard();
+}
+}
+
+//Masterminds
+
+async function carnageMasterStrike() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to reveal.`);
+  return;
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  playerDeck.pop();
+  koPile.push(topCardPlayerDeck);
+  onscreenConsole.log(`<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`);
+  koBonuses();
+  updateGameBoard();
+  
+  if (topCardPlayerDeck.cost === 0) {
+  onscreenConsole.log(`Since <span class="console-highlights">${topCardPlayerDeck.name}</span> is a zero-cost card, you gain a Wound.`);
+  await drawWound();
+  updateGameBoard();
+}
 }
