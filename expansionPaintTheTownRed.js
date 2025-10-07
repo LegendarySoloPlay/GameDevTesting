@@ -301,7 +301,7 @@ if (playerDeck.length === 0) {
   }
   
   if (playerDeck.length === 0) {
-    onscreenConsole.log(`No cards available to reveal.`);
+    onscreenConsole.log(`No cards available to feast upon.`);
   return;
   }
 
@@ -317,6 +317,122 @@ if (playerDeck.length === 0) {
   if (topCardPlayerDeck.cost === 0) {
   onscreenConsole.log(`Since <span class="console-highlights">${topCardPlayerDeck.name}</span> is a zero-cost card, you gain a Wound.`);
   await drawWound();
+  updateGameBoard();
+}
+}
+
+async function carnageDroolingJaws() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to feast upon.`);
+  return;
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  playerDeck.pop();
+  koPile.push(topCardPlayerDeck);
+  onscreenConsole.log(`<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`);
+  koBonuses();
+  updateGameBoard();
+}
+
+async function carnageEndlessHunger(isRecursiveCall = false) {
+  // Only show the initial message for the first call, not recursive calls
+  if (!isRecursiveCall) {
+    if (playerDeck.length === 0) {
+      playerDeck = shuffle(playerDiscardPile);
+      playerDiscardPile = [];
+    }
+    
+    if (playerDeck.length === 0) {
+      onscreenConsole.log(`No cards available to feast upon.`);
+      return;
+    }
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+  playerDeck.pop();
+  koPile.push(topCardPlayerDeck);
+  
+  // Single consolidated log message
+  if (isRecursiveCall) {
+    onscreenConsole.log(`Feasting continues... <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`);
+  } else {
+    onscreenConsole.log(`<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`);
+  }
+  
+  koBonuses();
+  updateGameBoard();
+  
+  if (topCardPlayerDeck.cost === 0) {
+    onscreenConsole.log(`Since <span class="console-highlights">${topCardPlayerDeck.name}</span> is a zero-cost card, <span class="console-highlights">Carnage</span> feasts again.`);
+    await carnageEndlessHunger(true); // Pass true to indicate recursive call
+  }
+}
+
+async function carnageFeedMe() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to feast upon.`);
+  return;
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  playerDeck.pop();
+  koPile.push(topCardPlayerDeck);
+  onscreenConsole.log(`<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`);
+  koBonuses();
+  updateGameBoard();
+  
+  onscreenConsole.log(`<span class="console-highlights">${topCardPlayerDeck.name}</span> had a <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> of ${topCardPlayerDeck.cost}. You get +${topCardPlayerDeck.cost} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
+  totalRecruitPoints += topCardPlayerDeck.cost;
+  cumulativeRecruitPoints += topCardPlayerDeck.cost;
+  updateGameBoard();
+}
+
+async function carnageOmNomNom() {
+if (playerDeck.length === 0) {
+    playerDeck = shuffle(playerDiscardPile);
+    playerDiscardPile = [];
+  }
+  
+  if (playerDeck.length === 0) {
+    onscreenConsole.log(`No cards available to feast upon.`);
+  return;
+  }
+
+  // Reveal the top card of the player's deck
+  const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+  playerDeck.pop();
+  koPile.push(topCardPlayerDeck);
+  onscreenConsole.log(`<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`);
+  koBonuses();
+  updateGameBoard();
+  
+  if (topCardPlayerDeck.cost === 0) {
+  onscreenConsole.log(`Since <span class="console-highlights">${topCardPlayerDeck.name}</span> is a zero-cost card, you must KO a Bystander from your Victory Pile.`);
+  if (victoryPile.filter(card => card.type === 'Bystander').length === 0) {
+    onscreenConsole.log(`No Bystanders available in the Victory Pile to KO.`);
+    return;
+    } else {
+      BYSTANDER SELECTION
+      }
+      }
+  
   updateGameBoard();
 }
 }
