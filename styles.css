@@ -680,7 +680,6 @@ filter: drop-shadow(0vh 0vh 0.3vh black);
 font-size: var(--heading-size);
 text-transform: var(--text-transform);
 letter-spacing: var(--letter-spacing);
-line-height: 2.6vh;
 }
 
 #hq-1 {
@@ -890,6 +889,23 @@ z-index:997;
 position:relative;
 }
 
+
+.card-image:hover ~ .attack-overlay {
+    transform: scale(1.5);
+    z-index: 998;
+    position: absolute;
+    right: -1vw;
+    bottom: -2.5vh;
+}
+
+.card-image:hover ~ .mastermind-attack-overlay {
+    transform: scale(1.5);
+    z-index: 998;
+    position: absolute;
+    right: 12%;
+    bottom: -2.5vh;
+}
+
 .card .overlay {
     position: absolute;
     top: 0;
@@ -921,7 +937,7 @@ font-weight: bold;
     color: white;
     padding: 2px 5px;
     border-radius: 5px;
-    font-size: 12px;
+    font-size: calc(0.4vh + 0.4vw);
     width: 80%;
     cursor: pointer;
 }
@@ -1794,12 +1810,32 @@ justify-content: center;
   box-sizing: border-box;
   border-radius: 5px;
   font-size: 12px;
-  display: flex; 
+  display: none; 
   justify-content: center; 
   align-items: center; 
   height: 20px; 
   line-height: normal;
 z-index: 3;
+}
+
+.location-attack-changes {
+    position: absolute;
+    top: -2.1vh;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 0, 0, 0.7);
+    color: white;
+    padding: 2px 5px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    font-size: calc(0.5vh + 0.5vw);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20px;
+    line-height: normal;
+    z-index: 3;
+    width: 3vw;
 }
 
 .mastermind .temp-buff-overlay {
@@ -1830,7 +1866,7 @@ z-index: 3;
     vertical-align: middle; /* Center the content vertically */
     word-wrap: break-word; /* Enable word wrapping for long text */
     white-space: normal; /* Ensure the text wraps to the next line if needed */
-    border: 1px solid #fff; /* Optional: Add a border for better visibility */
+    border: 1px solid var(--popupText); /* Optional: Add a border for better visibility */
 }
 
 #bottom-row-city-representation {
@@ -1864,20 +1900,14 @@ height:25vh;
 }
 
 .bystander-overlay {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: rgba(255, 0, 0, 0.7);
-  color: white;
-  padding: 2px 5px;
-  box-sizing: border-box;
-  border-radius: 5px;
-  font-size: calc(0.55vh + 0.55vw);
-  display: flex; 
-  justify-content: center; 
-  align-items: center; 
-  height: 20px; 
-  line-height: normal;
+    position: absolute;
+    top: 0;
+    right: 24%;
+    color: white;
+    border-radius: 5px;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 2vw;
+    cursor: pointer;
 }
 
 .bystander-overlay .card-icons {
@@ -2030,6 +2060,39 @@ background-image: url("Visual Assets/Icons/AttackNoOutline.svg");
     font-family: 'Matrix';
     font-weight: 300;
 padding-bottom:0.6vh;
+    transition: all 0.3s 
+ease;
+    -webkit-transition: all 0.3s 
+ease;
+}
+
+.mastermind-attack-overlay {
+  position: absolute;
+  bottom: 4px;
+  right: 22%;
+  background-color: rgb(226 222 218);
+  color: #fdfdfd;
+  box-sizing: border-box;
+  border-radius: 2.5px;
+  font-size: 3vh;
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  height: 3vh; 
+width:3vh;
+-webkit-text-stroke:0.8px #0000009e;
+  line-height: normal;
+background-image: url("Visual Assets/Icons/AttackNoOutline.svg");
+    background-size: 90%;
+    background-repeat: no-repeat;
+    background-position: center;
+    font-family: 'Matrix';
+    font-weight: 300;
+padding-bottom:0.6vh;
+    transition: all 0.3s 
+ease;
+    -webkit-transition: all 0.3s 
+ease;
 }
 
 .killbot-overlay {
@@ -2153,21 +2216,43 @@ color: #3d3d3d;
 }
 
 .perm-buff-overlay {
-  position: absolute;
-  bottom: 25px;
-  left: 5px;
-  background-color: rgba(255, 100, 0, 0.7);
-  color: white;
-  padding: 2px 5px;
-  box-sizing: border-box;
-  border-radius: 5px;
-  font-size: 12px;
-  display: flex; 
-  justify-content: center; 
-  align-items: center; 
-  height: 20px; 
-  line-height: normal;
-z-index: 3;
+    position: absolute;
+    bottom: 0;
+    left: -1px;
+    color: white;
+    box-sizing: border-box;
+    border-radius: 5px;
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2vw;
+    line-height: normal;
+    z-index: 3;
+}
+
+.dark-portal-image {
+    width: 100%;
+    height: auto;
+    border-style: solid;
+    border-color: rgb(89 64 173);
+    border-radius: 5px;
+}
+
+.mastermind-dark-portal-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 2vw;
+    color: white;
+    box-sizing: border-box;
+    border-radius: 5px;
+    font-size: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2vw;
+    line-height: normal;
+    z-index: 3;
 }
 
 .mastermind .perm-buff-overlay {
@@ -3352,6 +3437,7 @@ height:18vh;
 width:auto;
 vertical-align:middle;
 background-color: var(--panel-backgrounds);
+cursor: pointer;
 }
 
 button:disabled {
@@ -3581,6 +3667,34 @@ position: absolute;
 left:50%;
 transform: translateX(-50%);
 top:100%;
+}
+
+.captured-plutonium-image-overlay {
+    width: 2vw;
+    height: auto;
+    display: inline-block;
+    border-style: solid;
+    border-color: rgba(144, 238, 144, 0.72);
+    border-radius: 5px;
+    position: absolute;
+    left: 19%;
+    transform: translateX(-50%);
+    top: 59%;
+}
+
+.plutonium-count {
+    position: absolute;
+    bottom: 13%;
+    left: 12%;
+    z-index: 996;
+    font-family: var(--heading-font);
+    font-size: calc(0.8vh + 0.8vw);
+    color: #282828;
+    font-weight: bold;
+    text-shadow: 0 0 7px rgb(255 255 255);
+    background-color: #a6eaa6;
+    width: 0.7vw;
+    border-radius: 0.7vw;
 }
 
 .donate-button {
@@ -4196,23 +4310,9 @@ letter-spacing: var(--letter-spacing);
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-.expanded-bystanders {
-    position: absolute;
-    top: 44px;
-    right: -1px;
-    background-color: rgba(255, 0, 0, 0.7);
-    color: white;
-    padding: 2px 5px;
-    border-radius: 5px;
-    font-size: 12px;
-    width:75%;
-    cursor:default;
-}
-
 #scheme-token {
-    height: 3vw;
-    width: 3vw;
-    background-color: #cd7b78;
+    height: 2vw;
+    width: auto;
     position: absolute;
     z-index: 1;
     border-radius: 100%;
@@ -4257,42 +4357,48 @@ letter-spacing: var(--letter-spacing);
 }
 
 .city-cell .XCutioner-overlay {
-position: absolute;
-    top: 33%;
-    right: -1px;
-    background-color: rgb(4 0 255 / 70%);
+    position: absolute;
+    top: 0;
+    left: -1px;
     color: white;
-    padding: 2px 5px;
     border-radius: 5px;
-    font-size: calc(0.55vh + 0.55vw);
-    width: 80%;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 2vw;
     cursor: pointer;
 }
 
 .mastermind .XCutioner-overlay {
-position: absolute;
-    top: 33%;
-    right: -1px;
-    background-color: rgb(4 0 255 / 70%);
+    position: absolute;
+    top: 0;
+    left: 21%;
     color: white;
-    padding: 2px 5px;
     border-radius: 5px;
-    font-size: calc(0.55vh + 0.55vw);
-    width: 40%;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 2vw;
     cursor: pointer;
 }
 
 .expanded-XCutionerHeroes {
-position: absolute;
-    top: 63%;
-    right: -2px;
-    background-color: rgb(4 0 255 / 70%);
+    position: absolute;
+    top: 6.5vh;
+    left: 21%;
+    background-color: rgb(228 125 69);
     color: white;
     padding: 2px 5px;
     border-radius: 5px;
-    font-size: calc(0.55vh + 0.55vw);
-    width: 80%;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 4vw;
     cursor: default;
+    text-align: left;
+}
+
+.XCutionerOverlayNumber{
+    color: white;
+    font-size: calc(0.6vh + 0.6vw);
+    position: absolute;
+    top: 2vh;
+    left: .9vw;
+    text-shadow: 0vh 0 0.2vh #e47d45;
 }
 
 #hq-1-explosion, #hq-2-explosion, #hq-3-explosion, #hq-4-explosion, #hq-5-explosion {
@@ -4357,24 +4463,98 @@ letter-spacing: var(--letter-spacing);
 }
 
 .villain-baby-overlay {
-    height: 3vw;
-    width: 3vw;
+    width: 2vw;
     background-color: #cd7b78;
     position: absolute;
     z-index: 1;
     border-radius: 100%;
     color: white;
-font-family:var(--heading-font);
-font-size: var(--heading-size);
-text-transform: var(--text-transform);
-letter-spacing: var(--letter-spacing);
+    font-family: var(--heading-font);
+    font-size: var(--heading-size);
+    text-transform: var(--text-transform);
+    letter-spacing: var(--letter-spacing);
     filter: drop-shadow(0vh 0vh 1.3vh black);
     display: flex;
     justify-content: center;
     align-items: center;
-    top: 25%;
-    left: 25%;
+    bottom: 0;
+    left: 0;
     cursor: default;
+}
+
+.villain-baby {
+    width: 100%;
+    height: auto;
+    border-style: solid;
+    border-color: rgb(228 125 69);
+    border-radius: 5px;
+}
+
+.bystanders-overlay {
+    position: absolute;
+    top: 0;
+    right: 2px;
+    color: white;
+    border-radius: 5px;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 2vw;
+    cursor: pointer;
+}
+
+.expanded-bystanders {
+    position: absolute;
+    top: 6.5vh;
+    right: -5px;
+    background-color: rgb(188 9 9);
+    color: white;
+    padding: 2px 5px;
+    border-radius: 5px;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 4vw;
+    cursor: default;
+    text-align: left;
+}
+
+.expanded-bystanders-mastermind {
+    position: absolute;
+    top: 6.5vh;
+    right: 20%;
+    background-color: rgb(188 9 9);
+    color: white;
+    padding: 2px 5px;
+    border-radius: 5px;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 4vw;
+    cursor: default;
+    text-align: left;
+}
+
+.bystanderOverlayNumber{
+    color: white;
+    font-size: calc(0.6vh + 0.6vw);
+    position: absolute;
+    top: 2vh;
+    right: .6vw;
+    text-shadow: 0vh 0 0.2vh #e47d45;
+}
+
+.villain-bystander {
+    width: 100%;
+    height: auto;
+    border-style: solid;
+    border-color: rgb(188 9 9);
+    border-radius: 5px;
+}
+
+.villain-baby-on-scheme {
+    width: 100%;
+    height: auto;
+    border-style: solid;
+    border-color: rgb(228 125 69);
+    border-radius: 5px;
+    position: absolute;
+    left: -4vh;
+    bottom: -7.5vh;
 }
 
 #popup-context {
@@ -4535,7 +4715,7 @@ width: 50%;
 .mastermind-keyword-overlay {
     width: 60%;
     background-color: var(--accent);
-    z-index: 2;
+    z-index: 994;
     position: absolute;
     border-radius: .5vh;
     cursor: pointer;
@@ -5410,4 +5590,409 @@ hr {
     margin-top: 20px;
     background-position: 50% 22%;
     background-size: 120%;
+}
+
+.card-choice-popup {
+    position: absolute;
+    width: 76.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(11px, 1.2%, 17px);
+    height: 83%;
+    top: clamp(37px, 7.4%, 9%);
+    border: 5px solid var(--accent);
+    border-radius: 1.5vh;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+    display: none;
+}
+
+.card-choice-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.card-choice-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.card-choice-popup-closebutton {
+    font-size: 4vh;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    text-align: center;
+    align-content: center;
+    font-weight: bold;
+    font-family: Arial;
+}
+
+.card-choice-popup-closebutton:hover {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--contrastText);
+}
+
+.card-choice-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+}
+
+.card-choice-popup-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.card-choice-popup-choiceandpreview {
+    position: relative;
+    height: calc(100% - 9vh);
+    width: 100%;
+    overflow: hidden;
+}
+
+.card-choice-popup-preview-container {
+    position: absolute;
+    bottom: 1vh;
+    right: 3.5vh;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5vh;
+    height: 97%;
+}
+
+.card-choice-popup-preview {
+    width: auto;
+    height: 93%;
+    aspect-ratio: 738 / 1039;
+    background-color: var(--panel-backgrounds);
+    border: 0.5vh solid var(--accent);
+    border-radius: 1.5vh;
+    box-sizing: border-box;
+}
+
+.card-choice-popup-previewtitle {
+    width: 100%;
+    text-align: center;
+    padding: 0.5vh 0;
+    box-sizing: border-box;
+    margin: 0;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--accent);
+}
+
+.card-choice-popup-buttonhousing {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+}
+
+.card-choice-popup-buttonhousing button {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.7em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+}
+
+.card-choice-popup-buttonhousing button:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.card-choice-popup-selection-container {
+    height: 96%;
+    width: clamp(494px, 66.9%, 60vw);
+    left: 3.5vh;
+    position: relative;
+    align-content: center;
+    overflow: hidden;
+}
+
+.card-choice-popup-selectionrow1label {
+    width: 100%;
+    text-align: center;
+    margin-top: 1vh;
+    height: 7%;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    color: var(--accent);
+    display: none;
+}
+
+.card-choice-popup-selectionrow1 {
+    left: 1px;
+    height: 40%;
+    margin-top: 1vh;
+    justify-content: center; /* Default to center when no scroll needed */
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.5vw;
+    overflow-y: hidden;
+    padding: 0 2vw;
+    position: relative;
+    
+    scrollbar-width: thin; /* Firefox - show thin scrollbar */
+    scrollbar-color: var(--accent) transparent; /* Firefox scrollbar color */
+    
+    /* Default cursor when no scroll needed */
+    cursor: default;
+}
+
+.card-choice-popup-selectionrow2label {
+    width: 100%;
+    text-align: center;
+    margin-top: 1vh;
+    height: 7%;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    color: var(--accent);
+    display: none;
+}
+
+.card-choice-popup-selectionrow2 {
+    left: 1px;
+    height: 40%;
+    margin-top: 1vh;
+    justify-content: center; /* Default to center when no scroll needed */
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.5vw;
+    overflow-y: hidden;
+    padding: 0 2vw;
+    position: relative;
+    
+    scrollbar-width: thin; /* Firefox - show thin scrollbar */
+    scrollbar-color: var(--accent) transparent; /* Firefox scrollbar color */
+    
+    /* Default cursor when no scroll needed */
+    cursor: default;
+}
+
+@media (max-width: 768px) {
+    .card-choice-popup-selectionrow1,
+    .card-choice-popup-selectionrow2 {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+    }
+
+        .card-choice-popup-selectionrow1::-webkit-scrollbar,
+    .card-choice-popup-selectionrow2::-webkit-scrollbar {
+        display: none; /* Chrome, Safari and Opera */
+    }
+}
+
+.card-choice-popup-selectionrow1::-webkit-scrollbar,
+.card-choice-popup-selectionrow2::-webkit-scrollbar {
+    height: 8px; /* Horizontal scrollbar height */
+}
+
+.card-choice-popup-selectionrow1::-webkit-scrollbar-track,
+.card-choice-popup-selectionrow2::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 0 2vw;
+}
+
+.card-choice-popup-selectionrow1::-webkit-scrollbar-thumb,
+.card-choice-popup-selectionrow2::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 4px;
+}
+
+.card-choice-popup-selectionrow1::-webkit-scrollbar-thumb:hover,
+.card-choice-popup-selectionrow2::-webkit-scrollbar-thumb:hover {
+    background: var(--hoverAccent);
+}
+
+.card-choice-popup-selectionrow1.scrollable,
+.card-choice-popup-selectionrow2.scrollable {
+    justify-content: flex-start; /* Left align when scrollable */
+    cursor: grab; /* Show grab cursor only when scrollable */
+}
+
+/* Gradient overlays - applied to container for both rows */
+.card-choice-popup-selection-container::before,
+.card-choice-popup-selection-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4vw;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.3s ease;
+    opacity: 0; /* Hidden by default */
+}
+
+.card-choice-popup-selection-container::before {
+    left: -2px; /* Extend slightly beyond the left edge */
+    background: linear-gradient(to right, var(--panel-backgrounds) 10%, transparent 100%);
+}
+
+.card-choice-popup-selection-container::after {
+    right: -2px; /* Extend slightly beyond the right edge */
+    background: linear-gradient(to left, var(--panel-backgrounds) 10%, transparent 100%);
+}
+
+/* Show gradients only when rows are scrollable */
+.card-choice-popup-selection-container.row1-scrollable::before,
+.card-choice-popup-selection-container.row1-scrollable::after,
+.card-choice-popup-selection-container.row2-scrollable::before,
+.card-choice-popup-selection-container.row2-scrollable::after {
+    opacity: 1;
+}
+
+/* Hide gradients when at scroll boundaries for both rows */
+.card-choice-popup-selection-container.row1-at-start::before,
+.card-choice-popup-selection-container.row1-at-end::after,
+.card-choice-popup-selection-container.row2-at-start::before,
+.card-choice-popup-selection-container.row2-at-end::after {
+    opacity: 0;
+}
+
+/* When both rows are visible, adjust gradients to cover both */
+.card-choice-popup-selection-container.both-rows-visible::before,
+.card-choice-popup-selection-container.both-rows-visible::after {
+    height: 82%; /* Account for both rows + margin */
+    top: 9%; /* Start after first row label area */
+}
+
+.popup-card {
+    display: inline-block;
+    cursor: pointer;
+    height: 100%;
+    flex: 0 0 auto;
+    position: relative;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent; /* Remove mobile tap highlight */
+    margin-top: 0.4vh;
+}
+
+.popup-card-image {
+    width: auto;
+    height: 98%;
+    border-radius: 0.8vh;
+    transition: all 0.1s ease;
+    border: 0.4vh solid transparent; /* Reserve space for border */
+    box-sizing: border-box; /* Include border in element's dimensions */
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.popup-card-preview-image {
+    height: 100%;
+    border-radius: 1vh;
+}
+
+.popup-card-image.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 1.5vh var(--accentGlow);
+    animation: selection-animation 1.5s infinite;
+    background-color: var(--accent);
+}
+
+@keyframes selection-animation {
+  0% {
+    border-color: var(--accent);
+    box-shadow: 0 0 1vh var(--accentGlow);
+  }
+  50% {
+    border-color: var(--hoverAccent);
+    box-shadow: 0 0 1.5vh var(--accentGlow);
+  }
+  100% {
+    border-color: var(--accent);
+    box-shadow: 0 0 1vh var(--accentGlow);
+  }
+}
+
+/* Active grabbing state for scrollable rows only */
+.card-choice-popup-selectionrow1.scrollable:active,
+.card-choice-popup-selectionrow2.scrollable:active {
+    cursor: grabbing;
 }

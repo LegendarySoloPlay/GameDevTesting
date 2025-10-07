@@ -9,53 +9,60 @@ function angelDivingCatch(card) {
       "Yes",
       "No"
     );
-    
+
     const cardImage = document.getElementById('hero-ability-may-card');
     const imageHoverText = document.getElementById('heroAbilityHoverText');
+    const modalOverlay = document.getElementById('modal-overlay');
+
     popup.style.zIndex = '1500';
     cardImage.src = card.image;
     cardImage.style.display = 'block';
     imageHoverText.style.display = 'none';
 
-    // Clear previous event listeners
+    // Clear previous listeners just in case
     confirmButton.onclick = null;
     denyButton.onclick = null;
 
+    const closeAngelUI = () => {
+      hideHeroAbilityMayPopup();                 // your existing close function
+      cardImage.style.display = 'none';
+      imageHoverText.style.display = 'block';
+      popup.style.zIndex = '1000';
+      // Ensure overlay is free for the next popup
+      if (modalOverlay) modalOverlay.style.display = 'none';
+    };
 
-    const handleConfirm = async () => {   
+    const finish = () => {
+      // Final tidy & return control
+      setTimeout(() => {
+        updateGameBoard();
+        resolve();
+      }, 0);
+    };
+
+    confirmButton.onclick = async () => {
+      // 1) Close Angel popup *first* so the next popup can appear
+      closeAngelUI();
+
+      // 2) Yield one frame so the DOM visually clears before the next popup opens
+      await new Promise(requestAnimationFrame);
+
+      // 3) Now run the rescue (this will await Radiation Scientist if drawn)
       await rescueBystander(card);
+
+      // 4) Only after the bystander ability is fully done, do Angel’s draws
       extraDraw(card);
       extraDraw(card);
-      
-      hideHeroAbilityMayPopup();
-      cardImage.style.display = 'none';
-      imageHoverText.style.display = 'block';
-      popup.style.zIndex = '1000';
-      
-      setTimeout(() => {
-        updateGameBoard();
-        resolve();
-      }, 100);
+
+      finish();
     };
 
-    const handleDeny = () => {     
-      hideHeroAbilityMayPopup();
-      cardImage.style.display = 'none';
-      imageHoverText.style.display = 'block';
-      popup.style.zIndex = '1000';
-      
-      setTimeout(() => {
-        updateGameBoard();
-        resolve();
-      }, 100);
+    denyButton.onclick = () => {
+      closeAngelUI();
+      finish();
     };
-
-    confirmButton.onclick = handleConfirm;
-    denyButton.onclick = handleDeny;
   });
 }
-
-
 
   function angelHighSpeedChase() {
     return new Promise((resolve, reject) => {
@@ -1019,21 +1026,21 @@ jeanGreyBystanderAttack += 1;
 onscreenConsole.log('Whenever you rescue a Bystander this turn, you get +1<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.');
 }
 
-function jeanGreyXMenBystanders() {
+async function jeanGreyXMenBystanders() {
 onscreenConsole.log(`<img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`);
 const previousCards = cardsPlayedThisTurn.slice(0, -1);
 for (let i = 0; i < previousCards.filter(item => item.team === 'X-Men').length; i++) {
     if (previousCards.filter(item => item.team === 'X-Men').length > 0) {
-        rescueBystander();
+        await rescueBystander();
     } else {
         return;    }
         }
 }
 
 
-function jeangreyPsychicSearch() {
+async function jeangreyPsychicSearch() {
 onscreenConsole.log(`<img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`);
-rescueBystander();
+await rescueBystander();
 }
 
 function icemanIceSlide() {
@@ -1579,7 +1586,7 @@ function ghostRiderInfernalChains() {
             // Handle rescue of extra bystanders
             if (rescueExtraBystanders > 0) {
                 for (let i = 0; i < rescueExtraBystanders; i++) {
-                    rescueBystander();
+                    await rescueBystander();
                 }
             }
 
@@ -2108,7 +2115,7 @@ function punisherHailOfBullets() {
     }
 }
 
-function punisherHailOfBulletsDefeat() {
+async function punisherHailOfBulletsDefeat() {
     onscreenConsole.log(`<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"><img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Heroes played. Superpower Ability activated.`);
 
     if (villainDeck.length === 0) {
@@ -2143,7 +2150,7 @@ function punisherHailOfBulletsDefeat() {
         updateGameBoard();
     };
 
-    confirmButton.onclick = () => {
+    confirmButton.onclick = async () => {
         onscreenConsole.log(`You have chosen to defeat <span class="console-highlights">${topCardVillainDeck.name}</span> for free.`);
 
         hideHeroAbilityMayPopup();
@@ -2198,7 +2205,7 @@ function punisherHailOfBulletsDefeat() {
 
         if (rescueExtraBystanders > 0) {
             for (let i = 0; i < rescueExtraBystanders; i++) {
-                rescueBystander();
+                await rescueBystander();
             }
         }
         defeatBonuses();
@@ -2363,33 +2370,142 @@ document.getElementById('villain-movement-context').innerHTML = 'You may move a 
                 cardImage.classList.add('villain-movement-card-image');
                 cityCellElement.appendChild(cardImage);
 
-                // Add the bystander overlay if there are bystanders
-                if (city[i].bystander && city[i].bystander.length > 0) {
-                    const bystanderOverlay = document.createElement('div');
-                    bystanderOverlay.className = 'bystander-overlay';
-                    bystanderOverlay.innerText = `${city[i].bystander.length} Bystander${city[i].bystander.length > 1 ? 's' : ''}`;
-                    cityCellElement.appendChild(bystanderOverlay);
-                }
+              if (city[i].bystander && city[i].bystander.length > 0) {
+        const bystanderOverlay = document.createElement('div');
+        bystanderOverlay.className = 'bystanders-overlay';
+        let overlayText = `<span class="bystanderOverlayNumber">${city[i].bystander.length}</span>`;
+        let overlayImage = `<img src="${city[i].bystander[0].image}" alt="Captured Hero" class="villain-bystander">`;
+        bystanderOverlay.innerHTML = overlayText + overlayImage;
+        bystanderOverlay.style.whiteSpace = 'pre-line';
+        cityCellElement.appendChild(bystanderOverlay);
+    }
 
-                if (city[i].name === 'Killbot') {
-                    city[i].overlayTextAttack = `${killbotAttack}`;
-                }
+updateVillainAttackValues(city[i], i);
+
+    const attackFromMastermind = city[i].attackFromMastermind || 0;
+    const attackFromScheme = city[i].attackFromScheme || 0;
+    const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
+    const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
+    const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+    const villainShattered = city[i].shattered || 0;
+    const totalAttackModifiers = attackFromMastermind + attackFromScheme + attackFromOwnEffects + attackFromHeroEffects + currentTempBuff - villainShattered;
+
+    if (totalAttackModifiers !== 0) {
+        const villainOverlayAttack = document.createElement('div');
+        villainOverlayAttack.className = 'attack-overlay';
+        villainOverlayAttack.innerHTML = city[i].attack + totalAttackModifiers;
+        cityCellElement.appendChild(villainOverlayAttack);
+    }
+
+        if (city[i].killbot === true) {
+        const killbotOverlay = document.createElement('div');
+        killbotOverlay.className = 'killbot-overlay';
+        killbotOverlay.innerHTML = 'KILLBOT';
+
+        // Append the attack overlay directly to the container (over the image)
+        cityCellElement.appendChild(killbotOverlay);
+    }
+
+    if (city[i].babyHope === true) {
+    // Clear existing overlay to avoid duplicates
+    const existingOverlay = cityCellElement.querySelector('.villain-baby-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    // Create and append new overlay
+    const babyOverlay = document.createElement('div');
+    babyOverlay.className = 'villain-baby-overlay';
+    babyOverlay.innerHTML = `<img src="Visual Assets/Other/BabyHope.webp" alt="Baby Hope" class="villain-baby">`;
+  
+    cityCellElement.appendChild(babyOverlay);
+}
+
+    
+    if (city[i].overlayText) {
+        const villainOverlay = document.createElement('div');
+        villainOverlay.className = 'skrull-overlay';
+        villainOverlay.innerHTML = `${city[i].overlayText}`;
+        cityCellElement.appendChild(villainOverlay);
+    }
+
+        if (city[i].capturedOverlayText) {
+        const capturedVillainOverlay = document.createElement('div');
+        capturedVillainOverlay.className = 'captured-overlay';
+        capturedVillainOverlay.innerHTML = `${city[i].capturedOverlayText}`;
+        cityCellElement.appendChild(capturedVillainOverlay);
+    }
+
+    if (city[i].XCutionerHeroes && city[i].XCutionerHeroes.length > 0) {
+                const XCutionerOverlay = document.createElement('div');
+                XCutionerOverlay.className = 'XCutioner-overlay';
                 
-                // Check if the villain has an overlayTextAttack
-                if (city[i].overlayTextAttack) {
-                    const villainOverlayAttack = document.createElement('div');
-                    villainOverlayAttack.className = 'attack-overlay';
-                    villainOverlayAttack.innerHTML = city[i].overlayTextAttack;
-                    cityCellElement.appendChild(villainOverlayAttack);
-                }
+                // Create overlay text
+                let XCutionerOverlayImage = `<img src="${city[i].XCutionerHeroes[0].image}" alt="Captured Hero" class="villain-baby">`
+                let XCutionerOverlayText = `<span class="XCutionerOverlayNumber">${city[i].XCutionerHeroes.length}</span>`;
+                const selectedScheme = schemes.find(s => s.name === document.querySelector('#scheme-section input[type=radio]:checked').value);
+                
+                XCutionerOverlay.innerHTML = XCutionerOverlayImage + XCutionerOverlayText;
+                XCutionerOverlay.style.whiteSpace = 'pre-line';
 
-                // Add the Skrull overlay if the villain has an overlayText
-                if (city[i].overlayText) {
-                    const skrullOverlay = document.createElement('div');
-                    skrullOverlay.className = 'skrull-overlay';
-                    skrullOverlay.innerHTML = `${city[i].overlayText}`;
-                    cityCellElement.appendChild(skrullOverlay);
-                }
+                // Expanded container
+                const XCutionerExpandedContainer = document.createElement('div');
+                XCutionerExpandedContainer.className = 'expanded-XCutionerHeroes';
+                XCutionerExpandedContainer.style.display = 'none';
+                
+                city[i].XCutionerHeroes.forEach(hero => {
+                    const XCutionerHeroElement = document.createElement('span');
+                    XCutionerHeroElement.className = 'XCutioner-hero-name';
+                    XCutionerHeroElement.textContent = hero.name;
+                    XCutionerHeroElement.dataset.image = hero.image;
+                    
+                    XCutionerHeroElement.addEventListener('mouseover', (e) => {
+                        e.stopPropagation();
+                        showZoomedImage(hero.image);
+                        const card = cardLookup[normalizeImagePath(hero.image)];
+                        if (card) updateRightPanel(card);
+                    });
+                    
+                    XCutionerHeroElement.addEventListener('mouseout', (e) => {
+                        e.stopPropagation();
+                        if (!activeImage) hideZoomedImage();
+                    });
+                    
+                    XCutionerHeroElement.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        activeImage = activeImage === hero.image ? null : hero.image;
+                        showZoomedImage(activeImage || '');
+                    });
+                    
+                    XCutionerExpandedContainer.appendChild(XCutionerHeroElement);
+                });
+
+                // Overlay click handler
+                XCutionerOverlay.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    XCutionerExpandedContainer.style.display = XCutionerExpandedContainer.style.display === 'none' ? 'block' : 'none';
+                    
+                    if (XCutionerExpandedContainer.style.display === 'block') {
+                        setTimeout(() => {
+                            document.addEventListener('click', (e) => {
+                                if (!XCutionerExpandedContainer.contains(e.target)) {
+                                    XCutionerExpandedContainer.style.display = 'none';
+                                }
+                            }, { once: true });
+                        }, 50);
+                    }
+                });
+
+                cityCellElement.appendChild(XCutionerOverlay);
+                cityCellElement.appendChild(XCutionerExpandedContainer);
+            }
+
+if (city[i].plutoniumCaptured) {
+    const plutoniumOverlay = document.createElement('div');
+    
+    plutoniumOverlay.innerHTML = `<span class="plutonium-count">${city[i].plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
+      
+    // Add to the card
+    cityCellElement.appendChild(plutoniumOverlay);
+}
             } else {
                 // If no villain, add a blank card image
                 const blankCardImage = document.createElement('img');
@@ -2555,6 +2671,14 @@ function playOrTeleport(card) {
         cardImage.src = card.image;
         cardImage.style.display = 'block';
 
+        // ✅ Disable Play button if it's a Wound
+        if (card.type === "Wound") {
+            denyButton.disabled = true;
+            denyButton.style.opacity = "0.5";
+            denyButton.style.cursor = "not-allowed";
+        }
+
+        // TELEPORT
         confirmButton.onclick = () => {
             onscreenConsole.log(`<span class="console-highlights">${card.name}</span> has teleported and will be drawn as an extra card next turn.`);
             teleport(card);
@@ -2564,11 +2688,15 @@ function playOrTeleport(card) {
             resolve();
         };
 
+        // PLAY
         denyButton.onclick = async () => {
+            // If disabled, do nothing
+            if (denyButton.disabled) return;
+
             hideHeroAbilityMayPopup();
             onscreenConsole.log(`You have chosen to play <span class="console-highlights">${card.name}</span>.`);
             document.getElementById('heroAbilityHoverText').style.display = 'block';
-            
+
             // Remove card from hand and add to played cards
             const cardIndex = playerHand.indexOf(card);
             if (cardIndex > -1) {
@@ -2589,8 +2717,9 @@ function playOrTeleport(card) {
                 await nightcrawlerAlongForTheRide();
             }
 
-            // Handle unconditional ability
+            // Handle abilities
             try {
+                // Unconditional
                 if (card.unconditionalAbility && card.unconditionalAbility !== "None") {
                     const abilityFunction = window[card.unconditionalAbility];
                     if (typeof abilityFunction === 'function') {
@@ -2600,7 +2729,7 @@ function playOrTeleport(card) {
                     }
                 }
 
-                // Handle conditional ability
+                // Conditional
                 if (card.conditionalAbility && card.conditionalAbility !== "None") {
                     const { conditionType, condition } = card;
                     if (isConditionMet(conditionType, condition)) {
@@ -2655,6 +2784,7 @@ function playOrTeleport(card) {
         };
     });
 }
+
 
 async function nightcrawlerAlongForTheRide() {
     return new Promise((resolve) => {
@@ -3619,8 +3749,8 @@ numberDropdown.onchange = () => {
 }
 
 function forgeDirtyWork() {
-city5TempBuff--;
-city5TempBuff--;
+city5LocationAttack--;
+city5LocationAttack--;
 onscreenConsole.log(`Any Villain you fight in the Sewers this turn gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 updateGameBoard();
 }
@@ -4843,131 +4973,152 @@ async function professorXHandleBystanderCard(bystanderCard) {
 }
 
 async function initiateTelepathicVillainFight(villainCard, telepathicProbeCard) {
-playSFX('attack');
+  playSFX('attack');
 
-    if (telepathicProbeCard) {
-        telepathicProbeCard.villain = null; // Clear the reference after fighting
-    }
+  if (telepathicProbeCard) {
+    telepathicProbeCard.villain = null; // Clear the reference after fighting
+  }
 
-    onscreenConsole.log(`Preparing to fight <span class="console-highlights">${villainCard.name}</span> using <span class="console-highlights">Professor X - Telepathic Probe</span>.`);
-    
-    const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
-    const selectedScheme = schemes.find(scheme => scheme.name === selectedSchemeName);
+  onscreenConsole.log(`Preparing to fight <span class="console-highlights">${villainCard.name}</span> using <span class="console-highlights">Professor X - Telepathic Probe</span>.`);
+  
+  const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
+  const selectedScheme = schemes.find(scheme => scheme.name === selectedSchemeName);
 
-    // Calculate the villain's effective attack value
-    let villainAttack = recalculateVillainAttack(villainCard);
+  // Calculate the villain's effective attack value
+  let villainAttack = recalculateVillainAttack(villainCard);
 
-    // Ensure villainAttack doesn't drop below 0
-    if (villainAttack < 0) {
-        villainAttack = 0;
-    }
+  // Ensure villainAttack doesn't drop below 0
+  if (villainAttack < 0) {
+    villainAttack = 0;
+  }
 
-    villainDeck.pop(villainCard);
-    victoryPile.push(villainCard);
+  villainDeck.pop(villainCard);
+  victoryPile.push(villainCard);
 
-    onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> has been defeated.`);
- 
-    if (recruitUsedToAttack === true) {
-        // Show counter popup for point allocation
+  onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> has been defeated.`);
+
+  // ---- POINT DEDUCTION LOGIC (SAME AS defeatVillain) ----
+  if (villainAttack > 0) {
+    try {
+      if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
+          villainCard.keyword1 === "Bribe" || villainCard.keyword2 === "Bribe" || villainCard.keyword3 === "Bribe") {
+
         const result = await showCounterPopup(villainCard, villainAttack);
-        totalAttackPoints -= result.attackUsed;
-        totalRecruitPoints -= result.recruitUsed;
-        
-        onscreenConsole.log(`You chose to use ${result.attackUsed} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> points`);
-    } else {
-        totalAttackPoints -= villainAttack;
-    }
 
-    // Handle rescue of extra bystanders
-    if (rescueExtraBystanders > 0) {
-        for (let i = 0; i < rescueExtraBystanders; i++) {
-            rescueBystander();
-        }
-    }
+        let attackNeeded = result.attackUsed || 0;
+        let recruitNeeded = result.recruitUsed || 0;
 
-defeatBonuses();
+        // Note: Telepathic villain fight doesn't use location-based reserve attacks
+        // since it's not tied to a specific city location
 
-    // Handle fight effect if the villain has one
-    let fightEffectPromise = Promise.resolve();
-    if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
-        const fightEffectFunction = window[villainCard.fightEffect];
-        console.log("Fight effect function found:", fightEffectFunction);
-        if (typeof fightEffectFunction === 'function') {
-            fightEffectPromise = new Promise((resolve, reject) => {
-                try {
-                    const result = fightEffectFunction(villainCard);
-                    console.log("Fight effect executed:", result);
-                    resolve(result);
-                } catch (error) {
-                    reject(error);
-                }
-            });
+        // Deduct points from regular pools
+        totalAttackPoints -= attackNeeded;
+        totalRecruitPoints -= recruitNeeded;
+
+        onscreenConsole.log(`You chose to use ${result.attackUsed} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> points to attack <span class="console-highlights">${villainCard.name}</span>.`);
+      } else {
+        if (!negativeZoneAttackAndRecruit) {
+          // Regular attack point deduction
+          totalAttackPoints -= villainAttack;
         } else {
-            console.error(`Fight effect function ${villainCard.fightEffect} not found`);
+          // Negative zone uses recruit points
+          totalRecruitPoints -= villainAttack;
         }
-    } else {
-        console.log("No fight effect found for this villain.");
+      }
+    } catch (error) {
+      console.error('Error handling point deduction:', error);
     }
+  }
 
-    // Handle fight effect promise
-    await fightEffectPromise
-        .then(() => {
-            updateGameBoard(); // Update the game board after fight effect is handled
-        })
-        .catch(error => {
-            console.error(`Error in fight effect: ${error}`);
-            updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
-        });
+  // Handle rescue of extra bystanders
+  if (rescueExtraBystanders > 0) {
+    for (let i = 0; i < rescueExtraBystanders; i++) {
+      await rescueBystander();
+    }
+  }
 
-            if (hasProfessorXMindControl) {
+  defeatBonuses();
+
+  // Handle fight effect if the villain has one
+  let fightEffectPromise = Promise.resolve();
+  if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
+    const fightEffectFunction = window[villainCard.fightEffect];
+    console.log("Fight effect function found:", fightEffectFunction);
+    if (typeof fightEffectFunction === 'function') {
+      fightEffectPromise = new Promise((resolve, reject) => {
+        try {
+          const result = fightEffectFunction(villainCard);
+          console.log("Fight effect executed:", result);
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    } else {
+      console.error(`Fight effect function ${villainCard.fightEffect} not found`);
+    }
+  } else {
+    console.log("No fight effect found for this villain.");
+  }
+
+  // Handle fight effect promise
+  await fightEffectPromise
+    .then(() => {
+      updateGameBoard(); // Update the game board after fight effect is handled
+    })
+    .catch(error => {
+      console.error(`Error in fight effect: ${error}`);
+      updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
+    });
+
+  if (hasProfessorXMindControl) {
     // Show popup for gaining villain as hero
     const gainVillainResult = await new Promise((resolve) => {
-        const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-            "DO YOU WISH TO GAIN THIS VILLAIN?",
-            "GAIN AS A HERO",
-            "NO THANKS!"
-        );
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        "DO YOU WISH TO GAIN THIS VILLAIN?",
+        "GAIN AS A HERO",
+        "NO THANKS!"
+      );
 
-        document.getElementById('heroAbilityHoverText').style.display = 'none';
+      document.getElementById('heroAbilityHoverText').style.display = 'none';
 
-        // Show the villain card image in the popup
-        const cardImage = document.getElementById('hero-ability-may-card');
-        cardImage.src = 'Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_MindControl.webp';
-        cardImage.style.display = 'block';
+      // Show the villain card image in the popup
+      const cardImage = document.getElementById('hero-ability-may-card');
+      cardImage.src = 'Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_MindControl.webp';
+      cardImage.style.display = 'block';
 
-        confirmButton.onclick = () => {
-            // Create and modify the copy
-            const cardCopy = JSON.parse(JSON.stringify(villainCard));
-            cardCopy.type = "Hero";
-            cardCopy.color = "Grey";
-            cardCopy.cost = villainCard.attack;
-            cardCopy.keyword1 = "None";
-            cardCopy.keyword2 = "None";
-            cardCopy.keyword3 = "None";
-            
-            playerDiscardPile.push(cardCopy);
-            
-            onscreenConsole.log(`You have chosen to add <span class="console-highlights">${villainCard.name}</span> to your discard pile as a grey Hero.`);
-            updateGameBoard();
-            
-            hideHeroAbilityMayPopup();
-            document.getElementById('heroAbilityHoverText').style.display = 'block';
-            resolve(true); // Resolve with true indicating the player chose to copy
-        };
+      confirmButton.onclick = () => {
+        // Create and modify the copy
+        const cardCopy = JSON.parse(JSON.stringify(villainCard));
+        cardCopy.type = "Hero";
+        cardCopy.color = "Grey";
+        cardCopy.cost = villainCard.attack;
+        cardCopy.keyword1 = "None";
+        cardCopy.keyword2 = "None";
+        cardCopy.keyword3 = "None";
+        
+        playerDiscardPile.push(cardCopy);
+        
+        onscreenConsole.log(`You have chosen to add <span class="console-highlights">${villainCard.name}</span> to your discard pile as a grey Hero.`);
+        updateGameBoard();
+        
+        hideHeroAbilityMayPopup();
+        document.getElementById('heroAbilityHoverText').style.display = 'block';
+        resolve(true); // Resolve with true indicating the player chose to copy
+      };
 
-        denyButton.onclick = () => {
-            onscreenConsole.log(`You declined to copy ${villainCard.name}.`);
-            hideHeroAbilityMayPopup();
-            document.getElementById('heroAbilityHoverText').style.display = 'block';
-            resolve(false); // Resolve with false indicating the player declined
-        };
+      denyButton.onclick = () => {
+        onscreenConsole.log(`You declined to copy ${villainCard.name}.`);
+        hideHeroAbilityMayPopup();
+        document.getElementById('heroAbilityHoverText').style.display = 'block';
+        resolve(false); // Resolve with false indicating the player declined
+      };
     });
-}
+  }
 
-    // Reset the currentVillainLocation after the attack is resolved
-    currentVillainLocation = null;
-    updateGameBoard();
-
+  // Reset the currentVillainLocation after the attack is resolved
+  currentVillainLocation = null;
+  updateGameBoard();
 }
 
 // Card Abilities for Dark City Henchmen
@@ -5219,26 +5370,20 @@ function handlePhalanxTechRevealed() {
 
 // Card Abilities for Dark City Bystanders
 
-async function rescueBystanderAbility(bystander) {  
-let abilityPromise = Promise.resolve();
-            if (bystander.bystanderUnconditionalAbility && bystander.bystanderUnconditionalAbility !== "None") {
-                const abilityFunction = window[bystander.bystanderUnconditionalAbility];
-                if (typeof abilityFunction === 'function') {
-                    // Wrap the result in a Promise if it isn't one
-                    abilityPromise = new Promise((resolve, reject) => {
-                        try {
-                            const result = abilityFunction(bystander);
-                            resolve(result);
-				addHRToTopWithInnerHTML();
-                        } catch (error) {
-                            reject(error);
-                        }
-                    });
-                } else {
-                    console.error(`Unconditional ability function ${bystander.bystanderUnconditionalAbility} not found`);
-                }
-            }
+async function rescueBystanderAbility(bystander) {
+  // No-op default so callers can always await safely
+  if (!bystander) return;
 
+  // Handle unconditional ability
+  if (bystander.bystanderUnconditionalAbility && bystander.bystanderUnconditionalAbility !== "None") {
+    const fn = window[bystander.bystanderUnconditionalAbility];
+    if (typeof fn === 'function') {
+      // Ensure we await even if fn is non-async
+      await Promise.resolve(fn(bystander));
+    } else {
+      console.error(`Unconditional ability function ${bystander.bystanderUnconditionalAbility} not found`);
+    }
+  }
 }
 
 function bystanderNewsReporter() {
@@ -5269,6 +5414,7 @@ function bystanderRadiationScientist() {
         const hoverText = document.getElementById("card-ko-card-popupHoverText");
         const KOImage = document.getElementById("card-ko-popup-image");
         const context = document.getElementById("card-ko-popup-h2");
+        popup.zIndex = 1003;
 
         document.getElementById("card-list-hand").innerHTML = 'Cards You Have';
 
@@ -5281,8 +5427,7 @@ function bystanderRadiationScientist() {
         confirmButton.textContent = 'Confirm KO';
         modalOverlay.style.display = 'block';
         popup.style.display = 'block';
-        popup.style.zIndex = 1002;
-
+        
         let selectedCard = null;
         let selectedLocation = null; // 'hand', 'played', or 'discard'
         let activeImage = null; // Declare activeImage variable
@@ -6019,10 +6164,10 @@ genericDiscardChoice();
 }
 
 function pestilenceFight() {
-onscreenConsole.log(`<span class="console-highlights">Pestilence</span> - fight effect!`);
-return new Promise((resolve) => {
-    // Draw up to three cards
-    let revealedCards = [];
+  onscreenConsole.log(`<span class="console-highlights">Pestilence</span> - fight effect!`);
+  return new Promise(async (resolve) => {
+    // Reveal up to 3
+    const revealedCards = [];
     for (let i = 0; i < 3; i++) {
       if (playerDeck.length === 0) {
         if (playerDiscardPile.length > 0) {
@@ -6037,35 +6182,32 @@ return new Promise((resolve) => {
       revealedCards.push(playerDeck.pop());
     }
 
-    // Process cards - discard any with cost >= 1
-    const cardsToDiscard = revealedCards.filter(card => card.cost >= 1);
-    const cardsToReturn = revealedCards.filter(card => card.cost < 1);
+    const cardsToDiscard = revealedCards.filter(c => (c?.cost ?? 0) >= 1);
+    const cardsToReturn  = revealedCards.filter(c => (c?.cost ?? 0) < 1);
 
-    // Discard high cost cards immediately
-    cardsToDiscard.forEach(card => {
-      playerDiscardPile.push(card);
-      onscreenConsole.log(`<span class="console-highlights">${card.name}</span> (Cost: ${card.cost}) discarded.`);
-    });
+    // — NEW: cost summary + central discard handler —
+    const formatCardCosts = cards =>
+      cards.map(c => `<span class="console-highlights">${c.name}</span> (Cost: ${c.cost ?? 0})`).join(', ');
 
-    // Handle remaining cards (cost 0)
+    if (cardsToDiscard.length) {
+      onscreenConsole.log(`Discarding: ${formatCardCosts(cardsToDiscard)}.`);
+      const { returned } = await checkDiscardForInvulnerability(cardsToDiscard);
+      if (returned?.length) playerHand.push(...returned);
+    }
+
     if (cardsToReturn.length === 0) {
       onscreenConsole.log("All revealed cards cost 1 or more and have been discarded.");
-      updateGameBoard();
-      resolve();
-      return;
+      updateGameBoard(); resolve(); return;
     }
 
     if (cardsToReturn.length === 1) {
-      // Only one card to return - just put it back
       playerDeck.push(cardsToReturn[0]);
+      cardsToReturn[0].revealed = true;
       onscreenConsole.log(`<span class="console-highlights">${cardsToReturn[0].name}</span> returned to deck.`);
-cardsToReturn[0].revealed = true;
-      updateGameBoard();
-      resolve();
-      return;
+      updateGameBoard(); resolve(); return;
     }
 
-    // Multiple cards to return - let player choose order
+    // Multiple returns – keep your existing order UI/logic
     handleCardReturnOrder(cardsToReturn).then(() => {
       updateGameBoard();
       resolve();
@@ -6074,10 +6216,10 @@ cardsToReturn[0].revealed = true;
 }
 
 function pestilenceEscape() {
-onscreenConsole.log(`<span class="console-highlights">Pestilence</span> has escaped!`);
-return new Promise((resolve) => {
-    // Draw up to three cards
-    let revealedCards = [];
+  onscreenConsole.log(`<span class="console-highlights">Pestilence</span> has escaped!`);
+  return new Promise(async (resolve) => {
+    // Reveal up to 3
+    const revealedCards = [];
     for (let i = 0; i < 3; i++) {
       if (playerDeck.length === 0) {
         if (playerDiscardPile.length > 0) {
@@ -6092,84 +6234,37 @@ return new Promise((resolve) => {
       revealedCards.push(playerDeck.pop());
     }
 
-    // Process cards - discard any with cost >= 1
-    const cardsToDiscard = revealedCards.filter(card => card.cost >= 1);
-    const cardsToReturn = revealedCards.filter(card => card.cost < 1);
+    const cardsToDiscard = revealedCards.filter(c => (c?.cost ?? 0) >= 1);
+    const cardsToReturn  = revealedCards.filter(c => (c?.cost ?? 0) < 1);
 
-    // Discard high cost cards immediately
-    cardsToDiscard.forEach(card => {
-      playerDiscardPile.push(card);
-      onscreenConsole.log(`<span class="console-highlights">${card.name}</span> (Cost: ${card.cost}) discarded.`);
-    });
+    // — NEW: cost summary + central discard handler —
+    const formatCardCosts = cards =>
+      cards.map(c => `<span class="console-highlights">${c.name}</span> (Cost: ${c.cost ?? 0})`).join(', ');
 
-    // Handle remaining cards (cost 0)
+    if (cardsToDiscard.length) {
+      onscreenConsole.log(`Discarding: ${formatCardCosts(cardsToDiscard)}.`);
+      const { returned } = await checkDiscardForInvulnerability(cardsToDiscard);
+      if (returned?.length) playerHand.push(...returned);
+    }
+
     if (cardsToReturn.length === 0) {
       onscreenConsole.log("All revealed cards cost 1 or more and have been discarded.");
-      updateGameBoard();
-      resolve();
-      return;
+      updateGameBoard(); resolve(); return;
     }
 
     if (cardsToReturn.length === 1) {
-      // Only one card to return - just put it back
       playerDeck.push(cardsToReturn[0]);
+      cardsToReturn[0].revealed = true;
       onscreenConsole.log(`<span class="console-highlights">${cardsToReturn[0].name}</span> returned to deck.`);
-	cardsToReturn[0].revealed = true;
-      updateGameBoard();
-      resolve();
-      return;
+      updateGameBoard(); resolve(); return;
     }
 
-    // Multiple cards to return - let player choose order
+    // Multiple returns – keep your existing order UI/logic
     handleCardReturnOrder(cardsToReturn).then(() => {
       updateGameBoard();
       resolve();
     });
   });
-}
-
-async function handleCardReturnOrder(cards) {
-  const remainingCards = [...cards];
-  const returnOrder = [];
-
-  while (remainingCards.length > 0) {
-    const choice = await showCardSelectionPopup({
-      title: 'Return Cards to Deck',
-      instructions: remainingCards.length === cards.length 
-        ? 'Select first card to place on top of deck' 
-        : 'Select next card to place on deck',
-      items: remainingCards.map(card => ({
-        name: card.name,
-        image: card.image,
-        card: card
-      })),
-      confirmText: 'CONFIRM SELECTION'
-    });
-
-    // Move selected card from remaining to return order
-    const selectedIndex = remainingCards.findIndex(c => c === choice.card);
-    remainingCards.splice(selectedIndex, 1);
-    returnOrder.push(choice.card); // Changed from unshift to push
-  }
-
-  // Add all cards to deck in chosen order (now using unshift to maintain top-deck order)
-  returnOrder.forEach(card => {
-    playerDeck.push(card);
-    card.revealed = true;
-  });
-
-  // Format console message
-  const cardNames = returnOrder.map(card => 
-    `<span class="console-highlights">${card.name}</span>`
-  );
-
-  if (cardNames.length > 1) {
-    const last = cardNames.pop();
-    onscreenConsole.log(`Returned to deck: ${cardNames.join(', ')} and ${last}`);
-  } else {
-    onscreenConsole.log(`Returned to deck: ${cardNames[0]}`);
-  }
-  updateGameBoard();
 }
 
 function deathFight() {
@@ -6533,29 +6628,25 @@ function deathEscape() {
 }
 
 async function vertigoFight() {
-    onscreenConsole.log(`<span class="console-highlights">Vertigo</span> - fight effect!`);
-    const numberToDraw = playerHand.length;
-    console.log("Player hand before discard:", playerHand);
+  onscreenConsole.log(`<span class="console-highlights">Vertigo</span> - fight effect!`);
 
-    // Process discard with invulnerability check
-    const { returned: returnedCards } = await checkDiscardForInvulnerability([...playerHand]);
+  const numberToDraw = playerHand.length;
 
-    // Clear and redraw
-    playerHand = [];
-    
-    // Draw new cards first
-    for (let i = 0; i < numberToDraw; i++) {
-        extraDraw();
-    }
+  // 1) Snapshot & clear the hand up front
+  const handSnapshot = [...playerHand];   // exact refs
+  playerHand.length = 0;                  // clear without replacing the array object
 
-    // Then add back any invulnerable cards
-    if (returnedCards.length > 0) {
-        playerHand.push(...returnedCards);
-    }
+  // 2) Discard the snapshot (immediate triggers resolve here; new draws go safely into the empty hand)
+  const { returned } = await checkDiscardForInvulnerability(handSnapshot);
+  if (returned?.length) playerHand.push(...returned);
 
-    console.log('Hand discarded and redrawn. Updated playerHand:', playerHand);
-    onscreenConsole.log('Hand discarded and redrawn.');
-    updateGameBoard();
+  // 3) Draw the replacement hand
+  for (let i = 0; i < numberToDraw; i++) {
+    extraDraw();
+  }
+
+  onscreenConsole.log(`Hand discarded and redrawn (${numberToDraw}).`);
+  updateGameBoard();
 }
 
 function scalphunterAmbush(scalphunter) {
@@ -7124,12 +7215,17 @@ function hammerheadFight() {
     onscreenConsole.log(`Fight! <span class="console-highlights">Hammerhead</span> forces you to KO one of your Heroes with a <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> icon.`);
     return new Promise((resolve, reject) => {
         // Combine heroes from the player's hand and cards played this turn
+        // Exclude cards that are already marked for destruction
         const combinedCards = [
-            ...playerHand.filter(card => card.recruitIcon === true).map(card => ({ card, source: 'hand' })),
+            ...playerHand.filter(card => 
+                card.recruitIcon === true && 
+                !card.markedToDestroy
+            ).map(card => ({ card, source: 'hand' })),
             ...cardsPlayedThisTurn.filter(card => 
                 card.isCopied !== true && 
                 card.sidekickToDestroy !== true &&
-                card.recruitIcon === true
+                card.recruitIcon === true &&
+                !card.markedToDestroy  // Exclude already marked cards
             ).map(card => ({ card, source: 'played' }))
         ];        
         
@@ -7232,10 +7328,10 @@ function hammerheadFight() {
                 if (handIndex !== -1) {
                     playerHand.splice(handIndex, 1);
                 }
-} else {
-    // Directly mark the card to be destroyed instead of splicing
-    card.card.markedToDestroy = true;
-}
+            } else {
+                // Mark the card to be destroyed at the end of the turn
+                card.card.markedToDestroy = true;
+            }
             
             // Add the card to the KO pile
             koPile.push(card.card);
@@ -7286,7 +7382,10 @@ function hammerheadFight() {
             const class2Icon = createClassIconHTML(card.card.class2);
             const class3Icon = createClassIconHTML(card.card.class3);
             
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.card.name}</span>`;
+            // Add location indicator like in bullseyeFight
+            const location = card.source === 'hand' ? '(Hand)' : '(Played Cards)';
+            
+            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.card.name} ${location}</span>`;
 
             li.setAttribute('data-card-id', index);
 
@@ -7313,236 +7412,179 @@ function hammerheadFight() {
 }
 
 function jigsawAmbush() {
-    onscreenConsole.log(`Ambush! <span class="console-highlights">Jigsaw</span> forces you to discard and draw.`);
-    
-    return new Promise(async (resolve) => {
-        // Get all cards in hand with their original indices
-        const availableCards = playerHand
-            .filter(card => card) // Filter out any undefined/null cards
-            .map((card, originalIndex) => ({ 
-                card, 
-                originalIndex,
-                uniqueId: `${card.id}-${originalIndex}` 
-            }));
+  onscreenConsole.log(`Ambush! <span class="console-highlights">Jigsaw</span> forces you to discard and draw.`);
 
-        // Handle cases where there are 3 or fewer cards available
-        if (availableCards.length === 0) {
-            onscreenConsole.log("No cards in hand to discard.");
-            resolve();
-            return;
+  return new Promise(async (resolve) => {
+    // Build selectable entries that keep exact references + stable unique ids
+    const availableCards = playerHand
+      .filter(Boolean)
+      .map((card, originalIndex) => ({
+        card, originalIndex, uniqueId: `${card.id}-${originalIndex}`
+      }));
+
+    // No cards
+    if (availableCards.length === 0) {
+      onscreenConsole.log("No cards in hand to discard.");
+      resolve();
+      return;
+    }
+
+    // ===== Case A: 3 or fewer in hand — discard ALL (snapshot & clear) =====
+    if (availableCards.length <= 3) {
+      const handSnapshot = [...playerHand];   // exact refs
+      playerHand.length = 0;                  // clear without replacing array object
+
+      const { returned } = await checkDiscardForInvulnerability(handSnapshot);
+      if (returned.length) playerHand.push(...returned);
+
+      // Draw 2 after all discard triggers resolve
+      extraDraw();
+      extraDraw();
+
+      updateGameBoard();
+      onscreenConsole.log(`Discarded ${handSnapshot.length} card${handSnapshot.length !== 1 ? 's' : ''}.`);
+      resolve();
+      return;
+    }
+
+    // ===== Case B: More than 3 — pick exactly 3 =====
+    const popup = document.getElementById('card-choice-one-location-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const cardsList = document.getElementById('cards-to-choose-from');
+    const confirmButton = document.getElementById('card-choice-confirm-button');
+    const popupTitle = popup.querySelector('h2');
+    const instructionsDiv = document.getElementById('context');
+    const heroImage = document.getElementById('hero-one-location-image');
+    const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+    const cancelBtn = document.getElementById('close-choice-button');
+
+    // Hide "No Thanks" but remember prior state to restore later
+    const prevCancelDisplay = cancelBtn.style.display;
+    cancelBtn.style.display = 'none';
+
+    popupTitle.textContent = 'Ambush!';
+    instructionsDiv.textContent = 'Select three cards to discard.';
+    cardsList.innerHTML = '';
+    confirmButton.style.display = 'inline-block';
+    confirmButton.disabled = true;
+    confirmButton.textContent = 'Discard';
+    modalOverlay.style.display = 'block';
+    popup.style.display = 'block';
+
+    let selectedCards = [];  // array of { card, originalIndex, uniqueId }
+    let activeImage = null;
+
+    function updateConfirmButton() {
+      confirmButton.disabled = selectedCards.length !== 3;
+    }
+    function updateInstructions() {
+      if (selectedCards.length < 3) {
+        instructionsDiv.textContent = `Select ${3 - selectedCards.length} more card${selectedCards.length === 2 ? '' : 's'} to discard.`;
+      } else {
+        const namesList = selectedCards.map(o => `<span class="console-highlights">${o.card.name}</span>`).join(', ');
+        instructionsDiv.innerHTML = `Selected: ${namesList} will be discarded.`;
+      }
+    }
+    function updateCardImage(entry) {
+      if (entry) {
+        heroImage.src = entry.card.image;
+        heroImage.style.display = 'block';
+        oneChoiceHoverText.style.display = 'none';
+        activeImage = entry.card.image;
+      } else {
+        heroImage.src = '';
+        heroImage.style.display = 'none';
+        oneChoiceHoverText.style.display = 'block';
+        activeImage = null;
+      }
+    }
+    function toggleCardSelection(entry, li) {
+      const i = selectedCards.findIndex(c => c.uniqueId === entry.uniqueId);
+      if (i > -1) {
+        selectedCards.splice(i, 1);
+        li.classList.remove('selected');
+      } else {
+        if (selectedCards.length >= 3) {
+          const first = selectedCards.shift();
+          const firstLi = cardsList.querySelector(`[data-card-id="${first.uniqueId}"]`);
+          if (firstLi) firstLi.classList.remove('selected');
         }
+        selectedCards.push(entry);
+        li.classList.add('selected');
+      }
+      updateCardImage(selectedCards[selectedCards.length - 1] || null);
+      updateConfirmButton();
+      updateInstructions();
+    }
 
-        if (availableCards.length <= 3) {
-            // Discard all cards if 3 or fewer
-            const returnedCards = [];
-            // Process in reverse order to avoid index shifting issues
-            const cardsToProcess = [...availableCards].reverse();
-            
-            for (const cardObj of cardsToProcess) {
-                if (cardObj.originalIndex < playerHand.length && playerHand[cardObj.originalIndex] === cardObj.card) {
-                    playerHand.splice(cardObj.originalIndex, 1);
-                    const { returned } = await checkDiscardForInvulnerability(cardObj.card);
-                    returnedCards.push(...returned);
-                } else {
-                    // Fallback: find card by ID if indices don't match
-                    const fallbackIndex = playerHand.findIndex(c => c.id === cardObj.card.id);
-                    if (fallbackIndex !== -1) {
-                        playerHand.splice(fallbackIndex, 1);
-                        const { returned } = await checkDiscardForInvulnerability(cardObj.card);
-                        returnedCards.push(...returned);
-                    }
-                }
-            }
-            
-            // Add back any invulnerable cards
-            if (returnedCards.length > 0) {
-                playerHand.push(...returnedCards);
-            }
-            
-            updateGameBoard();
-            onscreenConsole.log(`Discarded ${availableCards.length} card${availableCards.length !== 1 ? 's' : ''}.`);
-            extraDraw();
-            extraDraw();
-            resolve();
-            return;
-        }
+    // Sort for display (your sorter can accept the 'card' property)
+    genericCardSort(availableCards, 'card');
 
-        // Setup UI for selection when more than 3 cards available
-        const popup = document.getElementById('card-choice-one-location-popup');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const cardsList = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+    // Render list
+    availableCards.forEach(entry => {
+      const li = document.createElement('li');
+      const createTeamIconHTML = (value) =>
+        (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None')
+          ? '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">'
+          : `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
+      const createClassIconHTML = (value) =>
+        (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None')
+          ? ''
+          : `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
 
-        // Hide the "No Thanks" button
-        document.getElementById('close-choice-button').style.display = 'none';
+      const teamIcon = createTeamIconHTML(entry.card.team);
+      const class1Icon = createClassIconHTML(entry.card.class1);
+      const class2Icon = createClassIconHTML(entry.card.class2);
+      const class3Icon = createClassIconHTML(entry.card.class3);
 
-        // Initialize UI
-        popupTitle.textContent = 'Ambush!';
-        instructionsDiv.textContent = 'Select three cards to discard.';
-        cardsList.innerHTML = '';
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Discard';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+      li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${entry.card.name}</span>`;
+      li.setAttribute('data-card-id', entry.uniqueId);
 
-        let selectedCards = [];
-        let activeImage = null;
-
-        function updateConfirmButton() {
-            confirmButton.disabled = selectedCards.length !== 3;
-        }
-
-        function updateInstructions() {
-            if (selectedCards.length < 3) {
-                instructionsDiv.textContent = `Select ${3 - selectedCards.length} more card${selectedCards.length === 2 ? '' : 's'} to discard.`;
-            } else {
-                const namesList = selectedCards.map(cardObj => 
-                    `<span class="console-highlights">${cardObj.card.name}</span>`
-                ).join(', ');
-                instructionsDiv.innerHTML = `Selected: ${namesList} will be discarded.`;
-            }
-        }
-
-        function updateCardImage(cardObj) {
-            if (cardObj) {
-                heroImage.src = cardObj.card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-                activeImage = cardObj.card.image;
-            } else {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-            }
-        }
-
-        function toggleCardSelection(cardObj, listItem) {
-            const index = selectedCards.findIndex(c => c.uniqueId === cardObj.uniqueId);
-            
-            if (index > -1) {
-                selectedCards.splice(index, 1);
-                listItem.classList.remove('selected');
-            } else {
-                if (selectedCards.length >= 3) {
-                    const firstSelected = document.querySelector(`[data-card-id="${selectedCards[0].uniqueId}"]`);
-                    if (firstSelected) firstSelected.classList.remove('selected');
-                    selectedCards.shift();
-                }
-                selectedCards.push(cardObj);
-                listItem.classList.add('selected');
-            }
-
-            updateCardImage(selectedCards[selectedCards.length - 1] || null);
-            updateConfirmButton();
-            updateInstructions();
-        }
-
-        // Sort the available cards
-        genericCardSort(availableCards, 'card');
-
-        // Populate the list with available cards
-        availableCards.forEach(cardObj => {
-            const li = document.createElement('li');
-            const createTeamIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-
-            const createClassIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-            
-            const teamIcon = createTeamIconHTML(cardObj.card.team);
-            const class1Icon = createClassIconHTML(cardObj.card.class1);
-            const class2Icon = createClassIconHTML(cardObj.card.class2);
-            const class3Icon = createClassIconHTML(cardObj.card.class3);
-            
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${cardObj.card.name}</span>`;
-
-            li.setAttribute('data-card-id', cardObj.uniqueId);
-
-            li.onmouseover = () => {
-                if (!activeImage) {
-                    heroImage.src = cardObj.card.image;
-                    heroImage.style.display = 'block';
-                    oneChoiceHoverText.style.display = 'none';
-                }
-            };
-
-            li.onmouseout = () => {
-                if (!activeImage) {
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    oneChoiceHoverText.style.display = 'block';
-                }
-            };
-
-            li.onclick = () => toggleCardSelection(cardObj, li);
-            cardsList.appendChild(li);
-        });
-
-        confirmButton.onclick = async () => {
-            if (selectedCards.length === 3) {
-                const returnedCards = [];
-                
-                // Process in reverse order to avoid index shifting issues
-                const sortedSelectedCards = [...selectedCards].sort((a, b) => b.originalIndex - a.originalIndex);
-                
-                for (const cardObj of sortedSelectedCards) {
-                    // Try using original index first
-                    if (cardObj.originalIndex < playerHand.length && playerHand[cardObj.originalIndex] === cardObj.card) {
-                        playerHand.splice(cardObj.originalIndex, 1);
-                        const { returned } = await checkDiscardForInvulnerability(cardObj.card);
-                        returnedCards.push(...returned);
-                    } else {
-                        // Fallback: find card by ID if indices don't match
-                        const fallbackIndex = playerHand.findIndex(c => c.id === cardObj.card.id);
-                        if (fallbackIndex !== -1) {
-                            playerHand.splice(fallbackIndex, 1);
-                            const { returned } = await checkDiscardForInvulnerability(cardObj.card);
-                            returnedCards.push(...returned);
-                        }
-                    }
-                }
-                
-                // Add back any invulnerable cards
-                if (returnedCards.length > 0) {
-                    playerHand.push(...returnedCards);
-                }
-                
-                closePopup();
-                updateGameBoard();
-                extraDraw();
-                extraDraw();
-                resolve();
-            }
-        };
-
-        function closePopup() {
-            popupTitle.textContent = 'Hero Ability!';
-            instructionsDiv.textContent = 'Context';
-            confirmButton.textContent = 'Confirm';
-            confirmButton.disabled = true;
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
+      li.onmouseover = () => { if (!activeImage) { heroImage.src = entry.card.image; heroImage.style.display = 'block'; oneChoiceHoverText.style.display = 'none'; } };
+      li.onmouseout  = () => { if (!activeImage) { heroImage.src = ''; heroImage.style.display = 'none'; oneChoiceHoverText.style.display = 'block'; } };
+      li.onclick = () => toggleCardSelection(entry, li);
+      cardsList.appendChild(li);
     });
+
+    const closePopup = () => {
+      popupTitle.textContent = 'Hero Ability!';
+      instructionsDiv.textContent = 'Context';
+      confirmButton.textContent = 'Confirm';
+      confirmButton.disabled = true;
+      heroImage.src = '';
+      heroImage.style.display = 'none';
+      oneChoiceHoverText.style.display = 'block';
+      activeImage = null;
+      popup.style.display = 'none';
+      modalOverlay.style.display = 'none';
+      cancelBtn.style.display = prevCancelDisplay || '';
+    };
+
+    confirmButton.onclick = async () => {
+      if (selectedCards.length !== 3) return;
+      confirmButton.disabled = true;
+
+      // Map selections to exact refs and remove them from hand by reference
+      const toDiscard = selectedCards.map(s => s.card);
+      for (const ref of toDiscard) {
+        const idx = playerHand.indexOf(ref);
+        if (idx !== -1) playerHand.splice(idx, 1);
+      }
+
+      // Run discard triggers once, in batch
+      const { returned } = await checkDiscardForInvulnerability(toDiscard);
+      if (returned.length) playerHand.push(...returned);
+
+      closePopup();
+      updateGameBoard();
+
+      // Draw 2 after discards resolve
+      extraDraw();
+      extraDraw();
+
+      resolve();
+    };
+  });
 }
 
 function bullseyeFight() {
@@ -8019,9 +8061,8 @@ function draculaAmbush(draculaCard) {
 
     // Increase the villain's attack by the hero's cost
     dracula.originalAttack = dracula.attack;
-    dracula.attack += hero.cost;
-    dracula.overlayTextAttack = dracula.attack;
-
+    dracula.heroAttack = hero.cost;
+    
     // Move the hero to the Skrull deck (or equivalent storage) and tag it with the captureCode
     capturedCardsDeck.push({ ...hero, captured: captureCode }); // Store the hero with its captureCode
 
@@ -8035,90 +8076,89 @@ function draculaAmbush(draculaCard) {
 }
 
 function draculaFight(villainCard) {
-    // FIRST - Find the ACTUAL Dracula instance in the city
-    const actualDracula = city.find(card => 
-        card.id === villainCard.id ||  // Match by ID if available
-        card.name === villainCard.name // Or fallback to name match
-    ) || villainCard; // Ultimate fallback
-    
-    // NOW use the actual instance's captureCode
-    const heroIndex = capturedCardsDeck.findIndex(hero => 
-        hero.captured === actualDracula.captureCode
-    );
+  const actualDracula = findActualVillainInstance(villainCard);
 
-    console.log("DEBUG - Actual Dracula:", {
-        id: actualDracula.id,
-        name: actualDracula.name,
-        code: actualDracula.captureCode
-    });
+  const heroIndex = capturedCardsDeck.findIndex(
+    hero => hero.captured === actualDracula.captureCode
+  );
 
-    if (heroIndex === -1) {
-        onscreenConsole.log(`Error. ${actualDracula.name} has no captured hero.`);
-        return;
-    }
+  console.log("DEBUG - Actual Dracula:", {
+    id: actualDracula?.id,
+    name: actualDracula?.name,
+    code: actualDracula?.captureCode
+  });
 
+  if (heroIndex === -1) {
+    onscreenConsole.log(`Error. ${actualDracula.name} has no captured hero.`);
+    return;
+  }
 
-    const hero = capturedCardsDeck.splice(heroIndex, 1)[0];
-    if (!hero) {
-        onscreenConsole.log('Error. Captured Hero not found.');
-        return;
-    }
+  const hero = capturedCardsDeck.splice(heroIndex, 1)[0];
+  if (!hero) {
+    onscreenConsole.log('Error. Captured Hero not found.');
+    return;
+  }
 
+  delete hero.captured;
+  playerDiscardPile.push(hero);
 
-    delete hero.captured;
-    playerDiscardPile.push(hero);
-
-    onscreenConsole.log(`<span class="console-highlights">${hero.name}</span> has been rescued from <span class="console-highlights">Dracula</span> and added to your discard pile.`);
-    updateGameBoard();
+  onscreenConsole.log(`<span class="console-highlights">${hero.name}</span> has been rescued from <span class="console-highlights">Dracula</span> and added to your discard pile.`);
+  updateGameBoard();
 }
 
+
 function draculaEscape(escapedVillain) {
-    // 1. First find the ACTUAL villain instance in city (like we did for fight)
-    const actualVillain = city.find(v => 
-        v.persistentId === escapedVillain.persistentId || // Best case
-        v.captureCode === escapedVillain.captureCode      // Fallback
-    ) || escapedVillain;
+  const actualVillain = findActualVillainInstance(escapedVillain);
+  const captureCode = actualVillain.captureCode;
 
-    // 2. Get the capture code from the actual instance
-    const captureCode = actualVillain.captureCode;
+  onscreenConsole.log(`<span class="console-highlights">Dracula</span> has escaped with his captured Hero!`);
 
-    onscreenConsole.log(`<span class="console-highlights">Dracula</span> has escaped with his captured Hero!`);
+  const heroIndex = capturedCardsDeck.findIndex(hero => hero.captured === captureCode);
 
-    // 3. Find hero using the PROPER capture code
-    const heroIndex = capturedCardsDeck.findIndex(hero => hero.captured === captureCode);
+  // Clean overlays/attack on the actual instance
+  actualVillain.overlayText = '';
+  actualVillain.overlayTextAttack = '';
+  actualVillain.attack = actualVillain.originalAttack || 0;
+  actualVillain.attackFromOwnEffects = 0;
+  delete actualVillain.captureCode;
 
-    // 4. Clear overlays and reset - modify the ACTUAL villain
-    actualVillain.overlayText = '';
-    actualVillain.overlayTextAttack = '';
-    actualVillain.attack = actualVillain.originalAttack || 0;
-    delete actualVillain.captureCode;
+  if (heroIndex === -1) {
+    console.error("Escape Failed - Villain:", {
+      name: actualVillain?.name,
+      id: actualVillain?.persistentId,
+      code: captureCode
+    });
+    onscreenConsole.log('Error. No hero was captured by this Dracula.');
+    return;
+  }
 
-    if (heroIndex === -1) {
-        console.error("Escape Failed - Villain:", {
-            name: actualVillain.name,
-            id: actualVillain.persistentId,
-            code: captureCode
-        });
-        onscreenConsole.log('Error. No hero was captured by this Dracula.');
-        return;
-    }
+  const hero = capturedCardsDeck.splice(heroIndex, 1)[0];
+  if (!hero) {
+    onscreenConsole.log('Error. Hero data corrupted during escape.');
+    return;
+  }
 
-    const hero = capturedCardsDeck.splice(heroIndex, 1)[0];
-    if (!hero) {
-        onscreenConsole.log('Error. Hero data corrupted during escape.');
-        return;
-    }
+  delete hero.captured;
+  escapedVillainsDeck.push(hero);
 
-    // 5. Clean up hero data
-    delete hero.captured;
-    escapedVillainsDeck.push(hero);
+  if (window.captureRegistry?.[actualVillain.persistentId]) {
+    delete window.captureRegistry[actualVillain.persistentId];
+  }
 
-    // 6. If using central registry (from previous fixes)
-    if (window.captureRegistry?.[actualVillain.persistentId]) {
-        delete window.captureRegistry[actualVillain.persistentId];
-    }
+  updateGameBoard();
+}
 
-    updateGameBoard();
+function findActualVillainInstance(candidate) {
+  // Try to find the actual in-city instance. Guard nulls!
+  const match = city.find(c =>
+    c && (
+      (candidate.captureCode && c.captureCode === candidate.captureCode) ||
+      (candidate.persistentId && c.persistentId === candidate.persistentId) ||
+      (candidate.id != null && c.id === candidate.id) ||
+      (c.name === candidate.name)
+    )
+  );
+  return match || candidate; // fall back to the passed-in copy
 }
 
 function azazelFight() {
@@ -8314,102 +8354,103 @@ function apocalypseStrike() {
 
 
 async function kingpinStrike() {
-    const cardsYouHave = [
-        ...playerHand,
-        ...cardsPlayedThisTurn.filter(card => 
-            !card.isCopied && 
-            !card.sidekickToDestroy
-        )
-    ];
+  const cardsYouHave = [
+    ...playerHand,
+    ...cardsPlayedThisTurn.filter(card => !card.isCopied && !card.sidekickToDestroy)
+  ];
 
-    const hasMarvelKnights = cardsYouHave.some(card => card.team === 'Marvel Knights');
+  const hasMarvelKnights = cardsYouHave.some(card => card.team === 'Marvel Knights');
 
-    if (!hasMarvelKnights) {
-        console.log('You are unable to reveal a Marvel Knights hero.');
-        onscreenConsole.log(`You are unable to reveal a <img src='Visual Assets/Icons/Marvel Knights.svg' alt='Marvel Knights Icon' class='console-card-icons'> Hero.`);
-        
-        // Process discard with invulnerability check
-        const returnedCards = [];
-        while (playerHand.length > 0) {
-            const card = playerHand[0];
-            playerHand.splice(0, 1);
-            const { returned } = await checkDiscardForInvulnerability(card);
-            returnedCards.push(...returned);
-        }
-        
-        // Add back any invulnerable cards
-        if (returnedCards.length > 0) {
-            playerHand.push(...returnedCards);
-        }
-        
-        // Draw 5 cards
-        for (let i = 0; i < 5; i++) {
-            await extraDraw();
-        }
+  if (!hasMarvelKnights) {
+    console.log('You are unable to reveal a Marvel Knights hero.');
+    onscreenConsole.log(
+      `You are unable to reveal a <img src='Visual Assets/Icons/Marvel Knights.svg' alt='Marvel Knights Icon' class='console-card-icons'> Hero.`
+    );
 
-	hideRevealedCards();
-        
-        updateGameBoard();
-    } else {
-        return new Promise((resolve) => {
-            setTimeout(() => {  
-                const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-                    "DO YOU WISH TO REVEAL A CARD?",
-                    "Yes",
-                    "No"
-                );
+    // --- Snapshot & clear hand up front ---
+    const handSnapshot = [...playerHand];
+    playerHand.length = 0;
 
-                document.getElementById('heroAbilityHoverText').style.display = 'none';
-                const cardImage = document.getElementById('hero-ability-may-card');
-                cardImage.src = 'Visual Assets/Masterminds/DarkCity_Kingpin.webp';
-                cardImage.style.display = 'block';
-
-                const cleanup = () => {
-                    cardImage.src = '';
-                    cardImage.style.display = 'none';
-                    document.getElementById('heroAbilityHoverText').style.display = 'block';
-                    hideHeroAbilityMayPopup();
-                    updateGameBoard();
-                    resolve();
-                };
-
-                confirmButton.onclick = async () => {
-                    onscreenConsole.log(`You revealed a <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="console-card-icons"> Hero and escaped discarding your hand!`);
-                    cleanup();
-                };
-
-                denyButton.onclick = async () => {
-                    onscreenConsole.log(`You chose not to reveal a <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="console-card-icons"> Hero.`);
-                    
-                    // Process discard with invulnerability check
-                    const returnedCards = [];
-                    while (playerHand.length > 0) {
-                        const card = playerHand[0];
-                        playerHand.splice(0, 1);
-                        const { returned } = await checkDiscardForInvulnerability(card);
-                        returnedCards.push(...returned);
-                    }
-                    
-                    // Add back any invulnerable cards
-                    if (returnedCards.length > 0) {
-                        playerHand.push(...returnedCards);
-                    }
-                    
-                    // Draw 5 cards
-                    for (let i = 0; i < 5; i++) {
-                        await extraDraw();
-                    }
-
-			hideRevealedCards();
-                    
-                    cleanup();
-                };
-            }, 10);
-        });
+    // Process all discards over the snapshot
+    const returnedCards = [];
+    for (const card of handSnapshot) {
+      const { returned } = await checkDiscardForInvulnerability(card); // immediate triggers
+      if (returned?.length) returnedCards.push(...returned);
     }
+
+    // Return any invulnerable cards to hand
+    if (returnedCards.length) playerHand.push(...returnedCards);
+
+    // Kingpin effect: draw 5 AFTER all discard triggers have fully resolved
+    for (let i = 0; i < 5; i++) {
+      await extraDraw();
+    }
+
+    hideRevealedCards();
+    updateGameBoard();
+    return;
+  }
+
+  // Reveal flow
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        "DO YOU WISH TO REVEAL A CARD?",
+        "Yes",
+        "No"
+      );
+
+      document.getElementById('heroAbilityHoverText').style.display = 'none';
+      const cardImage = document.getElementById('hero-ability-may-card');
+      cardImage.src = 'Visual Assets/Masterminds/DarkCity_Kingpin.webp';
+      cardImage.style.display = 'block';
+
+      const cleanup = () => {
+        cardImage.src = '';
+        cardImage.style.display = 'none';
+        document.getElementById('heroAbilityHoverText').style.display = 'block';
+        hideHeroAbilityMayPopup();
+        updateGameBoard();
+        resolve();
+      };
+
+      confirmButton.onclick = async () => {
+        onscreenConsole.log(
+          `You revealed a <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="console-card-icons"> Hero and escaped discarding your hand!`
+        );
+        cleanup();
+      };
+
+      denyButton.onclick = async () => {
+        onscreenConsole.log(
+          `You chose not to reveal a <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="console-card-icons"> Hero.`
+        );
+
+        // --- Snapshot & clear hand up front ---
+        const handSnapshot = [...playerHand];
+        playerHand.length = 0;
+
+        // Process all discards over the snapshot
+        const returnedCards = [];
+        for (const card of handSnapshot) {
+          const { returned } = await checkDiscardForInvulnerability(card); // immediate triggers
+          if (returned?.length) returnedCards.push(...returned);
+        }
+
+        // Return any invulnerable cards to hand
+        if (returnedCards.length) playerHand.push(...returnedCards);
+
+        // Kingpin effect: draw 5 AFTER all discard triggers have fully resolved
+        for (let i = 0; i < 5; i++) {
+          await extraDraw();
+        }
+
+        hideRevealedCards();
+        cleanup();
+      };
+    }, 10);
+  });
 }
-
-
 
 async function mephistoStrike() {
 
@@ -8526,229 +8567,175 @@ async function mrSinisterStrike() {
 }
 
 async function mrSinisterProcessDiscardPhase() {
-    const mastermind = getSelectedMastermind();
-    const bystanderCount = mastermind.bystanders.length;
-    
-    // SORT FIRST - before any card processing
-    genericCardSort(playerHand);
-    
-    const cardsToDiscard = Math.min(bystanderCount, playerHand.length);
+  const mastermind = getSelectedMastermind();
+  const bystanderCount = mastermind.bystanders.length;
 
-    // If discarding all cards or only 1 option, auto-process
-    if (cardsToDiscard === playerHand.length || playerHand.length === 1) {
-        onscreenConsole.log(`<span class="console-highlights">Mr. Sinister</span> has ${bystanderCount} captured Bystander${bystanderCount !== 1 ? 's' : ''} forcing you to discard ${cardsToDiscard} card${cardsToDiscard !== 1 ? 's' : ''}.`);
-        
-        while (playerHand.length > 0) {
-            const card = playerHand[0];
-            playerHand.splice(0, 1);
-            
-            const { returned } = await checkDiscardForInvulnerability(card);
-            if (returned.length) {
-                playerHand.push(...returned);
-            }
-        }
-        return;
+  // Sort display order first
+  genericCardSort(playerHand);
+
+  const cardsToDiscard = Math.min(bystanderCount, playerHand.length);
+  if (cardsToDiscard === 0) {
+    onscreenConsole.log(`<span class="console-highlights">Mr. Sinister</span> has no captured Bystanders; you discard nothing.`);
+    return;
+  }
+
+  // ===== Case A: Discard all or only 1 card -> snapshot & clear to avoid re-discarding fresh draws =====
+  if (cardsToDiscard === playerHand.length || playerHand.length === 1) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Mr. Sinister</span> has ${bystanderCount} captured Bystander${bystanderCount !== 1 ? 's' : ''} forcing you to discard ${cardsToDiscard} card${cardsToDiscard !== 1 ? 's' : ''}.`
+    );
+
+    const handSnapshot = [...playerHand]; // exact refs
+    playerHand.length = 0;                // clear hand up front
+
+    // Discard exactly the snapshot (all, or the single card)
+    const toDiscard = handSnapshot.slice(0, cardsToDiscard);
+    const { returned } = await checkDiscardForInvulnerability(toDiscard);
+    if (returned?.length) playerHand.push(...returned);
+
+    updateGameBoard();
+    return;
+  }
+
+  // ===== Case B: Player must choose some (but not all) =====
+  const popup = document.getElementById('card-choice-one-location-popup');
+  const modalOverlay = document.getElementById('modal-overlay');
+  const cardsList = document.getElementById('cards-to-choose-from');
+  const confirmButton = document.getElementById('card-choice-confirm-button');
+  const cancelButton = document.getElementById('close-choice-button');
+  const popupTitle = popup.querySelector('h2');
+  const instructionsDiv = document.getElementById('context');
+  const heroImage = document.getElementById('hero-one-location-image');
+  const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+
+  // Build selectable entries that keep exact references + stable unique ids
+  const selectables = playerHand.map((ref, idx) => ({ ref, uid: `${ref.id}-${idx}` }));
+
+  // UI setup
+  popupTitle.textContent = 'Master Strike';
+  instructionsDiv.innerHTML = `<span class="console-highlights">Mr. Sinister</span> has ${bystanderCount} captured Bystander${bystanderCount !== 1 ? 's' : ''}. Select ${cardsToDiscard} card${cardsToDiscard !== 1 ? 's' : ''} to discard.`;
+  cardsList.innerHTML = '';
+  confirmButton.style.display = 'inline-block';
+  confirmButton.disabled = true;
+  confirmButton.textContent = 'Confirm';
+  const prevCancelDisplay = cancelButton.style.display;
+  cancelButton.style.display = 'none'; // forced choice
+  modalOverlay.style.display = 'block';
+  popup.style.display = 'block';
+  heroImage.style.display = 'none';
+  oneChoiceHoverText.style.display = 'block';
+
+  let selected = []; // array of entries {ref, uid}
+  let activeImage = null;
+
+  const updateConfirmButton = () => { confirmButton.disabled = selected.length !== cardsToDiscard; };
+  const updateInstructions = () => {
+    if (selected.length < cardsToDiscard) {
+      instructionsDiv.textContent = `Select ${cardsToDiscard - selected.length} more card${selected.length === cardsToDiscard - 1 ? '' : 's'} to discard.`;
+    } else {
+      const names = selected.map(e => `<span class="console-highlights">${e.ref.name}</span>`).join(', ');
+      instructionsDiv.innerHTML = `Selected: ${names} will be discarded.`;
     }
-
-    // Setup card selection popup with image display
-    const popup = document.getElementById('card-choice-one-location-popup');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const cardsList = document.getElementById('cards-to-choose-from');
-    const confirmButton = document.getElementById('card-choice-confirm-button');
-    const cancelButton = document.getElementById('close-choice-button');
-    const popupTitle = popup.querySelector('h2');
-    const instructionsDiv = document.getElementById('context');
-    const heroImage = document.getElementById('hero-one-location-image');
-    const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-
-    // Initialize UI
-    popupTitle.textContent = 'Master Strike';
-    instructionsDiv.innerHTML = `<span class="console-highlights">Mr. Sinister</span> has ${bystanderCount} captured Bystander${bystanderCount !== 1 ? 's' : ''}. Select ${cardsToDiscard} card${cardsToDiscard !== 1 ? 's' : ''} to discard.`;
-    cardsList.innerHTML = '';
-    confirmButton.style.display = 'inline-block';
-    confirmButton.disabled = true;
-    confirmButton.textContent = `Confirm`;
-    cancelButton.style.display = 'none';
-    modalOverlay.style.display = 'block';
-    popup.style.display = 'block';
-    heroImage.style.display = 'none';
-    oneChoiceHoverText.style.display = 'block';
-
-    let selectedCards = [];
-    let activeImage = null;
-    const cardElements = [];
-
-    function updateConfirmButton() {
-        confirmButton.disabled = selectedCards.length !== cardsToDiscard;
+  };
+  const updateHeroImage = (card) => {
+    if (card) {
+      heroImage.src = card.image;
+      heroImage.style.display = 'block';
+      oneChoiceHoverText.style.display = 'none';
+      activeImage = card.image;
+    } else {
+      heroImage.src = '';
+      heroImage.style.display = 'none';
+      oneChoiceHoverText.style.display = 'block';
+      activeImage = null;
     }
+  };
 
-    function updateInstructions() {
-        if (selectedCards.length < cardsToDiscard) {
-            instructionsDiv.textContent = `Select ${cardsToDiscard - selectedCards.length} more card${selectedCards.length === cardsToDiscard - 1 ? '' : 's'} to discard.`;
-        } else {
-            const namesList = selectedCards.map(card => 
-                `<span class="console-highlights">${card.name}</span>`
-            ).join(', ');
-            instructionsDiv.innerHTML = `Selected: ${namesList} will be discarded.`;
+  // Render list (sorted for display, but keep refs intact)
+  const display = selectables.map(x => ({ ...x.ref, uid: x.uid }));
+  genericCardSort(display);
+  const liByUid = new Map();
+
+  display.forEach(entryLikeCard => {
+    const li = document.createElement('li');
+    const teamIcon = (!entryLikeCard.team || /^(none|null|undefined|None)$/i.test(entryLikeCard.team))
+      ? '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">'
+      : `<img src="Visual Assets/Icons/${entryLikeCard.team}.svg" alt="${entryLikeCard.team} Icon" class="popup-card-icons">`;
+    const cIcon = v => (!v || /^(none|null|undefined|None)$/i.test(v)) ? '' :
+      `<img src="Visual Assets/Icons/${v}.svg" alt="${v} Icon" class="popup-card-icons">`;
+
+    li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${cIcon(entryLikeCard.class1)} ${cIcon(entryLikeCard.class2)} ${cIcon(entryLikeCard.class3)} | ${entryLikeCard.name}</span>`;
+    li.setAttribute('data-card-uid', entryLikeCard.uid);
+
+    // Find the real entry with this uid (to keep the exact ref)
+    const realEntry = selectables.find(s => s.uid === entryLikeCard.uid);
+
+    li.onmouseover = () => { if (!activeImage) { heroImage.src = realEntry.ref.image; heroImage.style.display = 'block'; oneChoiceHoverText.style.display = 'none'; } };
+    li.onmouseout  = () => { if (!activeImage) { heroImage.src = ''; heroImage.style.display = 'none'; oneChoiceHoverText.style.display = 'block'; } };
+    li.onclick = () => {
+      const i = selected.findIndex(s => s.uid === realEntry.uid);
+      if (i > -1) {
+        selected.splice(i, 1);
+        li.classList.remove('selected');
+      } else {
+        if (selected.length >= cardsToDiscard) {
+          const oldest = selected.shift();
+          const oldestLi = liByUid.get(oldest.uid);
+          if (oldestLi) oldestLi.classList.remove('selected');
         }
-    }
-
-    function updateHeroImage(card) {
-        if (card) {
-            heroImage.src = card.image;
-            heroImage.style.display = 'block';
-            oneChoiceHoverText.style.display = 'none';
-            activeImage = card.image;
-        } else {
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-        }
-    }
-
-    // Handle card selection with automatic oldest deselection
-    function handleCardClick(card, index) {
-        const li = cardElements[index];
-        const cardId = card.id; // Use card.id instead of index-based ID
-        
-        if (selectedCards.some(c => c.id === cardId)) {
-            // Card is already selected - deselect it
-            selectedCards = selectedCards.filter(c => c.id !== cardId);
-            li.classList.remove('selected');
-        } else {
-            if (selectedCards.length < cardsToDiscard) {
-                // Can select without replacing
-                selectedCards.push(card);
-                li.classList.add('selected');
-            } else {
-                // Need to replace oldest selection
-                const oldestCard = selectedCards.shift(); // Remove oldest
-                const oldestLi = cardElements.find(li => 
-                    li.getAttribute('data-card-id') === oldestCard.id
-                );
-                if (oldestLi) {
-                    oldestLi.classList.remove('selected');
-                }
-                
-                // Add new selection
-                selectedCards.push(card);
-                li.classList.add('selected');
-            }
-        }
-        
-        // Update the displayed image to show the last selected card
-        if (selectedCards.length > 0) {
-            updateHeroImage(selectedCards[selectedCards.length - 1]);
-        } else {
-            updateHeroImage(null);
-        }
-        
-        updateConfirmButton();
-        updateInstructions();
-    }
-
-    // Handle hover effects
-    function handleCardHover(card) {
-        if (!activeImage) {
-            heroImage.src = card.image;
-            heroImage.style.display = 'block';
-            oneChoiceHoverText.style.display = 'none';
-        }
-    }
-
-    function handleCardHoverOut() {
-        if (!activeImage) {
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-        } else if (selectedCards.length > 0) {
-            // Show the last selected card when hovering out
-            const lastCard = selectedCards[selectedCards.length - 1];
-            heroImage.src = lastCard.image;
-        }
-    }
-
-    // Populate card list (now sorted)
-    playerHand.forEach((card, index) => {
-        const li = document.createElement('li');
-        const createTeamIconHTML = (value) => {
-            if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-            }
-            return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-        };
-
-        const createClassIconHTML = (value) => {
-            if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                return '';
-            }
-            return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-        };
-        
-        const teamIcon = createTeamIconHTML(card.team);
-        const class1Icon = createClassIconHTML(card.class1);
-        const class2Icon = createClassIconHTML(card.class2);
-        const class3Icon = createClassIconHTML(card.class3);
-        
-        li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
-
-        li.setAttribute('data-card-id', card.id); // Use card.id instead of index-based ID
-
-        // Set hover and click handlers
-        li.onmouseover = () => handleCardHover(card);
-        li.onmouseout = handleCardHoverOut;
-        li.onclick = () => handleCardClick(card, index);
-        
-        cardsList.appendChild(li);
-        cardElements.push(li);
-    });
-
-    confirmButton.onclick = async function() {
-        if (selectedCards.length === cardsToDiscard) {
-            closePopup();
-            
-            // Process discard by card ID instead of index to avoid index shifting issues
-            for (const card of selectedCards) {
-                // Find the card by ID instead of index
-                const handIndex = playerHand.findIndex(c => c.id === card.id);
-                if (handIndex !== -1) {
-                    const [discardedCard] = playerHand.splice(handIndex, 1);
-                    
-                    const { returned } = await checkDiscardForInvulnerability(discardedCard);
-                    if (returned.length) {
-                        playerHand.push(...returned);
-                    }
-                    updateGameBoard();
-                }
-            }
-        }
+        selected.push(realEntry);
+        li.classList.add('selected');
+      }
+      updateHeroImage(selected.length ? selected[selected.length - 1].ref : null);
+      updateConfirmButton();
+      updateInstructions();
     };
 
-    function closePopup() {
-        // Reset UI
-        popupTitle.textContent = 'Hero Ability!';
-        instructionsDiv.textContent = 'Context';
-        confirmButton.textContent = 'Confirm';
-        confirmButton.disabled = true;
-        heroImage.src = '';
-        heroImage.style.display = 'none';
-        oneChoiceHoverText.style.display = 'block';
-        activeImage = null;
+    cardsList.appendChild(li);
+    liByUid.set(entryLikeCard.uid, li);
+  });
 
-        // Hide popup
-        popup.style.display = 'none';
-        modalOverlay.style.display = 'none';
+  const closePopup = () => {
+    popupTitle.textContent = 'Hero Ability!';
+    instructionsDiv.textContent = 'Context';
+    confirmButton.textContent = 'Confirm';
+    confirmButton.disabled = true;
+    heroImage.src = '';
+    heroImage.style.display = 'none';
+    oneChoiceHoverText.style.display = 'block';
+    activeImage = null;
+    popup.style.display = 'none';
+    modalOverlay.style.display = 'none';
+    cancelButton.style.display = prevCancelDisplay || '';
+  };
+
+  confirmButton.onclick = async function () {
+    if (selected.length !== cardsToDiscard) return;
+    confirmButton.disabled = true;
+
+    // Remove the chosen refs from hand up front (by reference)
+    const toDiscard = selected.map(s => s.ref);
+    for (const ref of toDiscard) {
+      const idx = playerHand.indexOf(ref);
+      if (idx !== -1) playerHand.splice(idx, 1);
     }
 
-    // Wait for player selection
-    await new Promise((resolve) => {
-        const originalOnclick = confirmButton.onclick;
-        confirmButton.onclick = async function() {
-            await originalOnclick.call(this);
-            resolve();
-        };
-    });
+    // Run discard triggers; add any "returned" back to hand
+    const { returned } = await checkDiscardForInvulnerability(toDiscard);
+    if (returned?.length) playerHand.push(...returned);
+
+    closePopup();
+    updateGameBoard();
+  };
+
+  // Wait for player selection to finish
+  await new Promise((resolve) => {
+    const original = confirmButton.onclick;
+    confirmButton.onclick = async function () {
+      await original.call(this);
+      resolve();
+    };
+  });
 }
 
 async function stryfeStrike() {
@@ -8827,7 +8814,7 @@ async function stryfeStrike() {
 
 
 
-function apocalypseImmortalAndUndefeated() {
+async function apocalypseImmortalAndUndefeated() {
 
 const mastermind = getSelectedMastermind();
 
@@ -8836,7 +8823,7 @@ const mastermind = getSelectedMastermind();
         
 // Rescue six Bystanders
         for (let i = 0; i < 6; i++) {
-            rescueBystander();
+            await rescueBystander();
         }
 
 // Find and shuffle this Tactic back into mastermind.tactics
@@ -9349,214 +9336,177 @@ async function mrSinisterMasterGeneticist() {
 }
 
 async function stryfePsychicTorment() {
-    return new Promise(async (resolve) => {
-        // Check total available cards
-        const totalAvailableCards = playerDeck.length + playerDiscardPile.length;
+  return new Promise(async (resolve) => {
+    // 1) Quick availability check
+    const totalAvailableCards = playerDeck.length + playerDiscardPile.length;
+    if (totalAvailableCards === 0) {
+      onscreenConsole.log('No cards available to reveal.');
+      resolve(false);
+      return;
+    }
 
-        if (totalAvailableCards === 0) {
-            onscreenConsole.log('No cards available to reveal.');
-            console.log('No cards available to reveal.');
-            resolve(false);
-            return;
+    // 2) Draw up to 5, shuffling discard if needed
+    function drawCards(num) {
+      const drawn = [];
+      for (let i = 0; i < num; i++) {
+        if (playerDeck.length === 0) {
+          if (playerDiscardPile.length > 0) {
+            playerDeck = shuffle(playerDiscardPile);
+            playerDiscardPile = [];
+          } else {
+            break;
+          }
         }
+        drawn.push(playerDeck.pop()); // pop = top-of-deck
+      }
+      return drawn;
+    }
 
-        // Draw up to 5 cards, shuffling if needed
-        function drawCards(num) {
-            const drawnCards = [];
-            for (let i = 0; i < num; i++) {
-                if (playerDeck.length === 0) {
-                    if (playerDiscardPile.length > 0) {
-                        playerDeck = shuffle(playerDiscardPile);
-                        playerDiscardPile = [];
-                    } else {
-                        break;
-                    }
-                }
-                drawnCards.push(playerDeck.pop());
-            }
-            return drawnCards;
-        }
+    // Keep exact references to revealed cards
+    const revealed = drawCards(5).map((ref, i) => ({ ref, uid: `${Date.now()}-${i}` }));
+    if (revealed.length === 0) {
+      onscreenConsole.log('Unable to reveal any cards.');
+      resolve(false);
+      return;
+    }
 
-        const revealedCards = drawCards(5);
-        if (revealedCards.length === 0) {
-            onscreenConsole.log('Unable to reveal any cards.');
-            resolve(false);
-            return;
-        }
+    // 3) UI wiring
+    const popup = document.getElementById('card-choice-one-location-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const cardsList = document.getElementById('cards-to-choose-from');
+    const confirmButton = document.getElementById('card-choice-confirm-button');
+    const popupTitle = document.getElementById('cardChoiceh2');
+    const instructionsDiv = document.getElementById('context');
+    const heroImage = document.getElementById('hero-one-location-image');
+    const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
 
-        // Setup popup for card selection
-        const popup = document.getElementById('card-choice-one-location-popup');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const cardsList = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = document.getElementById('cardChoiceh2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
+    popupTitle.textContent = 'CHOOSE A CARD!';
+    instructionsDiv.textContent = `Select 1 of the ${revealed.length} revealed cards to add to your hand. The rest will be discarded.`;
+    cardsList.innerHTML = '';
+    confirmButton.style.display = 'inline-block';
+    confirmButton.disabled = true;
+    confirmButton.textContent = 'Confirm';
+    modalOverlay.style.display = 'block';
+    popup.style.display = 'block';
 
-        // Initialize UI
-        popupTitle.textContent = 'CHOOSE A CARD!';
-        instructionsDiv.textContent = `Select 1 of the ${revealedCards.length} revealed cards to add to your hand. The rest will be discarded.`;
-        cardsList.innerHTML = '';
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Confirm';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+    let selected = null;   // { ref, uid }
+    let activeImage = null;
 
-        let selectedCard = null;
-        let selectedCardId = null; // Track by ID instead of index
-        let activeImage = null;
+    const updateConfirmButton = () => { confirmButton.disabled = !selected; };
+    const updateInstructions = () => {
+      if (!selected) {
+        instructionsDiv.textContent = `Select 1 of the ${revealed.length} revealed cards to add to your hand. The rest will be discarded.`;
+      } else {
+        instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selected.ref.name}</span> will be added to your hand.`;
+      }
+    };
+    const updateHeroImage = (card) => {
+      if (card) {
+        heroImage.src = card.image;
+        heroImage.style.display = 'block';
+        oneChoiceHoverText.style.display = 'none';
+        activeImage = card.image;
+      } else {
+        heroImage.src = '';
+        heroImage.style.display = 'none';
+        oneChoiceHoverText.style.display = 'block';
+        activeImage = null;
+      }
+    };
+    const toggleCardSelection = (entry, li) => {
+      // Clear previous selection
+      const prev = cardsList.querySelector('li.selected');
+      if (prev) prev.classList.remove('selected');
+      if (selected && selected.uid === entry.uid) {
+        selected = null;
+        updateHeroImage(null);
+      } else {
+        selected = entry;
+        li.classList.add('selected');
+        updateHeroImage(entry.ref);
+      }
+      updateConfirmButton();
+      updateInstructions();
+    };
 
-        function updateConfirmButton() {
-            confirmButton.disabled = selectedCard === null;
-        }
+    // Display list (sorted for UI only)
+    const display = [...revealed]; // shallow copy
+    // Sort by your existing sorter; it expects plain cards, so map temporarily
+    const displayForSort = display.map(x => x.ref);
+    genericCardSort(displayForSort);
+    // Re-stitch the sorted refs back to their uid entries
+    const sorted = displayForSort.map(ref => display.find(x => x.ref === ref));
 
-        function updateInstructions() {
-            if (selectedCard === null) {
-                instructionsDiv.textContent = `Select 1 of the ${revealedCards.length} revealed cards to add to your hand. The rest will be discarded.`;
-            } else {
-                instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be added to your hand.`;
-            }
-        }
+    sorted.forEach(entry => {
+      const card = entry.ref;
+      const li = document.createElement('li');
+      const teamIcon = (!card.team || /^(none|null|undefined|None)$/i.test(card.team))
+        ? '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">'
+        : `<img src="Visual Assets/Icons/${card.team}.svg" alt="${card.team} Icon" class="popup-card-icons">`;
+      const cIcon = v => (!v || /^(none|null|undefined|None)$/i.test(v)) ? '' :
+        `<img src="Visual Assets/Icons/${v}.svg" alt="${v} Icon" class="popup-card-icons">`;
 
-        function updateHeroImage(card) {
-            if (card) {
-                heroImage.src = card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-                activeImage = card.image;
-            } else {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-            }
-        }
+      li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${cIcon(card.class1)} ${cIcon(card.class2)} ${cIcon(card.class3)} | ${card.name}</span>`;
+      li.setAttribute('data-card-id', entry.uid);
 
-        function toggleCardSelection(card, listItem) {
-            if (selectedCardId === card.id) {
-                // Deselect if same card clicked
-                selectedCard = null;
-                selectedCardId = null;
-                listItem.classList.remove('selected');
-                updateHeroImage(null);
-            } else {
-                // Clear previous selection if any
-                if (selectedCard) {
-                    const prevListItem = document.querySelector('li.selected');
-                    if (prevListItem) prevListItem.classList.remove('selected');
-                }
-                // Select new card
-                selectedCard = card;
-                selectedCardId = card.id;
-                listItem.classList.add('selected');
-                updateHeroImage(card);
-            }
-
-            updateConfirmButton();
-            updateInstructions();
-        }
-
-        // Create a copy for sorting without affecting the original array
-        const sortedRevealedCards = [...revealedCards];
-        genericCardSort(sortedRevealedCards);
-
-        // Populate the list with revealed cards
-        sortedRevealedCards.forEach((card, index) => {
-            const li = document.createElement('li');
-            const createTeamIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-
-            const createClassIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-            
-            const teamIcon = createTeamIconHTML(card.team);
-            const class1Icon = createClassIconHTML(card.class1);
-            const class2Icon = createClassIconHTML(card.class2);
-            const class3Icon = createClassIconHTML(card.class3);
-            
-            // Combine all icons
-            const allIcons = teamIcon + class1Icon + class2Icon + class3Icon;
-            
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
-
-            li.setAttribute('data-card-id', card.id);
-
-            li.onmouseover = () => {
-                if (!activeImage) {
-                    heroImage.src = card.image;
-                    heroImage.style.display = 'block';
-                    oneChoiceHoverText.style.display = 'none';
-                }
-            };
-
-            li.onmouseout = () => {
-                if (!activeImage) {
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    oneChoiceHoverText.style.display = 'block';
-                }
-            };
-
-            li.onclick = () => toggleCardSelection(card, li);
-            cardsList.appendChild(li);
-        });
-
-        // Handle confirmation
-        confirmButton.onclick = async function() {
-            if (selectedCard) {
-                // Add selected card to hand
-                playSFX('card-draw');
-                playerHand.push(selectedCard);
-                onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> added to hand.`);
-
-			await discardAvoidance();
-            if (hasDiscardAvoidance) {
-                onscreenConsole.log(`You have revealed <span class="console-highlights">Iceman - Impenetrable Ice Wall</span> and avoided discarding.`);
-                hasDiscardAvoidance = false;
-                return; 
-            }
-
-                // Discard the remaining cards - filter by ID to avoid reference issues
-                const cardsToDiscard = revealedCards.filter(card => card.id !== selectedCardId);
-                for (const card of cardsToDiscard) {
-                    const { returned } = await checkDiscardForInvulnerability(card);
-                    if (returned.length) {
-                        playerHand.push(...returned);
-                    }
-                }
-
-                closePopup();
-                updateGameBoard();
-                resolve(true);
-            }
-        };
-
-        function closePopup() {
-            // Reset UI
-            popupTitle.textContent = 'HERO ABILITY!';
-            instructionsDiv.textContent = 'Context';
-            confirmButton.style.display = 'none';
-            confirmButton.disabled = true;
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-
-            // Hide popup
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
+      li.onmouseover = () => { if (!activeImage) { heroImage.src = card.image; heroImage.style.display = 'block'; oneChoiceHoverText.style.display = 'none'; } };
+      li.onmouseout  = () => { if (!activeImage) { heroImage.src = '';       heroImage.style.display = 'none'; oneChoiceHoverText.style.display = 'block'; } };
+      li.onclick = () => toggleCardSelection(entry, li);
+      cardsList.appendChild(li);
     });
+
+    function closePopup() {
+      popupTitle.textContent = 'HERO ABILITY!';
+      instructionsDiv.textContent = 'Context';
+      confirmButton.style.display = 'none';
+      confirmButton.disabled = true;
+      heroImage.src = '';
+      heroImage.style.display = 'none';
+      oneChoiceHoverText.style.display = 'block';
+      activeImage = null;
+      popup.style.display = 'none';
+      modalOverlay.style.display = 'none';
+    }
+
+    confirmButton.onclick = async function () {
+      if (!selected) return;
+      confirmButton.disabled = true;
+
+      // Add chosen card to hand
+      playSFX('card-draw');
+      playerHand.push(selected.ref);
+      onscreenConsole.log(`<span class="console-highlights">${selected.ref.name}</span> added to hand.`);
+
+      // Compute the "rest"
+      const rest = revealed.filter(x => x.uid !== selected.uid).map(x => x.ref);
+
+      // Optional pre-check: some effects flip a flag before we discard
+      await discardAvoidance();
+
+      if (hasDiscardAvoidance) {
+        // Avoid discarding: put the rest back on top in original order.
+        // Because we popped (top) into revealed[0], to preserve order we push BACKWARDS.
+        for (let i = rest.length - 1; i >= 0; i--) {
+          playerDeck.push(rest[i]);
+        }
+        onscreenConsole.log(`You have revealed <span class="console-highlights">Iceman - Impenetrable Ice Wall</span> and avoided discarding.`);
+        hasDiscardAvoidance = false;
+
+        closePopup();
+        updateGameBoard();
+        resolve(true);
+        return;
+      }
+
+      // Discard the rest with normal on-discard triggers
+      const { returned } = await checkDiscardForInvulnerability(rest);
+      if (returned?.length) playerHand.push(...returned);
+
+      closePopup();
+      updateGameBoard();
+      resolve(true);
+    };
+  });
 }
 
 async function mephistoDamnedIfYouDo() {
@@ -10739,7 +10689,7 @@ async function mephistoDevilishTorment() {
 
 // Dark City Scheme Effects
 
-function strengthOrKOTop() {
+async function strengthOrKOTop() {
     return new Promise((resolve) => { // Return a Promise
         const cardsYouHave = [
             ...playerHand,
@@ -11131,7 +11081,7 @@ async function attachPlutoniumToVillain(villainIndex, twistCard) {
     updateGameBoard();
 }
 
-function BystanderstToDemonGoblins() {
+async function BystanderstToDemonGoblins() {
     if (bystanderDeck.length === 0) {
         onscreenConsole.log('There are no Bystanders available to become "Demon Goblin" Villains.');
         return;
@@ -11354,7 +11304,7 @@ async function KOCapturedHeroes() {
     updateGameBoard(); // Refresh UI
 }
 
-function explosionKO() {
+async function explosionKO() {
     let twistsRemaining = schemeTwistCount;
     let currentHQIndex = 0; // Start with left-most HQ (index 0 = HQ1)
     
@@ -11508,7 +11458,7 @@ if (Array.isArray(villainCard.XCutionerHeroes) && villainCard.XCutionerHeroes.le
     // Handle extra bystanders
     if (rescueExtraBystanders > 0) {
         for (let i = 0; i < rescueExtraBystanders; i++) {
-            rescueBystander();
+            await rescueBystander();
         }
     }
 
@@ -11622,7 +11572,7 @@ playSFX('attack');
         // Handle bystanders and recruit points
         if (rescueExtraBystanders > 0) {
             for (let i = 0; i < rescueExtraBystanders; i++) {
-                rescueBystander();
+                await rescueBystander();
             }
         }
 
@@ -11672,9 +11622,4 @@ for (const bystander of mastermind.bystanders) {
     }
 }
 
-async function doubleVillainDraw() {
-    onscreenConsole.log(`<span style="font-style:italic">Playing the top two cards of the Villain Deck...</span>`);
-    // Process cards one at a time, fully completing each before moving to next
-    await processVillainCard();
-    await processVillainCard();
-}
+

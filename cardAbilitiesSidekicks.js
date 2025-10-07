@@ -84,7 +84,7 @@ function hairballExtraDraw() {
 updateGameBoard();
 }
 
-function msLionBystanderAndDraw() {
+async function msLionBystanderAndDraw() {
 let playedSidekick = [...cardsPlayedThisTurn].reverse().find(card => card.name === "Ms. Lion");
     if (!playedSidekick) {
         console.error("No sidekick card found in cardsPlayedThisTurn.");
@@ -92,7 +92,7 @@ let playedSidekick = [...cardsPlayedThisTurn].reverse().find(card => card.name =
     }
 
     onscreenConsole.log(`<span class="console-highlights">Ms. Lion</span> played. Special Ability activated.`);
-    rescueBystander();
+    await rescueBystander();
     extraDraw();
     returnToSidekickDeck(playedSidekick);
 updateGameBoard();

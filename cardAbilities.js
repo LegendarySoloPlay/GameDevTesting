@@ -480,21 +480,22 @@ function drawThree() {
 async function rescueBystander(hero) {
   if (bystanderDeck.length > 0) {
     const rescuedBystander = bystanderDeck.pop();
-    victoryPile.push(rescuedBystander);  // Fixed typo here (was rescuedBystander)
-    console.log("Bystander rescued:", rescuedBystander);
-    console.log("Current Victory Pile:", victoryPile);
+    victoryPile.push(rescuedBystander);
+
     if (hero && hero.name === "Angel - Diving Catch") {
-        onscreenConsole.log(`<span style='padding-left: 40px'><span class="console-highlights">${rescuedBystander.name}</span> rescued.</span>`);
+      onscreenConsole.log(`<span style='padding-left: 40px'><span class="console-highlights">${rescuedBystander.name}</span> rescued.</span>`);
     } else {
-        onscreenConsole.log(`<span class="console-highlights">${rescuedBystander.name}</span> rescued.`);
+      onscreenConsole.log(`<span class="console-highlights">${rescuedBystander.name}</span> rescued.`);
     }
-    
+
     bystanderBonuses();
 
+    // CRITICAL: await until any popup/flow (e.g. Radiation Scientist) is done
     await rescueBystanderAbility(rescuedBystander);
+
     updateGameBoard();
+    return rescuedBystander; // optional but handy
   } else {
-    console.log("No bystanders left in the deck to rescue.");
     onscreenConsole.log('No Bystanders left to rescue.');
   }
 }
@@ -1183,73 +1184,73 @@ function CaptainAmericaCountUniqueColorsAndAddRecruit() {
 }
 
 function DeadpoolReDraw() {
-  if (cardsPlayedThisTurn.length === 1) {
-    return new Promise((resolve) => {
-      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-        "Do you wish to discard the remainder of your hand and draw four cards?",
-        "Yes",
-        "No"
-      );
-
-      const cardImage = document.getElementById('hero-ability-may-card');
-      const hoverText = document.getElementById('heroAbilityHoverText');
-      cardImage.style.display = 'block';
-      hoverText.style.display = 'none';
-      cardImage.src = 'Visual Assets/Heroes/Reskinned Core/Core_Deadpool_HeyCanIGetADoOver.webp';
-
-      // Clear previous event listeners
-      confirmButton.onclick = null;
-      denyButton.onclick = null;
-
-      confirmButton.onclick = async function () {
-        console.log("Player hand before discard:", playerHand);
-        
-        // Create a copy of the current hand to work with
-        const originalHand = [...playerHand];
-        const returnedCards = [];
-
-        // Process discard with invulnerability checks
-        await checkDiscardForInvulnerability(originalHand, returnedCards);
-
-        // Remove only the cards that were actually discarded (not returned)
-        originalHand.forEach(card => {
-          if (!returnedCards.includes(card) && playerHand.includes(card)) {
-            const index = playerHand.indexOf(card);
-            if (index > -1) {
-              playerHand.splice(index, 1);
-            }
-          }
-        });
-
-        // Draw four new cards
-        for (let i = 0; i < 4; i++) {
-          extraDraw();
-        }
-
-        // Add any returned cards back to the hand
-        playerHand.push(...returnedCards);
-
-        console.log('Updated playerHand:', playerHand);
-        onscreenConsole.log('Original hand discarded and redrawn.');
-
-        updateGameBoard();
-        hideHeroAbilityMayPopup();
-        cardImage.style.display = 'none';
-        hoverText.style.display = 'block';
-        resolve();
-      };
-
-      denyButton.onclick = function () {
-        onscreenConsole.log("Original hand preserved.");
-        hideHeroAbilityMayPopup();
-        cardImage.style.display = 'none';
-        hoverText.style.display = 'block';
-        resolve();
-      };
-    });
-  } else {
-    onscreenConsole.log(`<span class="console-highlights">Deadpool - Hey, Can I Get a Do-Over?</span> is not the first card you have played this turn.`)
+  if (cardsPlayedThisTurn.length !== 1) {
+    onscreenConsole.log(
+      `<span class="console-highlights">Deadpool - Hey, Can I Get a Do-Over?</span> is not the first card you have played this turn.`
+    );
+    return;
   }
+
+  return new Promise((resolve) => {
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      "Do you wish to discard the remainder of your hand and draw four cards?",
+      "Yes",
+      "No"
+    );
+
+    const cardImage = document.getElementById('hero-ability-may-card');
+    const hoverText = document.getElementById('heroAbilityHoverText');
+    cardImage.style.display = 'block';
+    hoverText.style.display = 'none';
+    cardImage.src = 'Visual Assets/Heroes/Reskinned Core/Core_Deadpool_HeyCanIGetADoOver.webp';
+
+    // Clear previous listeners
+    confirmButton.onclick = null;
+    denyButton.onclick = null;
+
+    const cleanupPopup = () => {
+      hideHeroAbilityMayPopup();
+      cardImage.style.display = 'none';
+      hoverText.style.display = 'block';
+    };
+
+    denyButton.onclick = function () {
+      onscreenConsole.log("Original hand preserved.");
+      cleanupPopup();
+      resolve();
+    };
+
+    confirmButton.onclick = async function () {
+      // Prevent double-activation
+      confirmButton.disabled = true;
+      denyButton.disabled = true;
+
+      // 1) Snapshot & clear hand up front
+      const handSnapshot = [...playerHand];
+      playerHand.length = 0;
+
+      // 2) Discard all snapshot cards with immediate triggers
+      const returnedCards = [];
+      for (const card of handSnapshot) {
+        const { returned } = await checkDiscardForInvulnerability(card);
+        if (returned && returned.length) returnedCards.push(...returned);
+      }
+
+      // 3) Add any invulnerable cards back to hand
+      if (returnedCards.length) playerHand.push(...returnedCards);
+
+      // 4) Draw four new cards
+      for (let i = 0; i < 4; i++) {
+        await extraDraw();
+      }
+
+      onscreenConsole.log('You discarded your remaining hand and drew four cards.');
+      updateGameBoard();
+
+      cleanupPopup();
+      resolve();
+    };
+  });
 }
 
 function EmmaFrostVoluntaryVillainForAttack() {
@@ -2524,8 +2525,10 @@ async function checkDiscardForInvulnerability(cards) {
                         // Discard Angel, then trigger the effect
                         playerDiscardPile.push(card);
                         actuallyDiscarded.push(card);
-                        onscreenConsole.log(`<span class="console-highlights">${card.name}</span> has been discarded (Diving Catch).`);
+                        onscreenConsole.log(`<span class="console-highlights">${card.name}</span> has been discarded.`);
+                        addHRToTopWithInnerHTML();
                         await angelDivingCatch(card);
+                        addHRToTopWithInnerHTML();
                         break;
                     }
 
@@ -4573,15 +4576,15 @@ genericCardSort(heroesToCopy);
 }
 
 function StormMinus2ToRooftops() {
-city3TempBuff--;
-city3TempBuff--;
+city3LocationAttack--;
+city3LocationAttack--;
 onscreenConsole.log(`Any Villain you fight on the Rooftops this turn gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 updateGameBoard();
 }
 
 function StormMinus2ToBridge() {
-city1TempBuff--;
-city1TempBuff--;
+city1LocationAttack--;
+city1LocationAttack--;
 console.log('Any villain on the bridge loses 2 Attack this turn.')
 onscreenConsole.log(`Any Villain you fight on the Bridge this turn gets -2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 
@@ -4729,32 +4732,141 @@ if (city[i]) {
     // Add the bystander overlay if there are bystanders
     if (city[i].bystander && city[i].bystander.length > 0) {
         const bystanderOverlay = document.createElement('div');
-        bystanderOverlay.className = 'bystander-overlay';
-        bystanderOverlay.innerText = `${city[i].bystander.length} Bystander${city[i].bystander.length > 1 ? 's' : ''}`;
+        bystanderOverlay.className = 'bystanders-overlay';
+        let overlayText = `<span class="bystanderOverlayNumber">${city[i].bystander.length}</span>`;
+        let overlayImage = `<img src="${city[i].bystander[0].image}" alt="Captured Hero" class="villain-bystander">`;
+        bystanderOverlay.innerHTML = overlayText + overlayImage;
+        bystanderOverlay.style.whiteSpace = 'pre-line';
         cityCellElement.appendChild(bystanderOverlay);
     }
 
-     if (city[i].name === 'Killbot') {
-        city[i].overlayTextAttack = `${killbotAttack}`;
-    }
+updateVillainAttackValues(city[i], i);
 
-    
-    // Check if the villain has an overlayTextAttack
-    if (city[i].overlayTextAttack) {
+    const attackFromMastermind = city[i].attackFromMastermind || 0;
+    const attackFromScheme = city[i].attackFromScheme || 0;
+    const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
+    const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
+    const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+    const villainShattered = city[i].shattered || 0;
+    const totalAttackModifiers = attackFromMastermind + attackFromScheme + attackFromOwnEffects + attackFromHeroEffects + currentTempBuff - villainShattered;
+
+    if (totalAttackModifiers !== 0) {
         const villainOverlayAttack = document.createElement('div');
         villainOverlayAttack.className = 'attack-overlay';
-        villainOverlayAttack.innerHTML = city[i].overlayTextAttack;
+        villainOverlayAttack.innerHTML = city[i].attack + totalAttackModifiers;
         cityCellElement.appendChild(villainOverlayAttack);
     }
 
+        if (city[i].killbot === true) {
+        const killbotOverlay = document.createElement('div');
+        killbotOverlay.className = 'killbot-overlay';
+        killbotOverlay.innerHTML = 'KILLBOT';
 
-    // Add the Skrull overlay if the villain has an overlayText
-    if (city[i].overlayText) {
-        const skrullOverlay = document.createElement('div');
-        skrullOverlay.className = 'skrull-overlay';
-        skrullOverlay.innerHTML = `${city[i].overlayText}`;
-        cityCellElement.appendChild(skrullOverlay);
+        // Append the attack overlay directly to the container (over the image)
+        cityCellElement.appendChild(killbotOverlay);
     }
+
+    if (city[i].babyHope === true) {
+    // Clear existing overlay to avoid duplicates
+    const existingOverlay = cityCellElement.querySelector('.villain-baby-overlay');
+    if (existingOverlay) existingOverlay.remove();
+
+    // Create and append new overlay
+    const babyOverlay = document.createElement('div');
+    babyOverlay.className = 'villain-baby-overlay';
+    babyOverlay.innerHTML = `<img src="Visual Assets/Other/BabyHope.webp" alt="Baby Hope" class="villain-baby">`;
+  
+    cityCellElement.appendChild(babyOverlay);
+}
+
+    
+    if (city[i].overlayText) {
+        const villainOverlay = document.createElement('div');
+        villainOverlay.className = 'skrull-overlay';
+        villainOverlay.innerHTML = `${city[i].overlayText}`;
+        cityCellElement.appendChild(villainOverlay);
+    }
+
+        if (city[i].capturedOverlayText) {
+        const capturedVillainOverlay = document.createElement('div');
+        capturedVillainOverlay.className = 'captured-overlay';
+        capturedVillainOverlay.innerHTML = `${city[i].capturedOverlayText}`;
+        cityCellElement.appendChild(capturedVillainOverlay);
+    }
+
+    if (city[i].XCutionerHeroes && city[i].XCutionerHeroes.length > 0) {
+                const XCutionerOverlay = document.createElement('div');
+                XCutionerOverlay.className = 'XCutioner-overlay';
+                
+                // Create overlay text
+                let XCutionerOverlayImage = `<img src="${city[i].XCutionerHeroes[0].image}" alt="Captured Hero" class="villain-baby">`
+                let XCutionerOverlayText = `<span class="XCutionerOverlayNumber">${city[i].XCutionerHeroes.length}</span>`;
+                const selectedScheme = schemes.find(s => s.name === document.querySelector('#scheme-section input[type=radio]:checked').value);
+                
+                XCutionerOverlay.innerHTML = XCutionerOverlayImage + XCutionerOverlayText;
+                XCutionerOverlay.style.whiteSpace = 'pre-line';
+
+                // Expanded container
+                const XCutionerExpandedContainer = document.createElement('div');
+                XCutionerExpandedContainer.className = 'expanded-XCutionerHeroes';
+                XCutionerExpandedContainer.style.display = 'none';
+                
+                city[i].XCutionerHeroes.forEach(hero => {
+                    const XCutionerHeroElement = document.createElement('span');
+                    XCutionerHeroElement.className = 'XCutioner-hero-name';
+                    XCutionerHeroElement.textContent = hero.name;
+                    XCutionerHeroElement.dataset.image = hero.image;
+                    
+                    XCutionerHeroElement.addEventListener('mouseover', (e) => {
+                        e.stopPropagation();
+                        showZoomedImage(hero.image);
+                        const card = cardLookup[normalizeImagePath(hero.image)];
+                        if (card) updateRightPanel(card);
+                    });
+                    
+                    XCutionerHeroElement.addEventListener('mouseout', (e) => {
+                        e.stopPropagation();
+                        if (!activeImage) hideZoomedImage();
+                    });
+                    
+                    XCutionerHeroElement.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        activeImage = activeImage === hero.image ? null : hero.image;
+                        showZoomedImage(activeImage || '');
+                    });
+                    
+                    XCutionerExpandedContainer.appendChild(XCutionerHeroElement);
+                });
+
+                // Overlay click handler
+                XCutionerOverlay.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    XCutionerExpandedContainer.style.display = XCutionerExpandedContainer.style.display === 'none' ? 'block' : 'none';
+                    
+                    if (XCutionerExpandedContainer.style.display === 'block') {
+                        setTimeout(() => {
+                            document.addEventListener('click', (e) => {
+                                if (!XCutionerExpandedContainer.contains(e.target)) {
+                                    XCutionerExpandedContainer.style.display = 'none';
+                                }
+                            }, { once: true });
+                        }, 50);
+                    }
+                });
+
+                cityCellElement.appendChild(XCutionerOverlay);
+                cityCellElement.appendChild(XCutionerExpandedContainer);
+            }
+
+if (city[i].plutoniumCaptured) {
+    const plutoniumOverlay = document.createElement('div');
+    
+    plutoniumOverlay.innerHTML = `<span class="plutonium-count">${city[i].plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
+      
+    // Add to the card
+    cityCellElement.appendChild(plutoniumOverlay);
+}
+
 } else {
     // If no villain, add a blank card image
     const blankCardImage = document.createElement('img');
@@ -6383,52 +6495,54 @@ return;
 HYDRAVPOrWound();
 }
 
-function revealTechOrWound() {
+async function revealTechOrWound() {
+    const cardsYouHave = [
+        ...playerHand,
+        ...cardsPlayedThisTurn.filter(card => 
+            card.isCopied !== true && 
+            card.sidekickToDestroy !== true
+        )
+    ];
 
-const cardsYouHave = [
-    ...playerHand,
-    ...cardsPlayedThisTurn.filter(card => 
-        card.isCopied !== true && 
-        card.sidekickToDestroy !== true
-    )
-];
+    if (cardsYouHave.filter(item => item.class1 === 'Tech').length === 0) {
+        onscreenConsole.log('You are unable to reveal a Tech hero.')
+        drawWound();
+        return; // Resolve immediately if no Tech cards
+    } else {
+        return new Promise((resolve) => {
+            setTimeout(() => { 
+                const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+                    "DO YOU WISH TO REVEAL A CARD TO AVOID GAINING A WOUND?",
+                    "Yes",
+                    "No"
+                );
+                
+                document.getElementById('hero-ability-may-h2').innerHTML = 'SCHEME TWIST!';
+                document.getElementById('heroAbilityHoverText').style.display = 'none';
 
-if (cardsYouHave.filter(item => item.class1 === 'Tech').length === 0) {
-onscreenConsole.log('You are unable to reveal a Tech hero.')
-drawWound();
-} else {
-setTimeout(() => { 
-const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-        "DO YOU WISH TO REVEAL A CARD TO AVOID GAINING A WOUND?",
-        "Yes",
-        "No"
-    );
-    
-document.getElementById('hero-ability-may-h2').innerHTML = 'SCHEME TWIST!';
-    
+                const cardImage = document.getElementById('hero-ability-may-card');
+                cardImage.src = 'Visual Assets/Schemes/legacyvirus.webp';
+                cardImage.style.display = 'block';
 
-document.getElementById('heroAbilityHoverText').style.display = 'none';
+                confirmButton.onclick = () => {
+                    onscreenConsole.log(`You are able to reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero and have escaped gaining a wound!`);
+                    hideHeroAbilityMayPopup();
+                    document.getElementById('heroAbilityHoverText').style.display = 'block';
+                    document.getElementById('hero-ability-may-h2').innerHTML = 'HERO ABILITY!';
+                    resolve(); // Resolve when player confirms
+                };
 
-    const cardImage = document.getElementById('hero-ability-may-card');
-    cardImage.src = 'Visual Assets/Schemes/legacyvirus.webp';
-    cardImage.style.display = 'block';
-
-    confirmButton.onclick = () => {
-        onscreenConsole.log(`You are able to reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero and have escaped gaining a wound!`);
-        hideHeroAbilityMayPopup();
-document.getElementById('heroAbilityHoverText').style.display = 'block';
-document.getElementById('hero-ability-may-h2').innerHTML = 'HERO ABILITY!';
-    };
-
-    denyButton.onclick = () => {
-        onscreenConsole.log(`You have chosen not to reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero.`);
-drawWound();
-        hideHeroAbilityMayPopup();
-document.getElementById('heroAbilityHoverText').style.display = 'block';
-document.getElementById('hero-ability-may-h2').innerHTML = 'HERO ABILITY!';
-    };
- }, 10); // 10ms delay
-}
+                denyButton.onclick = () => {
+                    onscreenConsole.log(`You have chosen not to reveal a <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero.`);
+                    drawWound();
+                    hideHeroAbilityMayPopup();
+                    document.getElementById('heroAbilityHoverText').style.display = 'block';
+                    document.getElementById('hero-ability-may-h2').innerHTML = 'HERO ABILITY!';
+                    resolve(); // Resolve when player denies
+                };
+            }, 10); // 10ms delay
+        });
+    }
 }
 
 
@@ -7740,7 +7854,7 @@ revealXMenOrWound();
 
 
 
-function XMenToBystanders() {
+async function XMenToBystanders() {
     const cardsYouHave = [
     ...playerHand, // Include all cards in hand (unchanged)
     ...cardsPlayedThisTurn.filter(card => 
@@ -7759,13 +7873,13 @@ onscreenConsole.log(`You do not currently have any <img src='Visual Assets/Icons
         console.log(`You have rescued ${XMenCardsYouHave.length} ${bystanderText}.`);
 onscreenConsole.log(`You have ${XMenCardsYouHave.length} <img src='Visual Assets/Icons/X-Men.svg' alt='X-Men Icon' class='console-card-icons'> Heroes. You are able to rescue ${XMenCardsYouHave.length} ${bystanderText}.`);
         for (let i = 0; i < XMenCardsYouHave.length; i++) {
-            rescueBystander();
+            await rescueBystander();
         }
 updateGameBoard();
     }
 }
 
-function AvengersToBystanders() {
+async function AvengersToBystanders() {
 onscreenConsole.log(`Fight! For each of your <img src='Visual Assets/Icons/Avengers.svg' alt='Avengers Icon' class='console-card-icons'> Heroes, rescue a Bystander.`);
     const cardsYouHave = [
     ...playerHand,
@@ -7783,7 +7897,7 @@ onscreenConsole.log(`Fight! For each of your <img src='Visual Assets/Icons/Aveng
 const HeroText = AvengersCardsYouHave.length === 1 ? 'Hero' : 'Heroes';
 onscreenConsole.log(`You currently have ${AvengersCardsYouHave.length} <img src='Visual Assets/Icons/Avengers.svg' alt='Avengers Icon' class='console-card-icons'> ${HeroText}. You have rescued ${AvengersCardsYouHave.length} ${bystanderText}.`);
         for (let i = 0; i < AvengersCardsYouHave.length; i++) {
-            rescueBystander();
+            await rescueBystander();
         }
     }
 }
@@ -8975,8 +9089,7 @@ function AmbushRightHeroSkrull() {
     hero.captureCode = captureCode;
 
     // Set the villain's attack equal to the hero's cost
-    skrullShapeshifters.attack = hero.cost;
-skrullShapeshifters.overlayTextAttack = hero.cost;
+    skrullShapeshifters.heroAttack = hero.cost;
 
     // Move the hero to the Skrull deck (or equivalent storage) and tag it with the captureCode
     capturedCardsDeck.push({ ...hero, captured: captureCode }); // Store the hero with its captureCode
@@ -8984,7 +9097,7 @@ skrullShapeshifters.overlayTextAttack = hero.cost;
     // Attach an overlay to the villain
     skrullShapeshifters.overlayText = `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SKRULL</span><img src="${hero.image}" alt="${hero.name}" class="hero-image-overlay">`;
 
-    onscreenConsole.log(`<span class="console-highlights">Skrull Shapeshifters</span> has captured <span class="console-highlights">${hero.name}</span>. This Villain now has ${skrullShapeshifters.attack} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. Fight this Villain to gain the captured Hero.`);
+    onscreenConsole.log(`<span class="console-highlights">Skrull Shapeshifters</span> has captured <span class="console-highlights">${hero.name}</span>. This Villain now has ${hero.cost} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. Fight this Villain to gain the captured Hero.`);
 
     // Replace the rightmost HQ space with the top card from the hero deck, if available
     hq[hqIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
@@ -9039,8 +9152,7 @@ function captureHeroBySkrullQueen(hero) {
     hero.captureCode = captureCode;
 
     // Set the Skrull Queen's attack equal to the hero's cost
-    skrullQueen.attack = hero.cost;
-skrullQueen.overlayTextAttack = hero.cost;
+    skrullQueen.heroAttack = hero.cost;
 
     // Move the hero to the Skrull deck and tag it with the captureCode
     capturedCardsDeck.push({ ...hero, captured: captureCode });
@@ -9057,7 +9169,7 @@ skrullQueen.overlayTextAttack = hero.cost;
     // Attach an overlay to the villain
     skrullQueen.overlayText = `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SKRULL</span><img src="${hero.image}" alt="${hero.name}" class="hero-image-overlay">`;
 
-    onscreenConsole.log(`<span class="console-highlights">Skrull Queen Veranke</span> has captured <span class="console-highlights">${hero.name}</span>. This Villain now has ${skrullQueen.attack} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. Fight this Villain to gain the captured Hero.`);
+    onscreenConsole.log(`<span class="console-highlights">Skrull Queen Veranke</span> has captured <span class="console-highlights">${hero.name}</span>. This Villain now has ${hero.cost} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. Fight this Villain to gain the captured Hero.`);
 
     // Update the game board to reflect the changes
     updateGameBoard();
@@ -9229,8 +9341,7 @@ function fightSkrullQueen(villainCard) {
 
     // Remove the skrull attribute (captureCode)
     delete hero.captured;
-villainCard.overlayTextAttack = '';
-villainCard.attack = villainCard.originalAttack;
+    villainCard.heroAttack = 0;
 
     // Add the hero to the player's discard pile
     playerDiscardPile.push(hero);
@@ -9257,7 +9368,7 @@ function escapeSkrullQueen(escapedVillain) {
     escapedVillainsDeck.push(hero);  // You could push this to a deck for escaped villains
 
 escapedVillain.overlayTextAttack = '';
-escapedVillain.attack = escapedVillain.originalAttack;
+escapedVillain.heroAttack = 0;
 
     // Update the game board to reflect the changes
     updateGameBoard();
@@ -9271,7 +9382,7 @@ function fightSkrullShapeshifters(villainCard) {
     const heroIndex = capturedCardsDeck.findIndex(hero => hero.captured === villainCard.captureCode);
 
 villainCard.overlayTextAttack = '';
-villainCard.attack = villainCard.originalAttack;
+villainCard.heroAttack = 0;
 
     if (heroIndex === -1) {
         onscreenConsole.log('Error. Unable to rescue the captured Hero.');
@@ -9308,7 +9419,7 @@ function escapeSkrullShapeshifter(escapedVillain) {
     const hero = capturedCardsDeck.splice(heroIndex, 1)[0];
     escapedVillainsDeck.push(hero);
 escapedVillain.overlayTextAttack = '';
-villainCard.attack = villainCard.originalAttack;
+escapedVillain.heroAttack = 0;
 
     // Update the game board to reflect the changes
     updateGameBoard();
@@ -9552,12 +9663,12 @@ onscreenConsole.log('Fight! You defeated <span class="console-highlights">The Li
 }
 }
 
-function streetsOrBridgeBystanders() {
+async function streetsOrBridgeBystanders() {
 if (currentVillainLocation === 0 || currentVillainLocation === 1) {
 onscreenConsole.log(`Fight! You fought <span class="console-highlights">Abomination</span> on the Streets or Bridge.`);
-rescueBystander();
-rescueBystander();
-rescueBystander();
+await rescueBystander();
+await rescueBystander();
+await rescueBystander();
 } else {
 onscreenConsole.log(`Fight! You fought <span class="console-highlights">Abomination</span> outside of the Streets or Bridge. No Bystanders rescued.`);
 }
@@ -10048,7 +10159,14 @@ function koAnyNumberOfWounds() {
     });
 }
 
-function bankRobbery() {
+async function doubleVillainDraw() {
+    onscreenConsole.log(`<span style="font-style:italic">Playing the top two cards of the Villain Deck...</span>`);
+    // Process cards one at a time, fully completing each before moving to next
+    await processVillainCard();
+    await processVillainCard();
+}
+
+async function bankRobbery() {
     const cityIndex = 3; // Specifically targeting city index 3
 
     return new Promise((resolve, reject) => {
@@ -10109,33 +10227,39 @@ function drawMultipleVillainCards(count) {
   return promiseChain;
 }
 
-function darkPortal() {
+async function darkPortal() {
     const twistCount = koPile.filter(item => item.type === 'Scheme Twist').length;
 
     switch (twistCount) {
         case 1:
             console.log('A dark portal opens beneath the Mastermind. They gain 1 Attack.');
             mastermindPermBuff++;
+            darkPortalMastermind = true;
             break;
         case 2:
             console.log('A dark portal opens beneath the Bridge. Villains on the Bridge gain 1 Attack.');
             city1PermBuff++;
+            darkPortalSpaces[0] = true;
             break;
         case 3:
             console.log('A dark portal opens beneath the Streets. Villains on the Streets gain 1 Attack.');
             city2PermBuff++;
+            darkPortalSpaces[1] = true;
             break;
         case 4:
             console.log('A dark portal opens above the Rooftops. Villains on the Rooftops gain 1 Attack.');
             city3PermBuff++;
+            darkPortalSpaces[2] = true;
             break;
         case 5:
             console.log('A dark portal opens within the Bank. Villains in the Bank gain 1 Attack.');
             city4PermBuff++;
+            darkPortalSpaces[3] = true;
             break;
         case 6:
             console.log('A dark portal opens within the Sewers. Villains within the Sewers gain 1 Attack.');
             city5PermBuff++;
+            darkPortalSpaces[4] = true;
             break;
         case 7:
             console.log('Dark portals have opened across the entire city!');
@@ -10149,7 +10273,7 @@ function darkPortal() {
 }
 
 
-function cosmicCube() {
+async function cosmicCube() {
     const twistCount = koPile.filter(item => item.type === 'Scheme Twist').length;
 
     if (twistCount < 5) {
@@ -10170,7 +10294,7 @@ function cosmicCube() {
 }
 
 
-function KOAllHeroesInHQ() {
+async function KOAllHeroesInHQ() {
     let heroesKOCounter = 0;
 
     for (let i = hq.length - 1; i >= 0; i--) {
@@ -10197,7 +10321,7 @@ function KOAllHeroesInHQ() {
 }
 
 
-function killbotAttackIncrease() {
+async function killbotAttackIncrease() {
     stackedTwistNextToMastermind++;
     killbotAttack++;
     console.log(`Killbot attack increased to ${killbotAttack}`);
@@ -10229,7 +10353,7 @@ async function highestCostHeroSkrulled() {
 function heroSkrulled(hero) {
     hero.skrulled = true;
     hero.originalAttack = hero.attack;
-    hero.attack = hero.cost + 2; // Assign the increased cost to attack
+    hero.attack = 0;
     hero.type = 'Villain';
     hero.fightEffect = 'unskrull';
 
@@ -10250,7 +10374,6 @@ function heroSkrulled(hero) {
 
     // Attach an overlay to the villain
     hero.overlayText = `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SKRULL</span>`;
-hero.overlayTextAttack = `${hero.cost + 2}`;
 
     // Update the game board to reflect the changes
     updateGameBoard();

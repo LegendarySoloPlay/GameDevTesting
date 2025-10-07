@@ -11,7 +11,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
 </head>
 
 <body>
@@ -512,7 +511,7 @@
 <div class="top-row-cell-label"><span class="labeltext" id="bystander-label">Bystanders:</span><span id="bystanderDeckCount" class="labeltext"></span></div>
 </div>
       <div class="row">
-<div class="cell scheme" id="scheme-place"><div id="scheme-token" style="display:none;">Baby<br>Hope</div><div id="demon-goblin-deck" style="display:none;"><span id="demon-goblin-count"></span></div></div>
+<div class="cell scheme" id="scheme-place"><div id="scheme-token" style="display:none;"><img src="Visual Assets/Other/BabyHope.webp" alt="Baby Hope" class="villain-baby-on-scheme"></div><div id="demon-goblin-deck" style="display:none;"><span id="demon-goblin-count"></span></div></div>
 <div id="mastermind" class="cell mastermind"><div id="stacked-mastermind-cards" style="display:none;"><span id="stacked-mastermind-cards-count"></span></div>
         <div id="mastermind-attack-button" style="display:none;"><span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>
     </div>
@@ -531,11 +530,11 @@
 <div class="row">
 <div class="cell-label"><span class="labeltext" style="font-size:calc(0.6vh + 0.6vw);">Evil Wins:</span><span id="evilWinsTracker"></span></div>
         <div class="cell-label"><span class="labeltext" style="font-size:calc(0.6vh + 0.6vw);">Remaining Tactics:</span><span id="mastermindTacticCountNumber" class="labeltext"></span></div>
-        <div class="cell-label"><p class="labeltext">Bridge</p></div>
-        <div class="cell-label"><p class="labeltext">Streets</p></div>
-        <div class="cell-label"><p class="labeltext">Rooftops</p></div>
-        <div class="cell-label"><p class="labeltext">Bank</p></div>
-        <div class="cell-label"><p class="labeltext">Sewers</p></div>
+        <div class="cell-label"><p class="labeltext" id="bridge-label">Bridge</p></div>
+        <div class="cell-label"><p class="labeltext" id="streets-label">Streets</p></div>
+        <div class="cell-label"><p class="labeltext" id="rooftops-label">Rooftops</p></div>
+        <div class="cell-label"><p class="labeltext" id="bank-label">Bank</p></div>
+        <div class="cell-label"><p class="labeltext" id="sewers-label">Sewers</p></div>
         <div class="cell-label"><span class="labeltext">Villain Deck: </span><span id="villainDeckCountNumber" class="game-board-bottom-row"></span></div>
       </div>
       <!-- Row of 7 Cells for HQ and Decks -->
@@ -1401,6 +1400,30 @@
   </div>
 </div>
 
+<div class="card-choice-popup">
+    <div class="card-choice-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div class="card-choice-popup-closebutton">✕</div>
+    <div class="card-choice-popup-title">POPUP TITLE</div>
+    <div class="card-choice-popup-instructions">Instructions will go in here...</div>
+    <div class="card-choice-popup-choiceandpreview">
+      <div class="card-choice-popup-selection-container">
+      <div class="card-choice-popup-selectionrow1label">Hand</div>
+      <div class="card-choice-popup-selectionrow1"></div>
+      <div class="card-choice-popup-selectionrow2label">Played Cards</div>
+      <div class="card-choice-popup-selectionrow2"></div>
+      </div>  
+        <div class="card-choice-popup-preview-container">
+            <div class="card-choice-popup-previewtitle">Preview:</div>
+            <div class="card-choice-popup-preview"></div>
+        </div>
+    </div>
+    <div class="card-choice-popup-buttonhousing">
+        <button id="card-choice-popup-confirm">CONFIRM</button>
+        <button id="card-choice-popup-otherchoice">OTHER CHOICE</button>
+        <button id="card-choice-popup-nothanks">NO THANKS</button>
+    </div>
+</div>
+    
 <script>
   // Main script loading chain
 const cardDatabaseScript = document.createElement('script');
