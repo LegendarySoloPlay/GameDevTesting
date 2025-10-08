@@ -461,3 +461,116 @@ totalRecruitPoints += tacticsLeft;
 cumulativeRecruitPoints += tacticsLeft;
 updateGameBoard();
 }
+
+function mysterioCaptiveAudience() {
+const mastermind = getSelectedMastermind();
+const tacticsLeft = mastermind.tactics.length;
+
+if (tacticsLeft === 0) {
+  onscreenConsole.log(`<span class="console-highlights">Mysterio</span> has ${tacticsLeft} Tactics remaining. No effect.`);
+  } else {
+onscreenConsole.log(`<span class="console-highlights">Mysterio</span> has ${tacticsLeft} Tactic${tacticsLeft.length === 1 ? '' : 's'} remaining. Rescuing ${tacticsLeft} Bystander${tacticsLeft.length === 1 ? '' : 's'}.`);
+}
+
+for (let i = 0; i < tacticsLeft; i++) {
+    await bystanderRescue();
+}
+
+updateGameBoard();
+}
+
+function mysterioMasterOfIllusions() {
+    const mysterioTactics = playerVictoryPile.filter(card => card.name === "Mysterio Mastermind Tactic");
+    
+    if (mysterioTactics.length === 0) {
+        onscreenConsole.log("No Master Strikes found in Victory Pile.");
+        return;
+    }
+    
+    // Randomly select one Mysterio tactic
+    const randomIndex = Math.floor(Math.random() * mysterioTactics.length);
+    const selectedTactic = mysterioTactics[randomIndex];
+    
+    // Remove it from player victory pile
+    const cardIndex = playerVictoryPile.findIndex(card => card === selectedTactic);
+    if (cardIndex > -1) {
+        playerVictoryPile.splice(cardIndex, 1);
+    }
+    
+    // Add it to mastermind tactics at random position
+    const mastermind = getSelectedMastermind();
+    const insertIndex = Math.floor(Math.random() * (mastermind.tactics.length + 1));
+    mastermind.tactics.splice(insertIndex, 0, selectedTactic);
+    
+    onscreenConsole.log(`A Master Strike from your Victory Pile has been shuffled back into <span class="console-highlights">Mysterio</span><span class="bold-spans">'s</span> Tactics.`);
+    updateGameBoard();
+}
+
+async function mysterioMistsOfDeception() {
+    const mastermind = getSelectedMastermind();
+
+    if (mastermind.tactics.length !== 0) {
+        onscreenConsole.log(`This is not the final Tactic.`);
+        
+        // Get top 5 cards from villain deck
+        const revealedCards = [];
+        for (let i = 0; i < 5 && villainDeck.length > 0; i++) {
+            revealedCards.push(villainDeck.pop());
+        }
+
+        if (revealedCards.length === 0) {
+            onscreenConsole.log("No cards left in the Villain deck to reveal!");
+            return;
+        }
+
+        // Log revealed cards
+        const cardNames = revealedCards.map(card => 
+            `<span class="console-highlights">${card.name}</span>`
+        ).join(', ');
+        onscreenConsole.log(`You revealed the top ${revealedCards.length} card${revealedCards.length !== 1 ? 's' : ''} of the Villain deck: ${cardNames}.`);
+
+        // Separate master strikes from other cards
+                const masterStrikes = revealedCards.filter(card => {
+            // Try multiple conditions to see which one matches
+            return card.name === "Master Strike" || 
+                   card.name === "Mysterio Mastermind Tactic"
+        });
+        const otherCards = revealedCards.filter(card => {
+            // Try multiple conditions to see which one matches
+            return card.name !== "Master Strike" || 
+                   card.name !== "Mysterio Mastermind Tactic"
+        });
+
+        // Play master strikes first
+        if (masterStrikes.length > 0) {
+            
+            onscreenConsole.log(`Playing ${masterStrikes.length} Master Strike${masterStrikes.length !== 1 ? 's' : ''} now.`);
+            
+            // Play each
+            for (const strike of masterStrikes) {
+                // Add to top of deck first
+                villainDeck.push(strike);
+                // Then draw it properly
+                await drawVillainCard();
+            }
+        }
+
+        // Handle remaining cards
+        if (otherCards.length > 0) {
+            shuffleArray(otherCards);
+            
+            onscreenConsole.log(`Shuffling the other cards and placing them on the bottom of the Villain deck.`);
+            
+            // Add to bottom of deck
+            villainDeck.unshift(...otherCards);
+        } else if (masterStrikes.length === 0) {
+            onscreenConsole.log("No Master Strikes were revealed. All revealed cards have been shuffled and placed at the bottom of the Villain deck.");
+        }
+        
+        updateGameBoard();
+    } else {
+        onscreenConsole.log(`This is the final Tactic. No effect.`);
+    }
+}
+
+
