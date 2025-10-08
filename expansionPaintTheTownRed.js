@@ -436,3 +436,28 @@ if (playerDeck.length === 0) {
   updateGameBoard();
 }
 }
+
+function mysterioMasterStrike() {
+currentMasterStrike = koPile.pop();
+
+currentMasterStrike.victoryPoints = 6;
+currentMasterStrike.mastermindId = 11;
+currentMasterStrike.name = "Mysterio Mastermind Tactic";
+currentMasterStrike.type = "Mastermind";
+currentMasterStrike.effect = `This Mastermind Tactic was a previous Master Strike. No effect!`;
+
+const mastermind = getSelectedMastermind();
+
+mastermind.tactics.splice(Math.floor(Math.random() * (mastermind.tactics.length + 1)), 0, currentMasterStrike);
+updateGameBoard();
+}
+
+function mysterioBlurringImages() {
+const mastermind = getSelectedMastermind();
+const tacticsLeft = mastermind.tactics.length;
+
+onscreenConsole.log(`<span class="console-highlights">Mysterio</span> has ${tacticsLeft} Tactic${tacticsLeft.length === 1 ? '' : 's'} remaining. You get +${tacticsLeft} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
+totalRecruitPoints += tacticsLeft;
+cumulativeRecruitPoints += tacticsLeft;
+updateGameBoard();
+}
