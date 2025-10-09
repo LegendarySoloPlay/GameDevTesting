@@ -1,6 +1,54 @@
 // Paint the Town Red Expansion
 // 01.10.2025
 
+//Keywords
+
+function feast() {
+  if (playerDeck.length === 0) {
+        if (playerDiscardPile.length > 0) {
+          playerDeck = shuffle(playerDiscardPile);
+          playerDiscardPile = [];
+        } else {
+          onscreenConsole.log(`No cards available for <span class="console-highlights">${card.name}</span> to feast upon.`);.");
+        return;
+        }
+        }
+  const topCard = playerDeck[playerDeck.length - 1];
+  
+  playerDeck.pop();
+  koPile.push(topCard);
+  onscreenConsole.log(`<span class="console-highlights">${card.name}</span> feasted upon <span class="console-highlights">${topCard.name}</span>, KOing them.`);
+  koBonuses();
+  updateGameBoard();
+}
+
+//Villains
+
+function demogoblinAmbush(demogoblin) {
+  onscreenConsole.log(`Ambush! <span class="console-highlights">Demogoblin</span> captures a Bystander!`);
+  if (bystanderDeck.length === 0) {
+            onscreenConsole.log(`There are no Bystanders left to be captured.`);
+            return;
+        }
+
+        // If only 1 bystander, automatically capture it
+        if (bystanderDeck.length > 0) {
+            const card = bystanderDeck.pop();
+            const demogoblinIndex = city.findIndex(c => c === demogoblin);
+            attachBystanderToVillain(demogoblinIndex, card);
+            onscreenConsole.log(`<span class="console-highlights">Demogoblin</span> has captured <span class="console-highlights">${card.name}</span>.`);
+            updateGameBoard();
+        }
+        }
+
+if (city[i].name === 'Doppelganger') {
+  const hqCost = `hq[${i + 1}].cost`;
+  city[i].attackFromOwnEffects = hqCost;
+  updateGameBoard();
+}
+
+
+
 //Heroes
 
 function blackCatPickpocket() {
