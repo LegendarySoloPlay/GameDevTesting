@@ -47,7 +47,31 @@ if (city[i].name === 'Doppelganger') {
   updateGameBoard();
 }
 
-
+function shriekFeast() {
+  if (playerDeck.length === 0) {
+        if (playerDiscardPile.length > 0) {
+          playerDeck = shuffle(playerDiscardPile);
+          playerDiscardPile = [];
+        } else {
+          onscreenConsole.log(`No cards available for <span class="console-highlights">Shriek</span> to feast upon.`);.");
+        return;
+        }
+        }
+  const topCard = playerDeck[playerDeck.length - 1];
+  
+  playerDeck.pop();
+  koPile.push(topCard);
+  onscreenConsole.log(`<span class="console-highlights">Shriek</span> feasted upon <span class="console-highlights">${topCard.name}</span>, KOing them.`);
+  koBonuses();
+  
+  if (topCard.cost === 0) {
+    onscreenConsole.log(`<span class="console-highlights">${topCard.name}</span> cost 0, so Shriek forces you to gain a Wound!`);
+    } else {
+      onscreenConsole.log(`Thankfully, <span class="console-highlights">${topCard.name}</span> did not cost 0 and youve escaped gaining a Wound.`);
+      }
+      
+  updateGameBoard();
+}
 
 //Heroes
 
