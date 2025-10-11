@@ -36,7 +36,6 @@ function demogoblinAmbush(demogoblin) {
             const card = bystanderDeck.pop();
             const demogoblinIndex = city.findIndex(c => c === demogoblin);
             attachBystanderToVillain(demogoblinIndex, card);
-            onscreenConsole.log(`<span class="console-highlights">Demogoblin</span> has captured <span class="console-highlights">${card.name}</span>.`);
             updateGameBoard();
         }
         }
@@ -72,6 +71,93 @@ function shriekFeast() {
       
   updateGameBoard();
 }
+
+async function hobgoblinAmbush() {
+  onscreenConsole.log(`Ambush! <span class="console-highlights">Hobgoblin</span> helps each Sinister Six Villain capture a Bystander!`);
+  if (bystanderDeck.length === 0) {
+            onscreenConsole.log(`There are no Bystanders left to be captured.`);
+            return;
+        }
+        
+  if (city[4].team === "Sinister Six" && bystanderDeck.length > 0) {
+    const card = bystanderDeck.pop();
+            const index = 4;
+            attachBystanderToVillain(index, card);
+            updateGameBoard();
+  }
+  
+  if (city[3].team === "Sinister Six" && bystanderDeck.length > 0) {
+    const card = bystanderDeck.pop();
+            const index = 3;
+            attachBystanderToVillain(index, card);
+            updateGameBoard();
+  }
+  
+  if (city[2].team === "Sinister Six" && bystanderDeck.length > 0) {
+    const card = bystanderDeck.pop();
+            const index = 2;
+            attachBystanderToVillain(index, card);
+            updateGameBoard();
+  }
+  
+  if (city[1].team === "Sinister Six" && bystanderDeck.length > 0) {
+    const card = bystanderDeck.pop();
+            const index = 1;
+            attachBystanderToVillain(index, card);
+            updateGameBoard();
+  }
+  
+  if (city[0].team === "Sinister Six" && bystanderDeck.length > 0) {
+    const card = bystanderDeck.pop();
+            const index = 0;
+            attachBystanderToVillain(index, card);
+            updateGameBoard();
+  }
+}
+
+if (city[i].name === "Kraven the Hunter") {
+  const highestCost = hq.length > 0 ? Math.max(...hq.map(obj => obj.cost)) : 0;
+  city[i].attackFromOwnEffects = highestCost;
+}
+
+if (city[i].name === "Sandman") {
+  const villainCount = city.filter(obj => obj.type === "Villain").length;
+  city[i].attackFromOwnEffects = villainCount;
+}
+
+//Add to escape logic to do extra escape after
+if (city[i].name === "Kraven the Hunter") {
+await kravenTheHunterEscape();
+}
+
+async function kravenTheHunterEscape() {
+Borrow from Veranke once popup is updated
+}
+
+async function sandmanEscape() {
+  borrow instinct or wound logic when popups are fixed
+  }
+  
+async function vultureEscape() {
+  borrow instinct or wound logic when popups are fixed
+  }
+  
+async function shockerAmbush() {
+  borrow instinct or discard logic when popups are fixed
+  }
+
+//Add to ambush logic to do vulture movement after
+if (city[i].name === "Vulture") {
+await vultureAmbush();
+}
+
+async function vultureAmbush() {
+  chekc rooftops and bridge for villains. if one, swap vulture abd it. if none, no effect. if two, let the player decide.
+  }
+  
+
+  
+  
 
 //Heroes
 
