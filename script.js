@@ -2269,8 +2269,10 @@ function formatList(items) {
 }
 
 function showConfirmChoicesPopup(scheme, mastermind, villains, henchmen, heroes) {
-    document.getElementById('chosen-scheme').innerHTML = `Your Chosen Scheme: <span class="bold-spans">${scheme.name}</span>`;
-    document.getElementById('chosen-mastermind').innerHTML = `Your Chosen Mastermind: <span class="bold-spans">${mastermind.name}</span>`;
+    document.getElementById('chosen-scheme').innerHTML = `<div class="line-1">Your Chosen Scheme:</div>
+    <div class="line-2"><span class="bold-spans">${scheme.name}.</span></div>`;
+    document.getElementById('chosen-mastermind').innerHTML = `<div class="line-1">Your Chosen Mastermind:</div>
+    <div class="line-2"><span class="bold-spans">${mastermind.name}.</span></div>`;
 
     const villainGroupText = villains.length === 1 ? 'group' : 'groups';
     const heroGroupText = heroes.length === 1 ? 'Hero' : 'Heroes';
@@ -2336,14 +2338,14 @@ function showConfirmChoicesPopup(scheme, mastermind, villains, henchmen, heroes)
     const formattedHenchmen = `<span class="bold-spans">${formatList(henchmen)}.</span>`;
     const formattedHeroes = `<span class="bold-spans">${formatList(heroes)}.</span>`;
 
-    document.getElementById('required-villains-count').innerHTML = `<span class="bold-spans">${scheme.requiredVillains} Villain ${villainGroupText}</span>`;
+    document.getElementById('required-villains-count').innerHTML = `<span class="bold-spans">${scheme.requiredVillains} Villain ${villainGroupText}.</span>`;
     document.getElementById('villains-list').innerHTML = formattedVillains + villainFeedback;
 
     const henchmenGroupText = scheme.requiredHenchmen === 1 ? 'group' : 'groups';
-    document.getElementById('required-henchmen-count').innerHTML = `<span class="bold-spans">${scheme.requiredHenchmen} Henchmen ${henchmenGroupText}</span>`;
+    document.getElementById('required-henchmen-count').innerHTML = `<span class="bold-spans">${scheme.requiredHenchmen} Henchmen ${henchmenGroupText}.</span>`;
     document.getElementById('henchmen-list').innerHTML = henchmen.length > 0 ? formattedHenchmen + henchmenFeedback : henchmenFeedback;
 
-    document.getElementById('required-heroes-count').innerHTML = `<span class="bold-spans">${scheme.requiredHeroes} ${heroGroupText}</span>`;
+    document.getElementById('required-heroes-count').innerHTML = `<span class="bold-spans">${scheme.requiredHeroes} ${heroGroupText}.</span>`;
     document.getElementById('heroes-list').innerHTML = formattedHeroes + heroFeedback;
 
     const villainsCorrect = villains.length === scheme.requiredVillains && specificVillainRequirementMet;
@@ -2365,7 +2367,7 @@ document.getElementById('return-to-selections').addEventListener('click', functi
 document.getElementById('modal-overlay').style.display = 'none';
 });
 
-document.getElementById('confirm-startup-close-x').addEventListener('click', function() {
+document.querySelector('.confirm-startup-close-x').addEventListener('click', function() {
     document.getElementById('confirm-start-up-choices').style.display = 'none';
 document.getElementById('modal-overlay').style.display = 'none';
 });
@@ -3354,6 +3356,7 @@ async function processMulligan() {
             heroDeck.splice(randomPosition, 0, newCard);
         }
     }
+    updateGameBoard();
 
 }
 
@@ -3842,34 +3845,38 @@ async function processCableCards(cableCards) {
     }
 }
 
-function askToDiscardCable(card) {
+async function askToDiscardCable(card) {
     return new Promise((resolve) => {
-        const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-            `A Master Strike is about to be played. Would you like to discard <span style="console-highlights">${card.name}</span> to draw 3 extra cards next turn?`,
-            "Yes",
-            "No"
-        );
+        setTimeout(() => {
+            const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+                `A Master Strike is about to be played. Would you like to discard <span style="console-highlights">${card.name}</span> to draw 3 extra cards next turn?`,
+                "Yes",
+                "No"
+            );
 
-        const cardImage = document.getElementById('hero-ability-may-card');
-        cardImage.src = card.image;
-        cardImage.style.display = 'block';
-        document.getElementById('heroAbilityHoverText').style.display = 'none';
-        confirmButton.onclick = function() {
-            cleanup();
-            resolve(true);
-        };
+            // Update title
+            document.querySelector('.info-or-choice-popup-title').innerHTML = 'Cable - Disaster Survivalist';
+            
+            // Use preview area for card image
+            const previewArea = document.querySelector('.info-or-choice-popup-preview');
+            if (previewArea && card.image) {
+                previewArea.style.backgroundImage = `url('${card.image}')`;
+                previewArea.style.backgroundSize = 'contain';
+                previewArea.style.backgroundRepeat = 'no-repeat';
+                previewArea.style.backgroundPosition = 'center';
+                previewArea.style.display = 'block';
+            }
 
-        denyButton.onclick = function() {
-            cleanup();
-            resolve(false);
-        };
+            confirmButton.onclick = () => {
+                closeInfoChoicePopup();
+                resolve(true);
+            };
 
-        function cleanup() {
-            hideHeroAbilityMayPopup();
-            cardImage.src = '';
-            cardImage.style.display = 'none';
-            document.getElementById('heroAbilityHoverText').style.display = 'block';
-        }
+            denyButton.onclick = () => {
+                closeInfoChoicePopup();
+                resolve(false);
+            };
+        }, 10);
     });
 }
 
@@ -4185,7 +4192,7 @@ function showHeroSelectPopup() {
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
@@ -4312,6 +4319,13 @@ function showHeroSelectPopup() {
             cardElement.appendChild(cardImage);
             selectionRow1.appendChild(cardElement);
         });
+
+        const maxCardsBeforeWrap = 5; // Adjust this number as needed
+        if (eligible.length > maxCardsBeforeWrap) {
+            selectionRow1.classList.add('multi-row');
+        } else {
+            selectionRow1.classList.remove('multi-row');
+        }
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -4526,15 +4540,14 @@ function returnHeroToDeck(hqIndex) {
 }
 
 function showPopup(type, drawnCard, confirmCallback) {
-    const popup = document.getElementById('popup');
-    const popupTitle = document.getElementById('popup-title');
-    const popupContext = document.getElementById('popup-context');
-    const confirmBtn = document.getElementById('popup-confirm');
+    const popup = document.querySelector('.info-or-choice-popup');
+    const popupTitle = document.querySelector('.info-or-choice-popup-title');
+    const popupContext = document.querySelector('.info-or-choice-popup-instructions');
+    const confirmBtn = document.getElementById('info-or-choice-popup-confirm');
     const modalOverlay = document.getElementById('modal-overlay');
 modalOverlay.style.display = 'block';
-const popupImage = document.getElementById('popup-single-image');
-const closeButton = document.getElementById('close-x');
-    confirmBtn.innerText = getRandomConfirmText();
+const popupImage = document.querySelector('.info-or-choice-popup-preview');
+const closeButton = document.querySelector('.info-or-choice-popup-closebutton');
 
     const mastermind = getSelectedMastermind();
 
@@ -4551,6 +4564,7 @@ const closeButton = document.getElementById('close-x');
         popupImage.style.display = 'block';
         popupContext.innerHTML = mastermind.masterStrikeConsoleLog;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Post Defeat Master Strike') {
 		popupTitle.innerText = `Master Strike`;
         popupImage.style.display = 'block';
@@ -4567,65 +4581,73 @@ const closeButton = document.getElementById('close-x');
              popupContext.innerHTML = ``;
         }
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Bystander to Mastermind') {
         popupTitle.innerText = `Bystander`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `No Villains in the city. <span class="console-highlights">${drawnCard.name}</span> will be captured by <span class="console-highlights">${mastermind.name}</span>.`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Bystander to Villain') {
         popupTitle.innerText = `Bystander`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> will be captured by the Villain closest to the Villain deck.`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Villain Escape') {
         popupTitle.innerText = `Escape`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `A new Villain in the city means <span class="console-highlights">${drawnCard.name}</span> escapes!`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Villain Ambush') {
         popupTitle.innerText = `Ambush`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city with an ambush!`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Villain Arrival') {
         popupTitle.innerText = `Villain`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city.`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'X-Cutioner Hero to Villain') {
         popupTitle.innerText = `Hero`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> will be captured by the Villain closest to the Villain deck.`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'X-Cutioner Hero to Mastermind') {
         popupTitle.innerText = `Hero`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `No Villains in the city. <span class="console-highlights">${drawnCard.name}</span> will be captured by <span class="console-highlights">${mastermind.name}</span>.`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     }   else if (type === 'Destroyed City Villain Escape') {
         popupTitle.innerText = `Escape`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `As <span class="console-highlights">Galactus</span> destroys the city <span class="console-highlights">${drawnCard.name}</span> escapes!`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Raktar Villain Escape') {
         popupTitle.innerText = `Escape`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `The actions of <span class="console-highlights">Ra'ktar the Molan King</span> help <span class="console-highlights">${drawnCard.name}</span> to escape!`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else if (type === 'Villain Moved') {
         popupTitle.innerText = `Ambush`;
         popupImage.style.display = 'block';
         popupContext.innerHTML = `<span class="console-highlights">Ra'ktar the Molan King</span> forces <span class="console-highlights">${drawnCard.name}</span> further into the city!`;
         popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
     } else {
         popupImage.style.display = 'none'; // Hide image if the type is unknown
     }
 
     const closePopup = () => {
-        popup.style.display = 'none';
-popupImage.style.display = 'none';
-popupContext.innerHTML = ``;
-        modalOverlay.style.display = 'none';
+        closeInfoChoicePopup();
         confirmBtn.removeEventListener('click', onConfirm);
     };
 
@@ -4636,7 +4658,7 @@ popupContext.innerHTML = ``;
 
     confirmBtn.addEventListener('click', onConfirm);
 
-    const closeBtn = popup.querySelector('.close-triangle-btn');
+    const closeBtn = popup.querySelector('.info-or-choice-popup-closebutton');
     closeBtn.onclick = onConfirm;
 }
 
@@ -4658,7 +4680,31 @@ function setupMinimizeSystem() {
             const popup = e.target.closest('.card-choice-popup');
             if (popup) minimizePopup(popup);
         }
-              
+        
+        // Handle minimize buttons for info-or-choice popups
+        if (e.target.closest('.info-or-choice-popup-minimizebutton')) {
+            const popup = e.target.closest('.info-or-choice-popup');
+            if (popup) minimizePopup(popup);
+        }
+
+        // Handle minimize buttons for bribe popups
+        if (e.target.closest('.bribe-popup-minimizebutton')) {
+            const popup = e.target.closest('.bribe-popup-class');
+            if (popup) minimizePopup(popup);
+        }
+
+        // Handle minimize buttons for mulligan popup
+        if (e.target.closest('.mulligan-popup-minimizebutton')) {
+            const popup = e.target.closest('.mulligan-popup-class');
+            if (popup) minimizePopup(popup);
+        }
+
+        // Handle minimize buttons for villain movement popup
+        if (e.target.closest('.villain-movement-popup-minimizebutton')) {
+            const popup = e.target.closest('.villain-movement-popup-class');
+            if (popup) minimizePopup(popup);
+        }
+             
         // Handle maximize buttons
         if (e.target.closest('.reopen-popup-btn')) {
             maximizeAllPopups();
@@ -4672,9 +4718,10 @@ function minimizePopup(popup) {
     
     // Store popup type for proper restoration
     const isNewPopup = popup.classList.contains('card-choice-popup');
+    const isInfoOrChoicePopup = popup.classList.contains('info-or-choice-popup');
     
     // Remove event handlers (only if this is the last visible popup)
-    const visiblePopups = document.querySelectorAll('.popup[style*="display: block"], .card-choice-popup[style*="display: block"]');
+    const visiblePopups = document.querySelectorAll('.popup[style*="display: block"], .card-choice-popup[style*="display: block"], .info-or-choice-popup[style*="display: block"]');
     if (visiblePopups.length <= 1) {
         removeEventHandlers();
     }
@@ -4684,7 +4731,8 @@ function minimizePopup(popup) {
         popup,
         wasVisible: popup.style.display !== 'none',
         associatedControls: getAssociatedControls(popup),
-        isNewPopup: isNewPopup
+        isNewPopup: isNewPopup,
+        isInfoOrChoicePopup: isInfoOrChoicePopup
     };
     
     // Hide the popup and its controls
@@ -4734,7 +4782,7 @@ function maximizeAllPopups() {
             // Track popup types for overlay management
             if (state.popup.id === 'played-cards-popup') {
                 hasPlayedCardsPopup = true;
-            } else if (!state.isNewPopup) {
+            } else if (!state.isNewPopup && !state.isInfoOrChoicePopup) {
                 hasRegularPopup = true;
             }
         }
@@ -4883,7 +4931,7 @@ function hideUIControls() {
     document.getElementById('healing-button').style.display = 'none';
     document.getElementById('superpowersToggle').style.display = 'none';
     document.getElementById('sort-player-cards').style.display = 'none';
-    document.getElementById('confirm-actions').style.display = 'none';
+    document.getElementById('turn-count').style.display = 'none';
     document.getElementById('play-all-button').style.display = 'none';
     document.getElementById('end-turn').style.display = 'none'; 
 }
@@ -4893,7 +4941,7 @@ function restoreUIControls() {
     document.getElementById('healing-button').style.display = 'block';
     document.getElementById('superpowersToggle').style.display = 'block';
     document.getElementById('sort-player-cards').style.display = 'block';
-    document.getElementById('confirm-actions').style.display = 'block';
+    document.getElementById('turn-count').style.display = 'flex';
     document.getElementById('play-all-button').style.display = 'block';
     document.getElementById('end-turn').style.display = 'block';
 }
@@ -5691,6 +5739,14 @@ if (city[i]) {
                 cardContainer.appendChild(permBuffOverlay);
             }
 
+                // Add Dark Portal overlay if this space has a Dark Portal
+                if (darkPortalSpaces[i]) {
+                    const darkPortalOverlay = document.createElement('div');
+                    darkPortalOverlay.className = 'dark-portal-overlay';
+                    darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+                    cardContainer.appendChild(darkPortalOverlay);
+                }
+
 updateVillainAttackValues(city[i], i);
 
     const attackFromMastermind = city[i].attackFromMastermind || 0;
@@ -6131,7 +6187,6 @@ if (city[i].type !== 'Bystander' && city[i].type !== 'Attached to Mastermind') {
 
     // Create an image element
     const cardImage = document.createElement('img');
-
         cardImage.src = "Visual Assets/Other/DarkPortal.webp";
         cardImage.alt = "Dark Portal Space";
         cardImage.classList.add('destroyed-space');
@@ -6876,8 +6931,6 @@ function sortPlayedCards() {
 }
 
 
-document.getElementById('confirm-actions').addEventListener('click', confirmActions);
-
 function confirmActions() {
     const cardsToPlay = selectedCards.map(index => playerHand[index]);
     cardsToPlay.reduce((promiseChain, card) => {
@@ -6943,50 +6996,62 @@ function confirmActions() {
                             }
                         } else {
                             return new Promise((resolve, reject) => {
-                                const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-                                    `DO YOU WISH TO ACTIVATE <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ability?`,
-                                    "Yes",
-                                    "No"
-                                );
+                                setTimeout(() => {
+                                    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+                                        `DO YOU WISH TO ACTIVATE <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ABILITY?`,
+                                        "Yes",
+                                        "No"
+                                    );
 
-                                document.getElementById('heroAbilityHoverText').style.display = 'none';
-
-                                const cardImage = document.getElementById('hero-ability-may-card');
-                                cardImage.src = card.image;
-                                cardImage.style.display = 'block';
-
-                                confirmButton.onclick = () => {
-                                    try {
-                                        const conditionalAbilityFunction = window[card.conditionalAbility];
-                                        if (typeof conditionalAbilityFunction === 'function') {
-                                            const result = conditionalAbilityFunction(card);
-                                            resolve(result);
-                                        } else {
-                                            console.error(`Conditional ability function ${card.conditionalAbility} not found`);
-                                            resolve();
-                                        }
-                                    } catch (error) {
-                                        reject(error);
+                                    // Update title
+                                    document.querySelector('.info-or-choice-popup-title').innerHTML = 'CONFIRM';
+                                    
+                                    // Hide close button
+                                    document.querySelector('.info-or-choice-popup-closebutton').style.display = 'none';
+                                    
+                                    // Use preview area for image
+                                    const previewArea = document.querySelector('.info-or-choice-popup-preview');
+                                    if (previewArea) {
+                                        previewArea.style.backgroundImage = `url('${card.image}')`;
+                                        previewArea.style.backgroundSize = 'contain';
+                                        previewArea.style.backgroundRepeat = 'no-repeat';
+                                        previewArea.style.backgroundPosition = 'center';
+                                        previewArea.style.display = 'block';
                                     }
-                                    hideHeroAbilityMayPopup();
-                                    document.getElementById('heroAbilityHoverText').style.display = 'block';
-                                };
 
-                                denyButton.onclick = () => {
-                                    onscreenConsole.log(`You have chosen not to activate <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ability.`);
-                                    hideHeroAbilityMayPopup();
-                                    document.getElementById('heroAbilityHoverText').style.display = 'block';
-                                    resolve();
-                                };
+                                    const cleanup = () => {
+                                        closeInfoChoicePopup();
+                                        resolve();
+                                    };
+
+                                    confirmButton.onclick = () => {
+                                        try {
+                                            cleanup();
+                                            const conditionalAbilityFunction = window[card.conditionalAbility];
+                                            if (typeof conditionalAbilityFunction === 'function') {
+                                                const result = conditionalAbilityFunction(card);
+                                                resolve(result);
+                                            } else {
+                                                console.error(`Conditional ability function ${card.conditionalAbility} not found`);
+                                                resolve();
+                                            }
+                                        } catch (error) {
+                                            reject(error);
+                                        }
+                                        
+                                    };
+
+                                    denyButton.onclick = () => {
+                                        onscreenConsole.log(`You have chosen not to activate <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ability.`);
+                                        cleanup();
+                                    };
+                                }, 10);
                             });
                         }
                     } else {
                         console.log(`Unable to use conditional ability.`);
                     }
                 }
-            }).then(() => {
-                // ADD HR AFTER EACH CARD'S ABILITIES COMPLETE (both unconditional and conditional)
-                addHRToTopWithInnerHTML();
             });
         });
     }, Promise.resolve()).then(() => {
@@ -6996,6 +7061,7 @@ function confirmActions() {
     }).catch(err => {
         console.error('Error during confirm actions:', err);
     });
+    addHRToTopWithInnerHTML();
 }
 
 function isConditionMet(conditionType, condition) {
@@ -7096,6 +7162,7 @@ async function endTurn() {
     onscreenConsole.log("Turn ended.");
     turnCount += 1;
     onscreenConsole.log(`<span class="console-highlights" style="text-decoration:underline;">Turn&nbsp;</span><span class="console-highlights" style="text-decoration:underline;">${turnCount}</span><span class="console-highlights" style="text-decoration:underline;">:</span>`);
+    document.getElementById('turn-counter').innerHTML = `TURN ${turnCount}`;
 
     console.log('Ending turn...');
     
@@ -8101,13 +8168,9 @@ if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCapture
   }
 
   // Professor X Mind Control
-  if (hasProfessorXMindControl) {
-    try {
-      await handleMindControlOption(villainCard);
-    } catch (error) {
-      console.error('Error in mind control popup:', error);
-    }
-  }
+if (hasProfessorXMindControl) {
+    await professorXMindControlGainVillain(villainCard);
+}
 
   // Final cleanup
   defeatBonuses();
@@ -8126,52 +8189,6 @@ if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCapture
 
   // One redraw at the end of post-defeat processing
   updateGameBoard();
-}
-
-// ---------------------------------
-// Professor X Mind Control (unchanged)
-// ---------------------------------
-async function handleMindControlOption(villainCard) {
-  return new Promise((resolve) => {
-    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-      "DO YOU WISH TO GAIN THIS VILLAIN?",
-      "GAIN AS A HERO",
-      "NO THANKS!"
-    );
-
-    document.getElementById('heroAbilityHoverText').style.display = 'none';
-
-    const cardImage = document.getElementById('hero-ability-may-card');
-    cardImage.src = 'Visual Assets/Heroes/Dark City/DarkCity_ProfessorX_MindControl.webp';
-    cardImage.style.display = 'block';
-
-    confirmButton.onclick = () => {
-      const cardCopy = JSON.parse(JSON.stringify(villainCard));
-      cardCopy.type = "Hero";
-      cardCopy.color = "Grey";
-      cardCopy.cost = villainCard.attack;
-      cardCopy.keyword1 = "None";
-      cardCopy.keyword2 = "None";
-      cardCopy.keyword3 = "None";
-      cardCopy.wasAVillain = true;
-
-      playerDiscardPile.push(cardCopy);
-
-      onscreenConsole.log(`You have chosen to add <span class="console-highlights">${villainCard.name}</span> to your discard pile as a grey Hero.`);
-      updateGameBoard();
-
-      hideHeroAbilityMayPopup();
-      document.getElementById('heroAbilityHoverText').style.display = 'block';
-      resolve(true);
-    };
-
-    denyButton.onclick = () => {
-      onscreenConsole.log(`You declined to copy ${villainCard.name}.`);
-      hideHeroAbilityMayPopup();
-      document.getElementById('heroAbilityHoverText').style.display = 'block';
-      resolve(false);
-    };
-  });
 }
 
 // Updated original functions to use the combined function
@@ -8358,7 +8375,7 @@ function showHeroKOPopup() {
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
@@ -8621,7 +8638,7 @@ function showDiscardCardPopup(escapedVillain) {
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '60%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
@@ -8648,8 +8665,11 @@ function showDiscardCardPopup(escapedVillain) {
         // Sort cards
         genericCardSort(availableCards);
 
+        const row1 = selectionRow1; // row1 is selectionRow1
+        const row2Visible = false; // Since we're hiding row2 in this popup
+
         // Initialize scroll gradient detection on the container
-        setupIndependentScrollGradients(row1, row2Visible ? row2 : null);
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
 
         // Create card elements for each available card
         availableCards.forEach(card => {
@@ -9326,32 +9346,45 @@ updateGameBoard();
 
 function showTacticPopup(tacticCard) {
     return new Promise((resolve) => {
-        const popup = document.getElementById('tactic-popup');
+        const popup = document.querySelector('.info-or-choice-popup');
+        const popupTitle = document.querySelector('.info-or-choice-popup-title');
+        const popupContext = document.querySelector('.info-or-choice-popup-instructions');
+        const popupImage = document.querySelector('.info-or-choice-popup-preview');
+        const confirmBtn = document.getElementById('info-or-choice-popup-confirm');
         const modalOverlay = document.getElementById('modal-overlay');
-        const resolveButton = document.getElementById('resolve-tactic');
+        const closeButton = document.querySelector('.info-or-choice-popup-closebutton');
 
-const mastermind = getSelectedMastermind();
+        const mastermind = getSelectedMastermind();
 
-        document.getElementById('tactic-effect').innerHTML = tacticCard.effect;
-document.getElementById('mastermind-tactic-image').src = tacticCard.image;
+        // Set up the popup content
+        popupTitle.innerText = `Tactic`;
+        popupImage.style.display = 'block';
+        popupContext.innerHTML = tacticCard.effect;
+        popupImage.style.backgroundImage = `url("${tacticCard.image}")`;
+        confirmBtn.innerText = getRandomConfirmText();
 
+        // Hide other buttons that aren't needed for tactics
+        const otherChoice = document.getElementById('info-or-choice-popup-otherchoice');
+        const nothanks = document.getElementById('info-or-choice-popup-nothanks');
+        if (otherChoice) otherChoice.style.display = 'none';
+        if (nothanks) nothanks.style.display = 'none';
+
+        // Show the popup and overlay
         popup.style.display = 'block';
         modalOverlay.style.display = 'block';
 
-        // Remove any previous event listener on the resolve button to avoid accumulation
-        resolveButton.replaceWith(resolveButton.cloneNode(true)); 
-        const newResolveButton = document.getElementById('resolve-tactic');
-        
-        // Add the new event listener
-        newResolveButton.addEventListener('click', () => {
-popup.style.display = 'none';
-                modalOverlay.style.display = 'none';
+        const onConfirm = () => {
             resolveTacticEffects(tacticCard).then(() => {
                 onscreenConsole.log(`<span class="console-highlights">${mastermind.name}</span> has ${mastermind.tactics.length} tactics remaining!`);
-		addHRToTopWithInnerHTML(); 
+                addHRToTopWithInnerHTML(); 
                 resolve(); // Resolve the promise after the tactic effects are resolved
             });
-        });
+            closeInfoChoicePopup();
+        };
+
+        // Simple onclick assignment - no need for cloneNode
+        confirmBtn.onclick = onConfirm;
+        closeButton.onclick = onConfirm;
     });
 }
 
@@ -9396,9 +9429,6 @@ function checkMastermindState() {
     }
     checkWinCondition();
 }
-
-
-
 
 // Add this JavaScript to your script.js
 function showMessagePopup(message) {
@@ -9952,20 +9982,40 @@ document.getElementById('modal-overlay').style.display = 'none';
 
 
 function hideHeroAbilityMayPopup() {
-  // Hide the pop-up and overlay
-  document.getElementById('hero-ability-may-popup').style.display = 'none';
-  document.getElementById('heroAbilityHoverText').style.display = 'block';
-  document.getElementById('modal-overlay').style.display = 'none';
+    // Hide the pop-up and overlay
+    document.querySelector('.info-or-choice-popup').style.display = 'none';
+    document.getElementById('modal-overlay').style.display = 'none';
+    document.querySelector('.info-or-choice-popup-closebutton').style.display = 'none';
+    
+    // Reset popup title to default
+    document.querySelector('.info-or-choice-popup-title').innerHTML = 'POPUP TITLE';
+    document.querySelector('.info-or-choice-popup-instructions').innerHTML = 'Instructions go here...';
+    
+    // Clear and hide preview area
+    const previewArea = document.querySelector('.info-or-choice-popup-preview');
+    if (previewArea) {
+        previewArea.style.backgroundImage = '';
+        previewArea.style.display = 'none';
+    }
+
+    document.getElementById('info-or-choice-popup-confirm').style.display = 'block';
+    document.getElementById('info-or-choice-popup-confirm').innerHTML = 'CONFIRM';
+    document.getElementById('info-or-choice-popup-otherchoice').style.display = 'none';
+    document.getElementById('info-or-choice-popup-otherchoice').innerHTML = 'OTHER CHOICE';
+    document.getElementById('info-or-choice-popup-nothanks').style.display = 'none';
+    document.getElementById('info-or-choice-popup-nothanks').innerHTML = 'DENY';
+
 }
 
 function showHeroAbilityMayPopup(promptText, confirmLabel = "Confirm", denyLabel = "Deny", extraLabel = "", showExtraButton = false) {
   // Set the prompt text
-  document.querySelector('#hero-ability-may-popup p').innerHTML = promptText;
+  document.querySelector('.info-or-choice-popup-title').innerHTML = "YOUR CHOICE";
+  document.querySelector('.info-or-choice-popup-instructions').innerHTML = promptText;
 
   // Get the button elements
-  const confirmButton = document.getElementById('hero-ability-confirm');
-  const denyButton = document.getElementById('hero-ability-deny');
-  const extraButton = document.getElementById('hero-ability-extra');
+  const confirmButton = document.getElementById('info-or-choice-popup-confirm');
+  const denyButton = document.getElementById('info-or-choice-popup-nothanks');
+  const extraButton = document.getElementById('info-or-choice-popup-otherchoice');
 
   // Set the button labels
   confirmButton.innerText = confirmLabel;
@@ -9984,7 +10034,7 @@ function showHeroAbilityMayPopup(promptText, confirmLabel = "Confirm", denyLabel
   }
 
   // Show the pop-up and overlay
-  document.getElementById('hero-ability-may-popup').style.display = 'block';
+  document.querySelector('.info-or-choice-popup').style.display = 'block';
   document.getElementById('modal-overlay').style.display = 'block';
 
   // Ensure previous event listeners are removed by cloning the buttons
@@ -9998,9 +10048,9 @@ function showHeroAbilityMayPopup(promptText, confirmLabel = "Confirm", denyLabel
   extraButton.replaceWith(clonedExtraButton);
 
   // Retrieve the new elements after replacement
-  const newConfirmButton = document.getElementById('hero-ability-confirm');
-  const newDenyButton = document.getElementById('hero-ability-deny');
-  const newExtraButton = document.getElementById('hero-ability-extra');
+  const newConfirmButton = document.getElementById('info-or-choice-popup-confirm');
+  const newDenyButton = document.getElementById('info-or-choice-popup-nothanks');
+  const newExtraButton = document.getElementById('info-or-choice-popup-otherchoice');
 
   // Debugging: Ensure buttons are visible and set correctly
   console.log('Confirm button display:', window.getComputedStyle(newConfirmButton).display);
@@ -10014,8 +10064,6 @@ function showHeroAbilityMayPopup(promptText, confirmLabel = "Confirm", denyLabel
     extraButton: newExtraButton,
   };
 }
-
-
 
 const zoomedImage = document.getElementById('zoomed-image');
 const zoomedImageTop = document.getElementById('zoomed-image-top');
@@ -12468,7 +12516,7 @@ function closeCardChoicePopup() {
     const nothanks = document.getElementById('card-choice-popup-nothanks');
 
     if (cardchoicepopup) cardchoicepopup.style.display = 'none';
-    if (close) close.style.display = 'block'; // Usually want to show close button
+    if (close) close.style.display = 'none';
     if (title) title.textContent = 'POPUP TITLE';
     if (instructions) instructions.textContent = 'INSTRUCTIONS';
     if (row1Title) {
@@ -12505,4 +12553,35 @@ function closeCardChoicePopup() {
         selectionContainer.classList.remove('row1-scrollable', 'row2-scrollable', 'both-rows-visible', 
                                           'row1-at-start', 'row1-at-end', 'row2-at-start', 'row2-at-end');
     }
+}
+
+function closeInfoChoicePopup() {
+    const infochoicepopup = document.querySelector('.info-or-choice-popup');
+    const minimise = document.querySelector('.info-or-choice-popup-minimizebutton');
+    const close = document.querySelector('.info-or-choice-popup-closebutton');
+    const title = document.querySelector('.info-or-choice-popup-title');
+    const instructions = document.querySelector('.info-or-choice-popup-instructions');
+    const preview = document.querySelector('.info-or-choice-popup-preview');
+    const confirm = document.getElementById('info-or-choice-popup-confirm');
+    const otherChoice = document.getElementById('info-or-choice-popup-otherchoice');
+    const nothanks = document.getElementById('info-or-choice-popup-nothanks');
+
+    // Nullify onclick handlers to prevent memory leaks and duplicate triggers
+    if (confirm) confirm.onclick = null;
+    if (otherChoice) otherChoice.onclick = null;
+    if (nothanks) nothanks.onclick = null;
+
+    if (infochoicepopup) infochoicepopup.style.display = 'none';
+    if (close) close.style.display = 'block';
+    if (title) title.textContent = 'POPUP TITLE';
+    if (instructions) instructions.textContent = 'INSTRUCTIONS';
+    if (preview) preview.innerHTML = '';
+    if (otherChoice) otherChoice.style.display = 'none';
+    if (otherChoice) otherChoice.innerHTML = 'OTHER CHOICE';
+    if (nothanks) nothanks.style.display = 'none';
+    if (nothanks) nothanks.innerHTML = 'NO THANKS';
+    
+    // Hide modal overlay
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) modalOverlay.style.display = 'none';
 }

@@ -462,26 +462,32 @@
     <button id="donate-call-to-action">DONATE TO SUPPORT FUTURE EXPANSIONS</button>
   </div>
 
-<div id="confirm-start-up-choices" class="popup" style="display:none;">
-  <div id="confirm-startup-close-x" class="close-triangle-btn" aria-label="Close">
-  <span class="close-x"><b>✕</b></span>
+<div id="confirm-start-up-choices" style="display:none;">
+  <div class="confirm-startup-close-x">✕</div>
+    <div class="confirm-start-up-choices-title">CONFIRM CHOICES</div>
+<div class="popup-content">
+    <div class="p-section">
+        <div id="chosen-scheme" class="two-line-item">Chosen Scheme:&nbsp;</div>
+        <div id="chosen-mastermind" class="two-line-item">Chosen Mastermind:&nbsp;</div>
+<div id="chosen-villains" class="two-line-item">
+    <div class="line-1">Your chosen Scheme requires <span id="required-villains-count">1 Villain group</span></div>
+    <div class="line-2">You have chosen: <span id="villains-list">Brotherhood</span></div>
 </div>
-    <h2>CONFIRM CHOICES</h2>
-    <div class="popup-content">
-        <div class="p-and-button-wrapper">
-            <div class="p-section">
-                <p id="chosen-scheme">Chosen Scheme: </p>
-                <p id="chosen-mastermind">Chosen Mastermind: </p>
-                <p id="chosen-villains">Your chosen Scheme requires <span id="required-villains-count"></span>. You have chosen: <span id="villains-list"></span></p>
-                <p id="chosen-henchmen">Your chosen Scheme requires <span id="required-henchmen-count"></span>. You have chosen: <span id="henchmen-list"></span></p>
-                <p id="chosen-heroes">Your chosen Scheme requires <span id="required-heroes-count"></span>. You have chosen <span id="heroes-list"></span></p>
-            </div>
-            <div class="button-group">
+<div id="chosen-henchmen" class="two-line-item">
+    <div class="line-1">Your chosen Scheme requires <span id="required-henchmen-count">1 Henchmen group</span></div>
+    <div class="line-2">You have chosen: <span id="henchmen-list">Maggia Goons</span></div>
+</div>
+<div id="chosen-heroes" class="two-line-item">
+    <div class="line-1">Your chosen Scheme requires <span id="required-heroes-count">3 Heroes</span></div>
+    <div class="line-2">You have chosen: <span id="heroes-list">Black Widow, Captain America and Cyclops</span></div>
+</div>
+    </div>
+</div>
+<div class="confirm-start-up-choices-buttonhousing">
                 <button id="return-to-selections">RETURN TO SELECTIONS</button>
                 <button id="begin-game" disabled>START GAME</button>
-            </div>
-        </div>
     </div>
+
 </div>
 
 
@@ -613,8 +619,8 @@
     </div>
 </div>
 <button id="sort-player-cards" class="player-controls"><span class="game-board-bottom-row">Sort Hand</span></button>
-<button id="confirm-actions" class="player-controls"><span class="game-board-bottom-row">Play Selected</span></button>
 <button id="play-all-button" style="margin-top:1vh;" class="player-controls"><span class="game-board-bottom-row">Play All Greys</span></button>
+<div id="turn-count" style="margin-top:1vh;" class="player-controls"><span id="turn-counter" class="game-board-bottom-row">Turn 1</span></div>
         <button id="end-turn" class="cell button-end-turn" style="grid-column: span 2;" class="player-controls"><span class="game-board-bottom-row">Hold to End Turn</span></button>
      
         <button class="reopen-popup-btn" aria-label="Reopen popup" style="grid-column: span 8; display:none;">
@@ -1015,26 +1021,20 @@
     </div>
   </div>
 
-  <div id="mulligan-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-    <div class="popup-content">
-      <h2 id="hero-ability-may-h2">MULLIGAN</h2>
-      <p>You have begun the game with a least two Heroes in the HQ with a cost of 7 or more. Would you like to shuffle these back into the Hero Deck?</p>
-      <div class="card-display">
-        <div class="card-image-frame"><img src="Visual Assets/CardBack.webp" alt="Card Image" id="mulligan-card"></div>
+  <div id="mulligan-popup" class="mulligan-popup-class" style="display: none;">
+  <div class="mulligan-popup-minimizebutton"><span style="font-size:6vh;">⇱</span></div>
+  <div id="mulligan-popup-title">MULLIGAN</div>
+      <div id="mulligan-popup-instructions">You have begun the game with a least two Heroes in the HQ with a cost of 7 or more. Would you like to shuffle these back into the Hero Deck?</div>
+      <div class="mulligan-card-display">
       </div>
-      <button id="mulligan-confirm">Yes</button>
-      <button id="mulligan-deny">No</button>
+        <div class="mulligan-popup-buttonhousing">
+        <button id="mulligan-confirm">YES</button>
+        <button id="mulligan-deny">NO THANKS</button>
     </div>
-  </div>
+    </div>
 
-<div id="bribe-popup" class="popup" style="display:none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-      <div class="popup-content">
+<div id="bribe-popup" class="bribe-popup-class" style="display:none;">
+<div class="bribe-popup-minimizebutton"><span style="font-size:6vh;">⇱</span></div>
       <h2 id="bribe-popup-h2">Attack or Recruit?</h2>
 <p id="bribe-instructions">What combination of <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> and <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons"> points would you like to use?</p>
         <div class="countersAndDisplay">
@@ -1059,13 +1059,14 @@
         </div>
           <div class="bribe-image">
           <div class="bribe-image-placeholder">
-<img id="bribe-card-image" src="" alt="Card Image" style="display:none; max-width:100%; height:auto;" />
+<img id="bribe-card-image" src="" alt="Card Image" style="display:none; max-width:100%; height:100%;" />
         </div>
         </div>
         </div>
-               <button id="bribe-confirm-button" class="bribe-buttons">CONFIRM</button>
-      </div>
-      
+               
+        <div class="bribe-popup-buttonhousing">
+        <button id="bribe-confirm-button">CONFIRM</button>
+    </div>  
     </div>
   </div>
 
@@ -1095,29 +1096,23 @@
     </div>
   </div>
 
-<div id="villain-movement-popup" class="popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close">
-  <span class="close-x"><b>✕</b></span>
-</div>
+<div id="villain-movement-popup" class="villain-movement-popup-class" style="display: none;">
+<div class="villain-movement-popup-minimizebutton"><span style="font-size:6vh;">⇱</span></div>
+        <div id="villain-movement-popup-title">Hero Ability!</div>
+        <div id="villain-movement-context">You may move a Villain to a new city space (swapping two if needed). Rescue any Bystanders captured by that Villain.</div>
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 2000;">
     <defs>
         <marker id="arrowhead" viewBox="0 0 10 10" refX="5" refY="5"
-            markerWidth="8" markerHeight="8" orient="auto" style="stroke:#ffab0f;fill:#ffab0f;">
+            markerWidth="8" markerHeight="8" orient="auto" style="stroke:var(--accent);fill:var(--accent);">
             <path d="M 0 0 L 10 5 L 0 10 z" />
         </marker>
     </defs>
-    <g fill="none" stroke="#ffab0f" stroke-width="2" marker-end="url(#arrowhead)">
+    <g fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)">
         <path id="selection-arrow"/>
     </g>
 </svg>
 
     <div class="popup-content">
-        <h2>Hero Ability!</h2>
-        <p id="villain-movement-context">You may move a Villain to a new city space (swapping two if needed). Rescue any Bystanders captured by that Villain.</p>
-        
         <table id="city-representation">
             <tr>
                 <td id="villain-bridge">Villain 1</td>
@@ -1134,13 +1129,11 @@
                 <td>Sewers</td>
             </tr>
         </table>
-
-
-
+    </div>
+<div class="villain-movement-popup-buttonhousing">
         <button id="confirm-villain-movement">Confirm</button>
         <button id="no-thanks-villain-movement">No Thanks</button>
     </div>
-
 </div>
 
   <div id="played-cards-popup" class="popup" style="display: none;">
@@ -1374,35 +1367,9 @@
   </div>
 </div>
 
-
- <div id="investigate-popup" class="popup" style="display: none;">
-  <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-  <div class="popup-content">
-    <h2 id="investigate-h2">INVESTIGATE!</h2>
-    <p>Choose a team. Investigate for a card of that team.</p>
-    <div class="card-display">
-      <div class="card-image-frame"><img src="" alt="Card Image" id="investigate-card"></div>
-    </div>
-    <div id="investigate-team-filter" class="dropdown-check-list" tabindex="100" style="display:none;">
-      <span class="anchor2">Teams</span>
-      <ul class="items">
-         <li><label><input type="radio" name="investigate-team" data-team="Avengers"/> <img src="Visual Assets/Icons/Avengers.svg" alt="Avengers Icon" class="card-icons"> Avengers</label></li>
-        <li><label><input type="radio" name="investigate-team" data-team="Fantastic Four"/> <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="card-icons"> Fantastic Four</label></li>
-<li><label><input type="radio" name="investigate-team" data-team="Marvel Knights"/> <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="card-icons"> Marvel Knights</label></li>
-        <li><label><input type="radio" name="investigate-team" data-team="S.H.I.E.L.D."/> <img src="Visual Assets/Icons/S.H.I.E.L.D..svg" alt="SHIELD Icon" class="card-icons"> S.H.I.E.L.D.</label></li>
-<li><label><input type="radio" name="investigate-team" data-team="Spider Friends"/> <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="card-icons"> Spider Friends</label></li>
-<li><label><input type="radio" name="investigate-team" data-team="X-Force"/> <img src="Visual Assets/Icons/X-Force.svg" alt="X-Force Icon" class="card-icons"> X-Force</label></li>
-<li><label><input type="radio" name="investigate-team" data-team="X-Men"/> <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="card-icons"> X-Men</label></li>      </ul>
-    </div>
-    <button id="investigate-confirm">CONFIRM</button>
-  </div>
-</div>
-
 <div class="card-choice-popup">
     <div class="card-choice-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
-    <div class="card-choice-popup-closebutton">✕</div>
+    <div class="card-choice-popup-closebutton" style="display:none;">✕</div>
     <div class="card-choice-popup-title">POPUP TITLE</div>
     <div class="card-choice-popup-instructions">Instructions will go in here...</div>
     <div class="card-choice-popup-choiceandpreview">
@@ -1434,6 +1401,42 @@
         <button id="card-choice-popup-otherchoice">OTHER CHOICE</button>
         <button id="card-choice-popup-nothanks">NO THANKS</button>
     </div>
+</div>
+
+<div class="info-or-choice-popup">
+    <div class="info-or-choice-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div class="info-or-choice-popup-closebutton">✕</div>
+    <div class="info-or-choice-popup-title">POPUP TITLE</div>
+    <div class="info-or-choice-popup-instructions">Instructions will go in here...</div>
+    <div class="info-or-choice-popup-preview"></div>
+        <div class="info-or-choice-popup-buttonhousing">
+        <button id="info-or-choice-popup-confirm">CONFIRM</button>
+        <button id="info-or-choice-popup-otherchoice">OTHER CHOICE</button>
+        <button id="info-or-choice-popup-nothanks">NO THANKS</button>
+    </div>
+</div>
+
+
+
+ <div class="investigate-popup" style="display: none;">
+<div class="investigate-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+<div class="investigate-popup-title">INVESTIGATE</div>
+<div class="investigate-popup-instructions">Choose a team. Investigate for a card of that team.</div>
+<div id="investigate-card-preview" class="info-or-choice-popup-preview"></div>    
+<div id="investigate-team-filter" class="dropdown-check-list" tabindex="100" style="display:none; width:60%; margin-left:auto; margin-right:auto;margin-top: 2vh;">
+      <span id="investigate-anchor" class="anchor2" style="width: calc(15vh + 16vw);">Teams</span>
+      <ul class="items" style="height: 20vh; overflow-y: auto; width:100%;">
+         <li><label><input type="radio" name="investigate-team" data-team="Avengers"/> <img src="Visual Assets/Icons/Avengers.svg" alt="Avengers Icon" class="card-icons"> Avengers</label></li>
+        <li><label><input type="radio" name="investigate-team" data-team="Fantastic Four"/> <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="card-icons"> Fantastic Four</label></li>
+<li><label><input type="radio" name="investigate-team" data-team="Marvel Knights"/> <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="card-icons"> Marvel Knights</label></li>
+        <li><label><input type="radio" name="investigate-team" data-team="S.H.I.E.L.D."/> <img src="Visual Assets/Icons/S.H.I.E.L.D..svg" alt="SHIELD Icon" class="card-icons"> S.H.I.E.L.D.</label></li>
+<li><label><input type="radio" name="investigate-team" data-team="Spider Friends"/> <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="card-icons"> Spider Friends</label></li>
+<li><label><input type="radio" name="investigate-team" data-team="X-Factor"/> <img src="Visual Assets/Icons/X-Factor.svg" alt="X-Factor Icon" class="card-icons"> X-Factor</label></li>
+<li><label><input type="radio" name="investigate-team" data-team="X-Force"/> <img src="Visual Assets/Icons/X-Force.svg" alt="X-Force Icon" class="card-icons"> X-Force</label></li>
+<li><label><input type="radio" name="investigate-team" data-team="X-Men"/> <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="card-icons"> X-Men</label></li>      </ul>
+    </div>
+    <button id="investigate-confirm">CONFIRM</button>
+  </div>
 </div>
     
 <script>

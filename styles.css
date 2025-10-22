@@ -134,22 +134,28 @@
     cursor: not-allowed;
 }
 
+#investigate-confirm:disabled {
+    background-color: var(--disabledAccent);
+    cursor: not-allowed;
+}
+
 #bribe-popup .counters {
-    width: clamp(200px, 68%, 65%);
-    display: flex;
+display: flex;
     gap: 1vw;
     align-items: center;
+    height: 96%;
+    width: 70%;
+    left: 2vw;
+    position: relative;
+    align-content: center;
+    overflow: hidden;
 }
 
 #bribe-popup .countersAndDisplay {
-    gap: 1vw;
-    display: flex;
-    width: 95%;
-    margin-top: 2.5vh;
-}
-
-#bribe-popup .bribe-buttons {
-    width:50%;
+    position: relative;
+    height: calc(100% - 9vh);
+    width: 100%;
+    overflow: hidden;
 }
 
 .side-panel {
@@ -366,7 +372,7 @@ button {
     cursor: pointer;
     width: 100%;
     margin-left: 0;
-    font-size: clamp(0.7em, 1.7vh, 1.5em);
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
 display: flex;
     align-items: center; /* Centers the text vertically */
     justify-content: center; /* Centers the text horizontally */
@@ -1065,6 +1071,7 @@ font-family: "Roboto Condensed", sans-serif;
     font-style: italic;
 text-decoration:underline;
 color:red;
+font-size: clamp(5pt, 1.5vh, 1em);
 }
 
 .popup h2 {
@@ -1076,38 +1083,6 @@ line-height:3vh;
 margin-top:20px;
 margin-bottom:0;
 }
-
-
-
-.p-and-button-wrapper {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    width: 95%;
- 
-}
-
-.p-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: calc(0.5vh + 0.5vw);
-
-}
-
-.p-section p {
-margin-bottom: calc(0.3vh + 0.3vw);
-    text-align: center;
-    font-size: 2vh;
-    line-height: 2.4vh;
-}
-
-#confirm-start-up-choices .button-group {
-    width: 50%;
-    
-}
-
 
 .close-btn {
     align-self: flex-end;
@@ -1441,7 +1416,7 @@ justify-content:center;
 
 #hero-select-popup button {
   
-font-size: clamp(0.7em, 2vh, 1.5em);
+font-size: clamp(0.6em, 2vh, 1.5em);
 height:calc(2vh + 2vw);
 max-height:5vh;
 margin-top: 2vh;
@@ -1451,7 +1426,7 @@ margin-left: auto;
 
 .heroSelectNoThanksButton {
   
-font-size: clamp(0.7em, 2vh, 1.5em);
+font-size: clamp(0.6em, 2vh, 1.5em);
 height:calc(2vh + 2vw);
 max-height:5vh;
 margin-top: 2vh;
@@ -1482,20 +1457,13 @@ border-width:thick;
 }
 
 .bribe-image-placeholder {
-    aspect-ratio: 740 / 1025;
-    height: 37vh;
-width:auto;
+    width: auto;
+    height: 85%;
+    aspect-ratio: 738 / 1039;
     background-color: var(--panel-backgrounds);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-color: var(--accent);
-font-weight:600;
-font-size:calc(0.7vh + 0.7vw);
-border-color: var(--accent);
-border-radius: 1.5vh;
-border-style:solid;
-border-width:thick;
+    border: 0.5vh solid var(--accent);
+    border-radius: 1.5vh;
+    box-sizing: border-box;
 }
 
 #hero-select-popup .popup-content {
@@ -1545,11 +1513,15 @@ margin-left:-1vh;
 }
 
 .bribe-image {
-    width: 35%;
-    justify-content: center;
+    position: absolute;
+    bottom: 1vh;
+    right: 3vw;
+    width: 20%;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-margin-top:0vh;
-margin-left:-1vh;
+    gap: 0.5vh;
+    height: 95%;
 }
 
 #card-choice-one-location-popup.hero-image {
@@ -1580,7 +1552,7 @@ margin-left:-1vh;
 
 #hero-KO-popup button {
     width:75%;
-font-size: clamp(0.7em, 2vh, 1.5em);
+font-size: clamp(0.6em, 2vh, 1.5em);
 height:6vh;
 justify-content: start;
 }
@@ -1741,7 +1713,7 @@ max-height: 5vh;
   font-family: "Roboto Condensed", sans-serif;
   font-weight: 600;
   font-style: normal;
-font-size: clamp(0.7em, 2vh, 1.5em);
+font-size: clamp(0.6em, 2vh, 1.5em);
 display: flex;
     align-items: center; /* Centers the text vertically */
     justify-content: center; /* Centers the text horizontally */
@@ -2108,7 +2080,7 @@ ease;
     height: auto;
     cursor: pointer;
     font-family:var(--heading-font);
-font-size: var(--heading-size);
+font-size: calc(.5vh + .5vw);
 text-transform: var(--text-transform);
 letter-spacing: var(--letter-spacing);
 
@@ -3016,7 +2988,7 @@ height: clamp(150px, 30vh, 35vh);
 
 #card-choice-one-location-popup button {
 width: 70%;
-    font-size: clamp(0.7em, 2vh, 1.5em);
+    font-size: clamp(0.6em, 2vh, 1.5em);
     margin-top: 1vh;
     text-transform: uppercase;
 
@@ -3365,7 +3337,7 @@ aspect-ratio: 740 / 1025;
     border-width: calc(0.2vh + 0.2vw);
 }
 
-#hero-ability-may-card, #mulligan-card {
+#hero-ability-may-card {
 height:100%;
 width: auto;
 }
@@ -3423,13 +3395,6 @@ text-transform: uppercase;
     font-size: clamp(9pt, 2vh, 1.5em);
     margin-top: 3px;
     margin-bottom: 3px;
-}
-
-#confirm-start-up-choices p {
-    text-transform: none;
-    font-weight: var(--console-text-weight);
-    font-size:clamp(9pt, 2vh, 1.5em);
-    line-height: 3vh;
 }
 
 .villain-movement-card-image {
@@ -4653,10 +4618,6 @@ margin-left: 10%;
     font-size: calc(0.5vh + 0.5vw);
 }
 
-#mulligan-confirm, #mulligan-deny {
-width: 50%;
-}
-
 .loading-container {
   position: fixed;
   top: 50%;
@@ -4730,7 +4691,7 @@ width: 50%;
     font-family: "Roboto Condensed", sans-serif;
     font-weight: 600;
     font-style: normal;
-    font-size: clamp(0.7em, 1.5vh, 1.5em);
+    font-size: clamp(0.6em, 1.5vh, 1.5em);
     white-space: nowrap;
     margin: 0; /* Remove default margins */
 }
@@ -5127,7 +5088,7 @@ display:flex;
     border-radius: 1vh;
     cursor: pointer;
     margin-left: 0;
-    font-size: clamp(0.7em, 1.7vh, 1.5em);
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5599,8 +5560,10 @@ hr {
     left: clamp(11px, 1.2%, 17px);
     height: 83%;
     top: clamp(37px, 7.4%, 9%);
-    border: 5px solid var(--accent);
+    border: 3px solid var(--accent);
     border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
     padding-top: 7vh;
     box-sizing: border-box;
     padding-bottom: 7vh;
@@ -5673,6 +5636,7 @@ hr {
     font-family: 'Roboto Condensed';
     font-weight: bold;
     font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
 }
 
 .card-choice-popup-instructions {
@@ -5697,7 +5661,7 @@ hr {
 .card-choice-popup-preview-container {
     position: absolute;
     bottom: 1vh;
-    right: 2vw;
+    right: 3vw;
     width: 20%;
     display: flex;
     flex-direction: column;
@@ -5708,7 +5672,7 @@ hr {
 
 .card-choice-popup-preview {
     width: auto;
-    height: 93%;
+    height: 85%;
     aspect-ratio: 738 / 1039;
     background-color: var(--panel-backgrounds);
     border: 0.5vh solid var(--accent);
@@ -5751,7 +5715,7 @@ hr {
     cursor: pointer;
     width: 28%;
     margin-left: 0;
-    font-size: clamp(0.7em, 1.7vh, 1.5em);
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5760,6 +5724,7 @@ hr {
     font-style: normal;
     height: calc(2vh + 2vw);
     max-height: 5vh;
+    text-transform: uppercase;
 }
 
 .card-choice-popup-buttonhousing button:disabled {
@@ -5795,7 +5760,7 @@ hr {
     overflow: hidden; /* Contain the gradients */
 }
 
-.card-choice-popup-selectionrow1-container {
+/* .card-choice-popup-selectionrow1-container {
     top: 50%;
     transform: translateY(-50%);
 }
@@ -5961,6 +5926,35 @@ hr {
     user-select: none;
 }
 
+/* Multi-row mode for cards - FIXED VERSION */
+.card-choice-popup-selectionrow1.multi-row,
+.card-choice-popup-selectionrow2.multi-row {
+    flex-wrap: wrap;
+    align-content: flex-start;
+    max-height: 100%;
+    overflow-y: hidden;
+    /* Force horizontal scrolling to work with wrapped content */
+    flex-direction: column; /* This is key! */
+    height: 100%; /* Ensure it takes full container height */
+}
+
+/* Create an inner container for the wrapped rows */
+.card-choice-popup-selectionrow1.multi-row .popup-card-wrapper,
+.card-choice-popup-selectionrow2.multi-row .popup-card-wrapper {
+    display: flex;
+    flex-wrap: nowrap; /* Don't wrap inside the wrapper */
+    height: 50%; /* Each row takes half height */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+/* Smaller cards in multi-row mode */
+.card-choice-popup-selectionrow1.multi-row .popup-card,
+.card-choice-popup-selectionrow2.multi-row .popup-card {
+    height: 90%; /* Slightly smaller to fit in row */
+    margin: 1% 0.5%;
+    flex: 0 0 auto; /* Don't grow or shrink */
+}
+
 .popup-card-preview-image {
     height: 100%;
     border-radius: 1vh;
@@ -6003,4 +5997,813 @@ hr {
     color: var(--accent);
     font-size: clamp(8pt, 2vh, 1.2em);
     font-family: 'Roboto Condensed';
+}
+
+.info-or-choice-popup {
+    position: absolute;
+    width: 48.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(88px, 19.6%, 300px);
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+    display: none;
+}
+
+.info-or-choice-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.info-or-choice-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.info-or-choice-popup-closebutton {
+    font-size: 4vh;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    text-align: center;
+    align-content: center;
+    font-weight: bold;
+    font-family: Arial;
+}
+
+.info-or-choice-popup-closebutton:hover {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--contrastText);
+}
+
+.info-or-choice-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+.info-or-choice-popup-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.info-or-choice-popup-preview {
+    width: auto;
+    height: 69%;
+    aspect-ratio: 738 / 1039;
+    background-color: var(--accent);
+    border: 0.5vh solid var(--accent);
+    border-radius: 1.5vh;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    background-size: 100% 100%;
+}
+
+.info-or-choice-popup-buttonhousing {
+    margin-top: 1vh;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
+.info-or-choice-popup-buttonhousing button {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+    text-transform: uppercase;
+}
+
+.info-or-choice-popup-buttonhousing button:disabled {
+    background-color: var(--disabledAccent);
+    cursor: not-allowed;
+}
+
+.info-or-choice-popup-buttonhousing button:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#info-or-choice-popup-otherchoice, #info-or-choice-popup-nothanks {
+    display: none;
+}
+
+.investigate-popup {
+    position: absolute;
+    width: 48.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(88px, 19.6%, 300px);
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+    display: none;
+}
+
+#investigate-confirm {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+    text-transform: uppercase;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 3vh;
+}
+
+.investigate-popup-buttonhousing button:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#turn-count {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1vh;
+}
+
+#turn-counter {
+    color: var(--popupText);
+    filter: none;
+    font-weight: bold;
+    user-select: none;
+}
+
+#bribe-popup {
+    position: absolute;
+    width: 48.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(88px, 19.6%, 300px);
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+    display: none;
+}
+
+.bribe-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.bribe-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#bribe-popup-h2 {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+#bribe-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.bribe-popup-buttonhousing {
+    margin-top: 1vh;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
+.bribe-popup-buttonhousing button:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#bribe-confirm-button {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+    text-transform: uppercase;
+}
+
+.investigate-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.investigate-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.investigate-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+.investigate-popup-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+#mulligan-popup {
+    position: absolute;
+    width: 48.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(88px, 19.6%, 300px);
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+    display: none;
+}
+
+.mulligan-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.mulligan-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#mulligan-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+#mulligan-popup-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.mulligan-popup-buttonhousing {
+    margin-top: 1vh;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
+#mulligan-confirm:hover, #mulligan-deny:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#mulligan-confirm, #mulligan-deny {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+    text-transform: uppercase;
+}
+
+.mulligan-card-display {
+    width: auto;
+    height: 69%;
+    aspect-ratio: 738 / 1039;
+    background-color: var(--accent);
+    border: 0.5vh solid var(--accent);
+    border-radius: 1.5vh;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    background-size: 100% 100%;
+    background-image: url('Visual Assets/CardBack.webp');
+}
+
+.card-image-frame {
+    height: 100%;
+}
+
+#confirm-start-up-choices {
+    display: block;
+    position: fixed;
+    width: 50%;
+    background-color: var(--panel-backgrounds);
+    left: 25%;
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 1000;
+}
+
+.confirm-startup-close-x {
+    font-size: 4vh;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    text-align: center;
+    align-content: center;
+    font-weight: bold;
+    font-family: Arial;
+}
+
+.confirm-startup-close-x:hover {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--contrastText);
+}
+
+.confirm-start-up-choices-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+.confirm-start-up-choices-buttonhousing {
+    margin-top: 1vh;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
+#return-to-selections, #begin-game {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+    text-transform: uppercase;
+}
+
+#return-to-selections:hover, #begin-game:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#confirm-start-up-choices p {
+    text-transform: none;
+    font-weight: var(--console-text-weight);
+    font-size:clamp(9pt, 2vh, 1.5em);
+    line-height: 3vh;
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 92%;
+    margin-left: auto;
+    margin-right: auto;
+    justify-items: center;
+    height: 70%;
+    margin-top: 5%;
+}
+
+.p-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around; /* This spreads them out evenly */
+    align-items: center;
+    height: 100%; /* Take full height of parent */
+    width: 100%;
+    white-space: nowrap;
+}
+
+.p-section div {
+    margin-bottom: calc(0.3vh + 0.3vw);
+    text-align: center;
+    font-size: clamp(7pt, 2vh, 1.5em);
+    line-height: 2.4vh;
+    flex: 1; /* Each paragraph takes equal space */
+    display: flex;
+    align-items: center; /* Vertically center text in its space */
+}
+
+.p-section .two-line-item {
+    display: block;
+    text-align: center;
+    line-height: 1.3;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.p-section .two-line-item .line-1,
+.p-section .two-line-item .line-2 {
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+/* Ensure all spans stay inline and don't create line breaks */
+.p-section .two-line-item span {
+    display: inline;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Remove any margins that might be creating gaps */
+.p-section .two-line-item .line-1 {
+    margin-bottom: -2vh;
+}
+
+.p-section .bold-spans {
+    text-transform: uppercase;
+}
+
+#villain-movement-popup {
+    position: absolute;
+    width: 76.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(11px, 1.2%, 17px);
+    height: 83%;
+    top: clamp(37px, 7.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+}
+
+.villain-movement-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.villain-movement-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#villain-movement-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+#villain-movement-context {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.villain-movement-popup-buttonhousing {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+}
+
+#confirm-villain-movement:disabled {
+    background-color: var(--disabledAccent);
+    cursor: not-allowed;
+}
+
+#confirm-villain-movement, #no-thanks-villain-movement {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.7em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+}
+
+#confirm-villain-movement:hover, #no-thanks-villain-movement:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.dark-portal-overlay {
+    width: 2vw;
+    background-color: #cd7b78;
+    position: absolute;
+    z-index: 1;
+    border-radius: 100%;
+    color: white;
+    font-family: var(--heading-font);
+    font-size: var(--heading-size);
+    text-transform: var(--text-transform);
+    letter-spacing: var(--letter-spacing);
+    filter: drop-shadow(0vh 0vh 1.3vh black);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 0;
+    left: 0;
+    cursor: default;
 }
