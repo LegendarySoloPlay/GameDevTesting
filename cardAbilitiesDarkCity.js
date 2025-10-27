@@ -99,13 +99,14 @@ function angelDivingCatch(card) {
             instructionsElement.textContent = 'Select one card to discard.';
 
             // Hide row labels and row2
-            document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
-            document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
-            document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-            document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-            document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-            document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-            document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
             // Clear existing content
             selectionRow1.innerHTML = '';
@@ -232,6 +233,31 @@ function angelDivingCatch(card) {
                 selectionRow1.appendChild(cardElement);
             });
 
+            if (playerHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (playerHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (playerHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
             // Drag scrolling functionality
             setupDragScrolling(selectionRow1);
 
@@ -311,13 +337,15 @@ function angelDropOffAFriend() {
             instructionsElement.innerHTML = 'Select a card to discard in order to gain +<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> equal to the selected card\'s cost.';
 
             // Hide row labels and row2, show close button
-            document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
-            document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
-            document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-            closeButton.style.display = 'block';
-            document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-            document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-            document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        closeButton.style.display = 'block';
+
 
             // Clear existing content
             selectionRow1.innerHTML = '';
@@ -438,6 +466,31 @@ function angelDropOffAFriend() {
                 selectionRow1.appendChild(cardElement);
             });
 
+            if (playerHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (playerHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (playerHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
             // Drag scrolling functionality
             setupDragScrolling(selectionRow1);
 
@@ -539,10 +592,11 @@ function angelStrengthOfSpirit() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        closeButton.style.display = 'block';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        closeButton.style.display = 'block';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -668,6 +722,31 @@ function angelStrengthOfSpirit() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (availableCards.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (availableCards.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (availableCards.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
 
@@ -785,6 +864,7 @@ function xforcewolverineNoMercy() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Discard Pile';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -1240,11 +1320,12 @@ function ghostRiderBlazingHellfire() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
         closeButton.style.display = 'block';
         closeButton.textContent = 'No Thanks';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -1363,6 +1444,31 @@ function ghostRiderBlazingHellfire() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (villainsInVP.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (villainsInVP.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (villainsInVP.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
 
@@ -1415,22 +1521,35 @@ function ghostRiderBlazingHellfire() {
 }
 
 function ghostRiderInfernalChains() {
-    return new Promise((resolve, reject) => {
-        onscreenConsole.log(`<img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`);
+    updateGameBoard();
+    return new Promise((resolve) => {
+        const popup = document.querySelector('.card-choice-city-hq-popup');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const previewElement = document.querySelector('.card-choice-city-hq-popup-preview');
+        const titleElement = document.querySelector('.card-choice-city-hq-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-city-hq-popup-instructions');
 
-        const eligibleVillains = [];
-        
-        // Check city for eligible villains
-        city.forEach((card, index) => {
-            if (card && card.type === 'Villain') {  // Explicitly check for villain type
+        // Set popup content
+        titleElement.textContent = 'DEFEAT VILLAIN';
+        instructionsElement.textContent = 'SELECT A VILLAIN WITH LESS THAN 4 ATTACK TO DEFEAT:';
+
+        // Clear preview
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+
+        let selectedCityIndex = null;
+        let selectedCell = null;
+        let telepathicProbeVillain = null;
+        let telepathicProbeSelected = false;
+        let demonGoblinSelected = false;
+
+        // Check for eligible villains in city
+        const eligibleVillainsInCity = city.some((card, index) => {
+            if (card && card.type === 'Villain' && !destroyedSpaces[index]) {
                 const villainAttack = recalculateVillainAttack(card);
-                if (villainAttack < 4) {
-                    if (card.name) {
-                        console.log(`${card.name} added to the eligible villain list.`);
-                        eligibleVillains.push({ ...card, index });
-                    }
-                }
+                return villainAttack < 4;
             }
+            return false;
         });
 
         // Check for Professor X - Telepathic Probe revealed villain
@@ -1447,200 +1566,400 @@ function ghostRiderInfernalChains() {
             const villainAttack = recalculateVillainAttack(topVillainCard);
             
             if (villainAttack < 4) {
-                console.log(`${topVillainCard.name} (from Telepathic Probe) added to the eligible villain list.`);
-                eligibleVillains.push({ 
+                telepathicProbeVillain = { 
                     ...topVillainCard, 
-                    index: 'telepathic-probe', // Special identifier for telepathic probe villains
                     telepathicProbe: true,
                     telepathicProbeCard: telepathicProbeCard
-                });
+                };
             }
         }
 
         // Check for Demon Goblin
-        if (demonGoblinDeck.length > 0) {
-            const demonGoblin = demonGoblinDeck[demonGoblinDeck.length - 1];
-            console.log(`Demon Goblin added to the eligible villain list.`);
-            eligibleVillains.push({
-                name: 'Demon Goblin',
-                image: 'Visual Assets/Other/Transform Citizens Into Demons/demonGoblin.webp', // Custom image path
-                index: 'demon-goblin', // Special identifier for demon goblin
-                isDemonGoblin: true,
-                attack: 2 // Fixed attack value for Demon Goblin
-            });
-        }
+        const hasDemonGoblin = demonGoblinDeck.length > 0;
 
-        if (eligibleVillains.length === 0) {
+        // If no eligible villains at all
+        if (!eligibleVillainsInCity && !telepathicProbeVillain && !hasDemonGoblin) {
             onscreenConsole.log('There are no Villains available to defeat.');
             resolve();
             return;
         }
 
-        // Get popup elements - add null checks
-        const popup = document.getElementById('card-choice-one-location-popup');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const cardsList = document.getElementById('cards-to-choose-from');
-        const defeatButton = document.getElementById('card-choice-confirm-button');
-        const noThanksButton = document.getElementById('close-choice-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-
-        // Initialize UI
-        popupTitle.textContent = 'Defeat Villain';
-        instructionsDiv.innerHTML = 'Select a Villain to defeat for free.';
-        cardsList.innerHTML = '';
-        defeatButton.style.display = 'inline-block';
-        defeatButton.disabled = true;
-        defeatButton.textContent = 'DEFEAT SELECTED VILLAIN';
-        noThanksButton.style.display = 'none';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
-
-        let selectedVillain = null;
-        let selectedIndex = null;
-        let activeImage = null;
-
-        // Update defeat button state
-        function updateDefeatButton() {
-            defeatButton.disabled = selectedVillain === null;
-        }
-
-        // Update instructions with styled card name
-        function updateInstructions() {
-            if (selectedVillain === null) {
-                instructionsDiv.textContent = 'Select a Villain to defeat for free.';
-            } else {
-                instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedVillain.name}</span> will be defeated.`;
-            }
-        }
-
-        // Show/hide villain image
-        function updateVillainImage(card) {
-            if (card) {
-                heroImage.src = card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-                activeImage = card.image;
-            } else {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-            }
-        }
-
-        // Toggle villain selection
-        function toggleVillainSelection(card, listItem) {
-            if (selectedVillain === card) {
-                // Deselect if same villain clicked
-                selectedVillain = null;
-                selectedIndex = null;
-                listItem.classList.remove('selected');
-                updateVillainImage(null);
-            } else {
-                // Clear previous selection if any
-                if (selectedVillain) {
-                    const prevListItem = document.querySelector('li.selected');
-                    if (prevListItem) prevListItem.classList.remove('selected');
-                }
-                // Select new villain
-                selectedVillain = card;
-                selectedIndex = card.index;
-                listItem.classList.add('selected');
-                updateVillainImage(card);
-            }
-
-            updateDefeatButton();
-            updateInstructions();
-        }
-
-        eligibleVillains.forEach(card => {
-            const li = document.createElement('li');
+        // Process each city slot (0-4)
+        for (let i = 0; i < 5; i++) {
+            const slot = i + 1;
+            const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+            const cardImage = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
             
-            // Add special indicators for different villain types
-            if (card.telepathicProbe) {
-                li.textContent = `${card.name} (Telepathic Probe)`;
-                li.style.fontStyle = 'italic';
-            } else if (card.isDemonGoblin) {
-                li.textContent = 'Demon Goblin';
-                li.style.fontWeight = 'bold';
-            } else {
-                li.textContent = card.name;
-            }
+            const card = city[i];
             
-            li.setAttribute('data-card-id', card.id || 'demon-goblin');
+            // Update label to show city location
+            document.getElementById(`hq-city-table-city-hq-${slot}-label`).textContent = 
+                ['Bridge', 'Streets', 'Rooftops', 'Bank', 'Sewers'][i];
+            
+            // Remove any existing selection classes from cell
+            cell.classList.remove('selected');
+            cell.classList.remove('destroyed');
 
-            li.onmouseover = () => {
-                if (!activeImage) {
-                    heroImage.src = card.image;
-                    heroImage.style.display = 'block';
-                    oneChoiceHoverText.style.display = 'none';
-                }
-            };
+            const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+            const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+            
+            if (explosion) explosion.style.display = 'none';
+            if (explosionCount) explosionCount.style.display = 'none';
+            
+            // Remove any existing popup containers before creating a new one
+            const existingContainers = cell.querySelectorAll('.popup-card-container');
+            existingContainers.forEach(container => container.remove());
+            
+            // Create card container for overlays
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'card-container popup-card-container';
+            cell.appendChild(cardContainer);
 
-            li.onmouseout = () => {
-                if (!activeImage) {
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    oneChoiceHoverText.style.display = 'block';
-                }
-            };
-
-            li.onclick = () => toggleVillainSelection(card, li);
-            cardsList.appendChild(li);
-        });
-
-        // Handle defeat confirmation
-        defeatButton.onclick = async () => {
-            if (selectedVillain) {
-                if (selectedVillain.telepathicProbe) {
-                    // Handle telepathic probe villain defeat (FREE version)
-                    await freeTelepathicVillainDefeat(selectedVillain, selectedVillain.telepathicProbeCard);
-                    console.log(`${selectedVillain.name} has been defeated via Telepathic Probe for free.`);
-                    onscreenConsole.log(`You have defeated <span class="console-highlights">${selectedVillain.name}</span> for free using Telepathic Probe.`);
-                } else if (selectedVillain.isDemonGoblin) {
-                    // Handle Demon Goblin defeat (free rescue without point deduction)
-                    const demonBystander = demonGoblinDeck.pop();
-                    victoryPile.push(demonBystander);
-                    
-                    onscreenConsole.log(`<span class="console-highlights">${demonBystander.name}</span> has been rescued for free.`);
-                    
-                    defeatBonuses();
-                    bystanderBonuses();
-                    await rescueBystanderAbility(demonBystander);
-                } else {
-                    // Handle regular city villain defeat
-                    await instantDefeatAttack(selectedVillain.index);
-                    console.log(`${selectedVillain.name} has been defeated.`);
-                    onscreenConsole.log(`You have defeated <span class="console-highlights">${selectedVillain.name}</span> for free.`);
-                }
+            // Check if this space is destroyed
+            if (destroyedSpaces[i]) {
+                // For destroyed spaces, use Master Strike image with same styling
+                const destroyedImage = document.createElement('img');
+                destroyedImage.src = "Visual Assets/Other/MasterStrike.webp";
+                destroyedImage.alt = "Destroyed City Space";
+                destroyedImage.className = 'city-hq-chosen-card-image';
+                destroyedImage.style.cursor = 'not-allowed';
+                cardContainer.appendChild(destroyedImage);
+                destroyedImage.classList.add('greyed-out');
                 
-                closePopup();
-                updateGameBoard();
-                resolve();
-            } else {
-                alert("You must select a valid Villain to defeat.");
-                reject("No villain selected");
+                // Hide the original card image
+                cardImage.style.display = 'none';
+                
+                continue;
             }
+
+            if (card) {
+                // Set the actual card image and MOVE IT INTO THE CONTAINER
+                cardImage.src = card.image;
+                cardImage.alt = card.name;
+                cardImage.className = 'city-hq-chosen-card-image';
+                cardImage.style.display = 'block';
+                cardContainer.appendChild(cardImage);
+
+                // Determine eligibility - Villains with less than 4 attack
+                const isVillain = card.type === 'Villain';
+                const villainAttack = isVillain ? recalculateVillainAttack(card) : 0;
+                const isEligible = isVillain && villainAttack < 4;
+                
+                // Apply greyed out styling for ineligible cards
+                if (!isEligible) {
+                    cardImage.classList.add('greyed-out');
+                } else {
+                    cardImage.classList.remove('greyed-out');
+                }
+
+                // Add all relevant overlays
+                addCardOverlays(cardContainer, card, i);
+
+                // Add click handler for eligible cards only
+                if (isEligible) {
+                    cardImage.style.cursor = 'pointer';
+                    
+                    // Click handler
+                    cardImage.onclick = (e) => {
+                        e.stopPropagation();
+                        
+                        if (selectedCityIndex === i) {
+                            // Deselect
+                            selectedCityIndex = null;
+                            cell.classList.remove('selected');
+                            selectedCell = null;
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                            
+                            // Update instructions and confirm button
+                            instructionsElement.textContent = 'SELECT A VILLAIN WITH LESS THAN 4 ATTACK TO DEFEAT:';
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = true;
+                        } else {
+                            // Deselect previous
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                            }
+                            
+                            // Select new
+                            selectedCityIndex = i;
+                            selectedCell = cell;
+                            cell.classList.add('selected');
+                            
+                            // Deselect Telepathic Probe and Demon Goblin if they were selected
+                            if (telepathicProbeSelected) {
+                                telepathicProbeSelected = false;
+                                otherChoiceButton.style.backgroundColor = 'var(--panel-backgrounds)';
+                                otherChoiceButton.style.transform = `none`;
+                                otherChoiceButton.style.boxShadow = `none`;
+                                otherChoiceButton.style.animation = `none`;
+                            }
+                            if (demonGoblinSelected) {
+                                demonGoblinSelected = false;
+                                noThanksButton.style.backgroundColor = 'var(--panel-backgrounds)';
+                                noThanksButton.style.transform = `none`;
+                                noThanksButton.style.boxShadow = `none`;
+                                noThanksButton.style.animation = `none`;
+                            }
+                            
+                            // Update preview
+                            previewElement.innerHTML = '';
+                            const previewImage = document.createElement('img');
+                            previewImage.src = card.image;
+                            previewImage.alt = card.name;
+                            previewImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(previewImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                            
+                            // Update instructions and confirm button
+                            instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will be defeated.`;
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = false;
+                        }
+                    };
+                    
+                    // Hover effects for eligible cards
+                    cardImage.onmouseover = () => {
+                        if (selectedCityIndex !== null && selectedCityIndex !== i) return;
+                        
+                        // Update preview
+                        previewElement.innerHTML = '';
+                        const previewImage = document.createElement('img');
+                        previewImage.src = card.image;
+                        previewImage.alt = card.name;
+                        previewImage.className = 'popup-card-preview-image';
+                        previewElement.appendChild(previewImage);
+                        
+                        // Only change background if no card is selected
+                        if (selectedCityIndex === null) {
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    };
+                    
+                    cardImage.onmouseout = () => {
+                        if (selectedCityIndex !== null && selectedCityIndex !== i) return;
+                        
+                        // Only clear preview if no card is selected AND we're not hovering over another eligible card
+                        if (selectedCityIndex === null) {
+                            setTimeout(() => {
+                                const hoveredCard = document.querySelector('.city-hq-chosen-card-image:hover:not(.greyed-out)');
+                                if (!hoveredCard) {
+                                    previewElement.innerHTML = '';
+                                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                                }
+                            }, 50);
+                        }
+                    };
+                } else {
+                    // For ineligible cards, remove event handlers and make non-clickable
+                    cardImage.style.cursor = 'not-allowed';
+                    cardImage.onclick = null;
+                    cardImage.onmouseover = null;
+                    cardImage.onmouseout = null;
+                }
+            } else {
+                // Empty city slot - show blank card and grey out
+                cardImage.src = "Visual Assets/BlankCardSpace.webp";
+                cardImage.alt = "Empty City Space";
+                cardImage.classList.add('greyed-out');
+                cardImage.style.cursor = 'not-allowed';
+                cardImage.onclick = null;
+                cardImage.onmouseover = null;
+                cardImage.onmouseout = null;
+                cardContainer.appendChild(cardImage);
+            }
+        }
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-city-hq-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-city-hq-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-city-hq-popup-nothanks');
+
+        // Configure buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'DEFEAT SELECTED VILLAIN';
+        
+        // Set up Other Choice button for Telepathic Probe villain
+        if (telepathicProbeVillain) {
+            otherChoiceButton.style.display = 'inline-block';
+            otherChoiceButton.textContent = `DEFEAT ${telepathicProbeVillain.name} (TELEPATHIC PROBE)`;
+            otherChoiceButton.style.backgroundColor = 'var(--panel-backgrounds)';
+            otherChoiceButton.style.border = `0.5vh solid var(--accent)`;
+            otherChoiceButton.style.color = '#282828';
+            otherChoiceButton.disabled = false;
+            
+            // Other Choice button handler for Telepathic Probe villain
+            otherChoiceButton.onclick = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                if (telepathicProbeSelected) {
+                    // Deselect Telepathic Probe
+                    telepathicProbeSelected = false;
+                    otherChoiceButton.style.backgroundColor = 'var(--panel-backgrounds)';
+                    otherChoiceButton.style.transform = `none`;
+                    otherChoiceButton.style.boxShadow = `none`;
+                    otherChoiceButton.style.animation = `none`;
+                    selectedCityIndex = null;
+                    if (selectedCell) {
+                        selectedCell.classList.remove('selected');
+                        selectedCell = null;
+                    }
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                    instructionsElement.textContent = 'SELECT A VILLAIN WITH LESS THAN 4 ATTACK TO DEFEAT:';
+                    confirmButton.disabled = true;
+                } else {
+                    // Select Telepathic Probe
+                    telepathicProbeSelected = true;
+                    otherChoiceButton.style.backgroundColor = '#ccc';
+                    otherChoiceButton.style.color = '#282828';
+                    otherChoiceButton.style.transform = `scale(1.02)`;
+                    otherChoiceButton.style.boxShadow = `0 4px 12px rgba(0, 0, 0, 0.3)`;
+                    otherChoiceButton.style.animation = `filter-animation 1s infinite`;
+
+                    // Deselect any city selection and Demon Goblin
+                    selectedCityIndex = null;
+                    if (selectedCell) {
+                        selectedCell.classList.remove('selected');
+                        selectedCell = null;
+                    }
+                    if (demonGoblinSelected) {
+                        demonGoblinSelected = false;
+                        noThanksButton.style.backgroundColor = 'var(--panel-backgrounds)';
+                        noThanksButton.style.transform = `none`;
+                        noThanksButton.style.boxShadow = `none`;
+                        noThanksButton.style.animation = `none`;
+                    }
+                    
+                    // Update preview
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = telepathicProbeVillain.image;
+                    previewImage.alt = telepathicProbeVillain.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                    
+                    // Update instructions
+                    instructionsElement.innerHTML = `Selected: <span class="console-highlights">${telepathicProbeVillain.name}</span> (Telepathic Probe) will be defeated.`;
+                    confirmButton.disabled = false;
+                }
+            };
+        } else {
+            otherChoiceButton.style.display = 'none';
+        }
+        
+        // Set up No Thanks button for Demon Goblin
+        if (hasDemonGoblin) {
+            noThanksButton.style.display = 'inline-block';
+            noThanksButton.textContent = `DEFEAT DEMON GOBLIN`;
+            noThanksButton.style.backgroundColor = 'var(--panel-backgrounds)';
+            noThanksButton.style.border = `0.5vh solid var(--accent)`;
+            noThanksButton.style.color = '#282828';
+            noThanksButton.disabled = false;
+            
+            // No Thanks button handler for Demon Goblin
+            noThanksButton.onclick = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                if (demonGoblinSelected) {
+                    // Deselect Demon Goblin
+                    demonGoblinSelected = false;
+                    noThanksButton.style.backgroundColor = 'var(--panel-backgrounds)';
+                    noThanksButton.style.transform = `none`;
+                    noThanksButton.style.boxShadow = `none`;
+                    noThanksButton.style.animation = `none`;
+                    selectedCityIndex = null;
+                    if (selectedCell) {
+                        selectedCell.classList.remove('selected');
+                        selectedCell = null;
+                    }
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                    instructionsElement.textContent = 'SELECT A VILLAIN WITH LESS THAN 4 ATTACK TO DEFEAT:';
+                    confirmButton.disabled = true;
+                } else {
+                    // Select Demon Goblin
+                    demonGoblinSelected = true;
+                    noThanksButton.style.backgroundColor = '#ccc';
+                    noThanksButton.style.color = '#282828';
+                    noThanksButton.style.transform = `scale(1.02)`;
+                    noThanksButton.style.boxShadow = `0 4px 12px rgba(0, 0, 0, 0.3)`;
+                    noThanksButton.style.animation = `filter-animation 1s infinite`;
+                    noThanksButton.textContent = 'DEFEAT DEMON GOBLIN';
+
+                    // Deselect any city selection and Telepathic Probe
+                    selectedCityIndex = null;
+                    if (selectedCell) {
+                        selectedCell.classList.remove('selected');
+                        selectedCell = null;
+                    }
+                    if (telepathicProbeSelected) {
+                        telepathicProbeSelected = false;
+                        otherChoiceButton.style.backgroundColor = 'var(--panel-backgrounds)';
+                        otherChoiceButton.style.transform = `none`;
+                        otherChoiceButton.style.boxShadow = `none`;
+                        otherChoiceButton.style.animation = `none`;
+                    }
+                    
+                    // Update preview
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = 'Visual Assets/Other/Transform Citizens Into Demons/demonGoblin.webp';
+                    previewImage.alt = 'Demon Goblin';
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                    
+                    // Update instructions
+                    instructionsElement.innerHTML = `Selected: <span class="console-highlights">Demon Goblin</span> will be defeated.`;
+                    confirmButton.disabled = false;
+                }
+            };
+        } else {
+            noThanksButton.style.display = 'none';
+        }
+
+        // Store the original resolve function to use in event handler
+        const originalResolve = resolve;
+
+        // Confirm button handler
+        confirmButton.onclick = async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (selectedCityIndex === null && !telepathicProbeSelected && !demonGoblinSelected) return;
+
+            closeHQCityCardChoicePopup();
+            modalOverlay.style.display = 'none';
+            updateGameBoard();
+
+            if (telepathicProbeSelected) {
+                // Handle telepathic probe villain defeat
+                onscreenConsole.log(`You have defeated <span class="console-highlights">${telepathicProbeVillain.name}</span> for free using Telepathic Probe.`);
+                await freeTelepathicVillainDefeat(telepathicProbeVillain, telepathicProbeVillain.telepathicProbeCard);
+            } else if (demonGoblinSelected) {
+                // Handle Demon Goblin defeat
+                const demonBystander = demonGoblinDeck.pop();
+                victoryPile.push(demonBystander);
+                
+                onscreenConsole.log(`<span class="console-highlights">${demonBystander.name}</span> has been rescued for free.`);
+                
+                defeatBonuses();
+                bystanderBonuses();
+                await rescueBystanderAbility(demonBystander);
+            } else {
+                // Handle regular city villain defeat
+                onscreenConsole.log(`You have defeated <span class="console-highlights">${city[selectedCityIndex].name}</span> for free.`);
+                await instantDefeatAttack(selectedCityIndex);
+            }
+
+            originalResolve();                      
         };
 
-        function closePopup() {
-            // Reset UI
-            popupTitle.textContent = 'Hero Ability!';
-            instructionsDiv.textContent = 'Context';
-            defeatButton.style.display = 'none';
-            defeatButton.disabled = true;
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-
-            // Hide popup
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
+        // Show popup
+        modalOverlay.style.display = 'block';
+        popup.style.display = 'block';
 
         // Helper function for free telepathic probe villain defeat
         async function freeTelepathicVillainDefeat(villainCard, telepathicProbeCard) {
@@ -1697,9 +2016,10 @@ function ghostRiderInfernalChains() {
                     updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
                 });
 
-if (hasProfessorXMindControl) {
-    await professorXMindControlGainVillain(villainCard);
-}
+            if (hasProfessorXMindControl) {
+                await professorXMindControlGainVillain(villainCard);
+            }
+
             // Reset the currentVillainLocation after the attack is resolved
             currentVillainLocation = null;
             updateGameBoard();
@@ -2428,6 +2748,7 @@ function bladeStalkThePrey() {
                 cardImage.alt = "Destroyed City Space";
                 cardImage.classList.add('destroyed-space');
                 cardContainer.appendChild(cardImage);
+                destroyedImage.classList.add('greyed-out');
                 
                 cityCellElement.classList.add('destroyed');
                 continue; // Skip the rest for destroyed spaces
@@ -2941,7 +3262,6 @@ async function nightcrawlerAlongForTheRide() {
         const previewElement = document.querySelector('.card-choice-popup-preview');
         const titleElement = document.querySelector('.card-choice-popup-title');
         const instructionsElement = document.querySelector('.card-choice-popup-instructions');
-        const closeButton = document.querySelector('.card-choice-popup-closebutton');
 
         // Set popup content
         titleElement.textContent = 'Nightcrawler - Along for the Ride';
@@ -2951,10 +3271,9 @@ async function nightcrawlerAlongForTheRide() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        closeButton.style.display = 'block';
-        closeButton.textContent = 'NO THANKS';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
         // Clear existing content
@@ -3077,6 +3396,31 @@ async function nightcrawlerAlongForTheRide() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (sortedHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sortedHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sortedHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
 
@@ -3085,14 +3429,12 @@ async function nightcrawlerAlongForTheRide() {
         const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
         const noThanksButton = document.getElementById('card-choice-popup-nothanks');
 
-        // Hide all standard buttons since we're using close button for teleport action
-        confirmButton.style.display = 'none';
         otherChoiceButton.style.display = 'none';
         noThanksButton.style.display = 'none';
 
         // Update UI state
         const updateUI = () => {
-            closeButton.textContent = selectedCards.length > 0 
+            confirmButton.textContent = selectedCards.length > 0 
                 ? `TELEPORT ${selectedCards.length} CARD${selectedCards.length !== 1 ? 'S' : ''}`
                 : 'NO THANKS';
                 
@@ -3102,7 +3444,7 @@ async function nightcrawlerAlongForTheRide() {
         };
 
         // Close button handler (Teleport/No Thanks action)
-        closeButton.onclick = (e) => {
+        confirmButton.onclick = (e) => {
             e.stopPropagation();
             e.preventDefault();
             
@@ -3185,8 +3527,9 @@ function dominoSpecializedAmmunition() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
         // Clear existing content
@@ -3303,6 +3646,31 @@ function dominoSpecializedAmmunition() {
             cardElement.appendChild(cardImage);
             selectionRow1.appendChild(cardElement);
         });
+
+        if (sortedHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sortedHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sortedHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -3427,7 +3795,6 @@ function cableArmyOfOne() {
         const previewElement = document.querySelector('.card-choice-popup-preview');
         const titleElement = document.querySelector('.card-choice-popup-title');
         const instructionsElement = document.querySelector('.card-choice-popup-instructions');
-        const closeButton = document.querySelector('.card-choice-popup-closebutton');
 
         // Set popup content
         titleElement.textContent = 'Cable - Army of One';
@@ -3437,9 +3804,9 @@ function cableArmyOfOne() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        closeButton.style.display = 'block';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
         // Clear existing content
@@ -3559,6 +3926,31 @@ function cableArmyOfOne() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (playerHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (playerHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (playerHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
 
@@ -3567,17 +3959,16 @@ function cableArmyOfOne() {
         const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
         const noThanksButton = document.getElementById('card-choice-popup-nothanks');
 
-        // Hide all standard buttons since we're using close button for KO action
-        confirmButton.style.display = 'none';
+        confirmButton.style.display = 'block';
         otherChoiceButton.style.display = 'none';
         noThanksButton.style.display = 'none';
 
         // Update close button text and state
         function updateCloseButton() {
             if (selectedCards.length > 0) {
-                closeButton.textContent = `KO ${selectedCards.length} Selected Card${selectedCards.length !== 1 ? 's' : ''}`;
+                confirmButton.textContent = `KO ${selectedCards.length} Selected Card${selectedCards.length !== 1 ? 's' : ''}`;
             } else {
-                closeButton.textContent = 'No Thanks!';
+                confirmButton.textContent = 'No Thanks!';
             }
         }
 
@@ -3595,7 +3986,7 @@ function cableArmyOfOne() {
         updateCloseButton();
 
         // Close button handler (KO action)
-        closeButton.onclick = (e) => {
+        confirmButton.onclick = (e) => {
             e.stopPropagation();
             e.preventDefault();
             
@@ -4049,11 +4440,12 @@ function forgeReboot() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
         closeButton.style.display = 'block';
         closeButton.textContent = 'No Thanks';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -4171,6 +4563,31 @@ function forgeReboot() {
             cardElement.appendChild(cardImage);
             selectionRow1.appendChild(cardElement);
         });
+
+        if (playerHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (playerHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (playerHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -4299,6 +4716,7 @@ function bishopWhateverTheCost() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Discard Pile';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -4536,6 +4954,7 @@ function professorXClassDismissedKO() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Discard Pile';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -4755,180 +5174,245 @@ function professorXClassDismissedKO() {
 }
 
 function professorXClassDismissed() {
-  updateGameBoard();
+    updateGameBoard();
+    return new Promise((resolve) => {
+        const popup = document.querySelector('.card-choice-city-hq-popup');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const previewElement = document.querySelector('.card-choice-city-hq-popup-preview');
+        const titleElement = document.querySelector('.card-choice-city-hq-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-city-hq-popup-instructions');
 
-  return new Promise((resolve) => {
-    const heroSelectPopup = document.getElementById('hero-select-popup');
-    const modalOverlay     = document.getElementById('modal-overlay');
-    const heroOptions      = document.getElementById('hero-options');
-    const context          = document.getElementById('hero-select-context');
-    const heroImage        = document.getElementById('hero-select-image');
-    const hoverText        = document.getElementById('selectHoverText');
+        // Set popup content
+        titleElement.textContent = 'Class Dismissed';
+        instructionsElement.textContent = 'You may choose a Hero in the HQ to return to the bottom of the Hero Deck.';
 
-    // Clean any old buttons
-    const existingConfirm = document.getElementById('hero-select-confirm');
-    if (existingConfirm) heroSelectPopup.removeChild(existingConfirm);
-    const existingNoThanks = heroSelectPopup.querySelector('.heroSelectNoThanksButton');
-    if (existingNoThanks) heroSelectPopup.removeChild(existingNoThanks);
+        // Clear preview
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
 
-    // Build buttons
-    const confirmButton = document.createElement('button');
-    confirmButton.id = 'hero-select-confirm';
-    confirmButton.textContent = 'CONFIRM';
-    confirmButton.style.display = 'inline-block';
-    confirmButton.disabled = true;
+        let selectedHQIndex = null;
+        let selectedCell = null;
 
-    const noThanksButton = document.createElement('button');
-    noThanksButton.className = 'heroSelectNoThanksButton';
-    noThanksButton.textContent = 'No Thanks';
-    noThanksButton.style.width = '50%';
+        // Get HQ slots (1-5) and explosion values
+        const hqSlots = [1, 2, 3, 4, 5];
+        const explosionValues = [hqExplosion1, hqExplosion2, hqExplosion3, hqExplosion4, hqExplosion5];
 
-    // UI copy (no Scheme Twist wording)
-    context.innerHTML = 'You may choose a Hero in the HQ to return to the bottom of the Hero Deck.';
-
-    heroImage.style.display = 'none';
-    hoverText.style.display = 'block';
-    heroOptions.innerHTML = '';
-
-    let selectedHQIndex = null;
-    let activeImage = null;
-
-    heroSelectPopup.appendChild(confirmButton);
-    heroSelectPopup.appendChild(noThanksButton);
-
-    // Preserve original HQ order
-    const eligible = hq
-      .map((hero, hqIndex) => ({ hero, hqIndex }))
-      .filter(x => x.hero && x.hero.type === 'Hero' && x.hero.cost <= 10);
-
-    if (eligible.length === 0) {
-      onscreenConsole.log('No eligible Heroes in the HQ (cost 10 or less).');
-      heroSelectPopup.removeChild(confirmButton);
-      heroSelectPopup.removeChild(noThanksButton);
-      heroSelectPopup.style.display = 'none';
-      modalOverlay.style.display = 'none';
-      resolve();
-      return;
-    }
-
-    // Helpers
-    const createTeamIconHTML = (value) => {
-      if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-        return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-      }
-      return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-    const createClassIconHTML = (value) => {
-      if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') return '';
-      return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-    };
-
-    // Populate options strictly in HQ order
-    eligible.forEach(({ hero, hqIndex }) => {
-      const heroButton = document.createElement('button');
-      heroButton.classList.add('hero-option');
-      heroButton.setAttribute('data-hq-index', String(hqIndex));
-
-      const teamIcon = createTeamIconHTML(hero.team);
-      const class1   = createClassIconHTML(hero.class1);
-      const class2   = createClassIconHTML(hero.class2);
-      const class3   = createClassIconHTML(hero.class3);
-
-      heroButton.innerHTML =
-        `<span style="white-space: nowrap;">HQ-${hqIndex + 1} | ${teamIcon} | ${class1} ${class2} ${class3} | ${hero.name}</span>`;
-
-      // Hover preview
-      heroButton.onmouseover = () => {
-        if (!activeImage) {
-          heroImage.src = hero.image;
-          heroImage.style.display = 'block';
-          hoverText.style.display = 'none';
-        }
-      };
-      heroButton.onmouseout = () => {
-        if (!activeImage) {
-          heroImage.src = '';
-          heroImage.style.display = 'none';
-          hoverText.style.display = 'block';
-        }
-      };
-
-      // Selection (by HQ index)
-      heroButton.onclick = () => {
-        const thisHQIndex = Number(heroButton.getAttribute('data-hq-index'));
-        if (selectedHQIndex === thisHQIndex) {
-          selectedHQIndex = null;
-          heroButton.classList.remove('selected');
-          activeImage = null;
-          heroImage.src = '';
-          heroImage.style.display = 'none';
-          hoverText.style.display = 'block';
-          confirmButton.disabled = true;
+        // Process each HQ slot
+        hqSlots.forEach((slot, index) => {
+            const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+            const cardImage = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+            const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+            const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+            
+            const hero = hq[index];
+            const explosionValue = explosionValues[index] || 0;
+            
+            // Update explosion indicators
+if (explosion && explosionCount) {  // Add this null check
+    if (explosionValue > 0) {
+        explosion.style.display = 'block';
+        explosionCount.style.display = 'block';
+        explosionCount.textContent = explosionValue;
+        
+        if (explosionValue >= 6) {
+            explosion.classList.add('max-explosions');
+            cell.classList.add('destroyed');
         } else {
-          if (selectedHQIndex !== null) {
-            const prev = heroOptions.querySelector(`button[data-hq-index="${selectedHQIndex}"]`);
-            if (prev) prev.classList.remove('selected');
-          }
-          selectedHQIndex = thisHQIndex;
-          heroButton.classList.add('selected');
-          activeImage = hero.image;
-          heroImage.src = hero.image;
-          heroImage.style.display = 'block';
-          hoverText.style.display = 'none';
-          confirmButton.disabled = false;
+            explosion.classList.remove('max-explosions');
+            cell.classList.remove('destroyed');
         }
-      };
+    } else {
+        explosion.style.display = 'none';
+        explosionCount.style.display = 'none';
+        explosion.classList.remove('max-explosions');
+        cell.classList.remove('destroyed');
+    }
+}
+            
+            // Update label
+            document.getElementById(`hq-city-table-city-hq-${slot}-label`).textContent = `HQ-${slot}`;
+            
+            // Remove any existing selection classes from cell
+            cell.classList.remove('selected');
+            
+            if (hero) {
+                // Set the actual hero image
+                cardImage.src = hero.image;
+                cardImage.alt = hero.name;
+                
+                // Determine eligibility - must be Hero type AND cost ≤ 10 AND not destroyed
+                const isHeroType = hero.type === 'Hero';
+                const isEligibleCost = hero.cost <= 10;
+                const isDestroyed = explosionValue >= 6;
+                const isEligible = isHeroType && isEligibleCost && !isDestroyed;
+                
+                // Apply greyed out styling for ineligible cards
+                if (!isEligible) {
+                    cardImage.classList.add('greyed-out');
+                } else {
+                    cardImage.classList.remove('greyed-out');
+                }
+                
+                // Add click handler for eligible cards only
+                if (isEligible) {
+                    cardImage.style.cursor = 'pointer';
+                    
+                    // Click handler
+                    cardImage.onclick = (e) => {
+                        e.stopPropagation();
+                        
+                        if (selectedHQIndex === index) {
+                            // Deselect
+                            selectedHQIndex = null;
+                            cell.classList.remove('selected');
+                            selectedCell = null;
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                            
+                            // Update instructions and confirm button state
+                            instructionsElement.textContent = 'You may choose a Hero in the HQ to return to the bottom of the Hero Deck.';
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = true;
+                        } else {
+                            // Deselect previous
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                            }
+                            
+                            // Select new
+                            selectedHQIndex = index;
+                            selectedCell = cell;
+                            cell.classList.add('selected');
+                            
+                            // Update preview
+                            previewElement.innerHTML = '';
+                            const previewImage = document.createElement('img');
+                            previewImage.src = hero.image;
+                            previewImage.alt = hero.name;
+                            previewImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(previewImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                            
+                            // Update instructions and confirm button state
+                            instructionsElement.innerHTML = `Selected: <span class="console-highlights">${hero.name}</span> will be returned to the bottom of the Hero Deck.`;
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = false;
+                        }
+                    };
+                    
+                    // Hover effects for eligible cards
+                    cardImage.onmouseover = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Update preview
+                        previewElement.innerHTML = '';
+                        const previewImage = document.createElement('img');
+                        previewImage.src = hero.image;
+                        previewImage.alt = hero.name;
+                        previewImage.className = 'popup-card-preview-image';
+                        previewElement.appendChild(previewImage);
+                        
+                        // Only change background if no card is selected
+                        if (selectedHQIndex === null) {
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    };
+                    
+                    cardImage.onmouseout = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Only clear preview if no card is selected AND we're not hovering over another eligible card
+                        if (selectedHQIndex === null) {
+                            setTimeout(() => {
+                                const hoveredCard = document.querySelector('.city-hq-chosen-card-image:hover:not(.greyed-out)');
+                                if (!hoveredCard) {
+                                    previewElement.innerHTML = '';
+                                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                                }
+                            }, 50);
+                        }
+                    };
+                } else {
+                    // For ineligible cards, remove event handlers and make non-clickable
+                    cardImage.style.cursor = 'not-allowed';
+                    cardImage.onclick = null;
+                    cardImage.onmouseover = null;
+                    cardImage.onmouseout = null;
+                }
+            } else {
+                // No hero in this slot - reset to card back and grey out
+                cardImage.src = "Visual Assets/CardBack.webp";
+                cardImage.alt = "Empty HQ Slot";
+                cardImage.classList.add('greyed-out');
+                cardImage.style.cursor = 'not-allowed';
+                cardImage.onclick = null;
+                cardImage.onmouseover = null;
+                cardImage.onmouseout = null;
+            }
+        });
 
-      heroOptions.appendChild(heroButton);
+        // Check if any eligible heroes exist - same logic as original
+        const eligibleHeroes = hq.filter((hero, index) => {
+            const explosionValue = explosionValues[index] || 0;
+            return hero && 
+                   hero.type === 'Hero' && 
+                   hero.cost <= 10 && 
+                   explosionValue < 6; // Not destroyed
+        });
+
+        if (eligibleHeroes.length === 0) {
+            onscreenConsole.log('No eligible Heroes in the HQ (cost 10 or less).');
+            resolve();
+            return;
+        }
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-city-hq-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-city-hq-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-city-hq-popup-nothanks');
+
+        // Disable confirm initially and set button text
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'CONFIRM';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'inline-block'; // Show "No Thanks" button
+        noThanksButton.textContent = 'No Thanks';
+
+        // Confirm button handler
+        confirmButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedHQIndex === null) return;
+
+            setTimeout(() => {
+                const hero = hq[selectedHQIndex];
+                if (hero) {
+                    onscreenConsole.log(
+                        `You have chosen to return <span class="console-highlights">${hero.name}</span> to the bottom of the Hero Deck.`
+                    );
+                }
+                returnHeroToDeck(selectedHQIndex);
+                updateGameBoard();
+                closeHQCityCardChoicePopup();
+                resolve();
+            }, 100);
+        };
+
+        // No Thanks button handler
+        noThanksButton.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            setTimeout(() => {
+                onscreenConsole.log('You chose not to return a Hero to the bottom of the Hero Deck.');
+                updateGameBoard();
+                closeHQCityCardChoicePopup();
+                resolve();
+            }, 100);
+        };
+
+        // Show popup
+        modalOverlay.style.display = 'block';
+        popup.style.display = 'block';
     });
-
-    // Confirm
-    confirmButton.onclick = (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      if (selectedHQIndex === null) return;
-
-      setTimeout(() => {
-        const chosen = hq[selectedHQIndex];
-        if (chosen) {
-          onscreenConsole.log(
-            `You have chosen to return <span class="console-highlights">${chosen.name}</span> to the bottom of the Hero Deck.`
-          );
-        }
-        returnHeroToDeck(selectedHQIndex); // keep your existing implementation
-        updateGameBoard();
-
-        // Cleanup
-        heroSelectPopup.removeChild(confirmButton);
-        heroSelectPopup.removeChild(noThanksButton);
-        heroSelectPopup.style.display = 'none';
-        modalOverlay.style.display = 'none';
-        resolve();
-      }, 100);
-    };
-
-    // No Thanks
-    noThanksButton.onclick = (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-
-      setTimeout(() => {
-        onscreenConsole.log('You chose not to return a Hero to the bottom of the Hero Deck.');
-        updateGameBoard();
-
-        // Cleanup
-        heroSelectPopup.removeChild(confirmButton);
-        heroSelectPopup.removeChild(noThanksButton);
-        heroSelectPopup.style.display = 'none';
-        modalOverlay.style.display = 'none';
-        resolve();
-      }, 100);
-    };
-
-    // Show popup
-    modalOverlay.style.display = 'block';
-    heroSelectPopup.style.display = 'block';
-  });
 }
 
 async function bishopFirepowerFromTheFuture() {
@@ -5003,7 +5487,6 @@ async function showXMenKOPopup(availableCards) {
         const previewElement = document.querySelector('.card-choice-popup-preview');
         const titleElement = document.querySelector('.card-choice-popup-title');
         const instructionsElement = document.querySelector('.card-choice-popup-instructions');
-        const closeButton = document.querySelector('.card-choice-popup-closebutton');
 
         // Set popup content
         titleElement.textContent = 'Bishop - Firepower from the Future';
@@ -5013,10 +5496,11 @@ async function showXMenKOPopup(availableCards) {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        closeButton.style.display = 'block';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -5146,6 +5630,31 @@ async function showXMenKOPopup(availableCards) {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (sortedAvailableCards.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sortedAvailableCards.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sortedAvailableCards.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
 
@@ -5154,17 +5663,16 @@ async function showXMenKOPopup(availableCards) {
         const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
         const noThanksButton = document.getElementById('card-choice-popup-nothanks');
 
-        // Hide all standard buttons since we're using close button for KO action
-        confirmButton.style.display = 'none';
+
         otherChoiceButton.style.display = 'none';
         noThanksButton.style.display = 'none';
 
         // Update close button text and state
         function updateCloseButton() {
             if (selectedCards.length > 0) {
-                closeButton.textContent = `KO ${selectedCards.length} Selected Card${selectedCards.length !== 1 ? 's' : ''}`;
+                confirmButton.textContent = `KO ${selectedCards.length} Selected Card${selectedCards.length !== 1 ? 's' : ''}`;
             } else {
-                closeButton.textContent = 'No Thanks!';
+                confirmButton.textContent = 'No Thanks!';
             }
         }
 
@@ -5182,7 +5690,7 @@ async function showXMenKOPopup(availableCards) {
         updateCloseButton();
 
         // Close button handler (KO action)
-        closeButton.onclick = (e) => {
+        confirmButton.onclick = (e) => {
             e.stopPropagation();
             e.preventDefault();
             
@@ -5477,6 +5985,7 @@ function handlePhalanxNoTechRevealed() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Played Cards';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -5766,6 +6275,7 @@ function bystanderRadiationScientist() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Played Cards & Hand';
         selectionRow2Label.textContent = 'Discard Pile';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -6039,6 +6549,7 @@ function bystanderParamedic() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Discard Pile';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -6728,10 +7239,11 @@ function deathFight() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -6859,6 +7371,31 @@ function deathFight() {
                 instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.card.name}</span> will be KO'd.`;
             }
         }
+
+        if (heroesThatCostMoreThanOne.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (heroesThatCostMoreThanOne.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (heroesThatCostMoreThanOne.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -6937,10 +7474,11 @@ function deathEscape() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -7068,6 +7606,31 @@ function deathEscape() {
                 instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.card.name}</span> will be KO'd.`;
             }
         }
+
+        if (heroesThatCostMoreThanOne.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (heroesThatCostMoreThanOne.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (heroesThatCostMoreThanOne.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -7182,10 +7745,11 @@ function scalphunterAmbush(scalphunter) {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -7312,6 +7876,31 @@ function scalphunterAmbush(scalphunter) {
                 instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedBystander.name}</span>`;
             }
         }
+
+        if (bystandersInVP.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (bystandersInVP.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (bystandersInVP.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -7562,10 +8151,11 @@ function zeroFight() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -7694,6 +8284,31 @@ function zeroFight() {
                 instructionsElement.innerHTML = `Selected: ${names} (${count}/3)`;
             }
         }
+
+        if (zeroCardsInHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (zeroCardsInHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (zeroCardsInHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -7844,6 +8459,7 @@ function hammerheadFight() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Played Cards';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -8102,13 +8718,14 @@ function jigsawAmbush() {
     instructionsElement.textContent = 'Select three cards to discard.';
 
     // Hide row labels and row2
-    document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-    document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
     // Clear existing content
     selectionRow1.innerHTML = '';
@@ -8249,6 +8866,31 @@ function jigsawAmbush() {
       }
     }
 
+    if (availableCards.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (availableCards.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (availableCards.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
     // Drag scrolling functionality
     setupDragScrolling(selectionRow1);
 
@@ -8342,6 +8984,7 @@ function bullseyeFight() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Attack Heroes';
         selectionRow2Label.textContent = 'Recruit Heroes';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -8965,10 +9608,11 @@ function azazelFight() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -9088,6 +9732,31 @@ function azazelFight() {
                 instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will gain Teleport this turn.`;
             }
         }
+
+        if (playerHand.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (playerHand.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (playerHand.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -9443,10 +10112,11 @@ async function mrSinisterProcessDiscardPhase() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -9597,6 +10267,31 @@ async function mrSinisterProcessDiscardPhase() {
             selectionRow1.appendChild(cardElement);
             cardElementByUid.set(entryLikeCard.uid, cardElement);
         });
+
+        if (display.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (display.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (display.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
@@ -9987,10 +10682,11 @@ async function kingpinCallAHit() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -10112,6 +10808,31 @@ async function kingpinCallAHit() {
             cardElement.appendChild(cardImage);
             selectionRow1.appendChild(cardElement);
         });
+
+        if (sortedHeroesInDiscard.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sortedHeroesInDiscard.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sortedHeroesInDiscard.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
@@ -10358,10 +11079,11 @@ async function stryfePsychicTorment() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -10489,6 +11211,31 @@ async function stryfePsychicTorment() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (sorted.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sorted.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sorted.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
 
@@ -10607,10 +11354,11 @@ async function mephistoDamnedIfYouDo() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -10748,6 +11496,31 @@ async function mephistoDamnedIfYouDo() {
             cardElement.appendChild(cardImage);
             selectionRow1.appendChild(cardElement);
         });
+
+        if (bystanders.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (bystanders.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (bystanders.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
@@ -10943,10 +11716,11 @@ async function kingpinDirtyCops() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -11069,6 +11843,31 @@ async function kingpinDirtyCops() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (sortedZeroCostHeroes.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sortedZeroCostHeroes.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sortedZeroCostHeroes.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
 
@@ -11154,10 +11953,11 @@ async function kingpinMobWar() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -11276,6 +12076,31 @@ async function kingpinMobWar() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (henchmenInVP.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (henchmenInVP.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (henchmenInVP.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
 
@@ -11359,10 +12184,11 @@ async function apocalypseHorsemenAreDrawingNearer() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -11476,6 +12302,31 @@ async function apocalypseHorsemenAreDrawingNearer() {
             selectionRow1.appendChild(cardElement);
         });
 
+        if (horsemenInVP.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (horsemenInVP.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (horsemenInVP.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
 
@@ -11571,10 +12422,11 @@ function apocalypseApocalypticDestruction() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Reset content
         selectionRow1.innerHTML = '';
@@ -11717,6 +12569,31 @@ function apocalypseApocalypticDestruction() {
             createCardElement(card, selectionRow1);
         });
 
+        if (availableHeroes.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (availableHeroes.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (availableHeroes.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
 
@@ -11798,10 +12675,11 @@ async function mephistoDevilishTorment() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         let currentSelection = null;
         let isDragging = false;
@@ -11904,6 +12782,31 @@ async function mephistoDevilishTorment() {
                 cardElement.appendChild(cardImage);
                 selectionRow1.appendChild(cardElement);
             });
+
+            if (sortedRemainingCards.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sortedRemainingCards.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sortedRemainingCards.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
             // Set up drag scrolling for the row
             setupDragScrolling(selectionRow1);
@@ -12233,13 +13136,14 @@ async function saveHumanityInstinctKO() {
     instructionsElement.textContent = 'Select a Bystander to KO from your Victory Pile.';
 
     // Hide row labels and row2
-    document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-    document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
     // Clear existing content
     selectionRow1.innerHTML = '';
@@ -12359,6 +13263,31 @@ async function saveHumanityInstinctKO() {
             instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd.`;
         }
     }
+
+    if (bystanders.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (bystanders.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (bystanders.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
     // Drag scrolling functionality
     setupDragScrolling(selectionRow1);

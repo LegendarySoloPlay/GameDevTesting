@@ -598,14 +598,14 @@ function pickFromCardsSingleRow(items, { title, instructions, confirmText }) {
     const noThanksBtn = document.getElementById('card-choice-popup-nothanks');
     const closeX = document.querySelector('.card-choice-popup-closebutton');
 
-    // Configure single-row layout @55%
+    // Configure single-row layout @50%
     titleEl.textContent = title;
     instructionsEl.innerHTML = instructions;
     row2.style.display = 'none';
     row2Container.style.display = 'none';
     row1.style.display = 'flex';
     row1Container.style.display = 'block';
-    row1Container.style.height = '55%';
+    row1Container.style.height = '50%';
 
     closeX.style.display = 'none';
     noThanksBtn.style.display = 'none'; // force choice
@@ -1117,7 +1117,7 @@ async function prodigyCopyPowers() {
     selectionRow2.style.display = 'none';
     closeX.style.display = 'none'; // Use NO THANKS instead
 
-    selectionRow1Container.style.height = '55%';
+    selectionRow1Container.style.height = '50%';
     selectionRow1Container.style.top = '50%';
     selectionRow1Container.style.transform = 'translateY(-50%)';
 
@@ -1224,6 +1224,31 @@ async function prodigyCopyPowers() {
       cardEl.appendChild(img);
       selectionRow1.appendChild(cardEl);
     });
+
+    if (heroesToCopy.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (heroesToCopy.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (heroesToCopy.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
     // 7) Confirm → copy attributes, trigger abilities, update state
     confirmButton.onclick = async (e) => {
@@ -1405,7 +1430,7 @@ function rockslideShatter() {
     titleEl.textContent = 'Rockslide — Shatter';
     instructionsEl.innerHTML = 'Select a Villain or Henchman to <span class="bold-spans">Shatter</span>:';
 
-    // Hide labels and row2; ensure row1 visible & centred @ 55%
+    // Hide labels and row2; ensure row1 visible & centred @ 50%
     row1Label.style.display = 'none';
     row2Label.style.display = 'none';
     row2.style.display = 'none';
@@ -1413,7 +1438,7 @@ function rockslideShatter() {
 
     row1Container.style.display = 'block';
     row1.style.display = 'flex';
-    row1Container.style.height = '55%';
+    row1Container.style.height = '50%';
     row1Container.style.top = '50%';
     row1Container.style.transform = 'translateY(-50%)';
 
@@ -1760,7 +1785,7 @@ async function showCardSelectionPopup(options) {
     const noThanksBtn = document.getElementById('card-choice-popup-nothanks');
     const closeX = document.querySelector('.card-choice-popup-closebutton');
 
-    // --- Configure single-row layout (@55%, no top/transform) ---
+    // --- Configure single-row layout (@50%, no top/transform) ---
     titleEl.textContent = options.title || 'Make a Selection';
     instructionsEl.innerHTML = options.instructions || 'Select an option:';
 
@@ -1771,7 +1796,7 @@ async function showCardSelectionPopup(options) {
 
     row1Container.style.display = 'block';
     row1.style.display = 'flex';
-    row1Container.style.height = '55%';
+    row1Container.style.height = '50%';
     row1Container.style.marginTop = '0'; // ensure true centring with your CSS
 
     // Buttons: show only Confirm for this generic picker

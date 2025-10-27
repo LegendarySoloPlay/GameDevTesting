@@ -303,125 +303,189 @@ async function batheEarthInCosmicRaysTwist() {
             return;
         }
 
-        // Get the popup elements
-        const popup = document.getElementById('card-choice-one-location-popup');
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
         const modalOverlay = document.getElementById('modal-overlay');
-        const cardsList = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-        document.getElementById('close-choice-button').style.display = 'none';
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
 
-        // Initialise UI
-        popupTitle.textContent = 'Scheme Twist';
-        instructionsDiv.innerHTML = 'Select a non-grey Hero to KO from your hand. You will then be able to choose a Hero from the HQ with the same or lower cost and put it into your hand.';
-        cardsList.innerHTML = '';
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Confirm KO';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
-        document.getElementById('close-choice-button').style.display = 'none';
+        // Set popup content
+        titleElement.textContent = 'SCHEME TWIST';
+        instructionsElement.innerHTML = 'Select a non-grey Hero to KO from your hand. You will then be able to choose a Hero from the HQ with the same or lower cost and put it into your hand.';
+
+        // Hide row labels and row2
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
 
         let selectedCard = null;
-        let activeImage = null;
+        let selectedCardImage = null;
+        let isDragging = false;
 
-        function updateConfirmButton() {
-            confirmButton.disabled = selectedCard === null;
-        }
-
-        function updateInstructions() {
-            if (selectedCard === null) {
-                instructionsDiv.innerHTML = 'Select a non-grey Hero to KO from your hand. You will then be able to choose a Hero from the HQ with the same or lower cost and put it into your hand.';
-            } else {
-                instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd.`;
-            }
-        }
-
-        function updateHeroImage(card) {
-            if (card) {
-                heroImage.src = card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-                activeImage = card.image;
-            } else {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-            }
-        }
-
-        function toggleCardSelection(card, listItem) {
-            if (selectedCard === card) {
-                selectedCard = null;
-                listItem.classList.remove('selected');
-                updateHeroImage(null);
-            } else {
-                const prevListItem = document.querySelector('li.selected');
-                if (prevListItem) prevListItem.classList.remove('selected');
-                selectedCard = card;
-                listItem.classList.add('selected');
-                updateHeroImage(card);
-            }
-            updateConfirmButton();
-            updateInstructions();
-        }
+        // Initialize scroll gradient detection
+        const row1 = selectionRow1;
+        const row2Visible = false;
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
 
         // Create a copy of eligibleCards to sort for display only
         const displayCards = [...eligibleCards];
         genericCardSort(displayCards);
 
+        // Create card elements for each eligible card
         displayCards.forEach((card) => {
-            const li = document.createElement('li');
-
-            const createTeamIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
-
-            const createClassIconHTML = (value) => {
-                if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                    return '';
-                }
-                return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-            };
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-card-id', String(card.id));
             
-            const teamIcon = createTeamIconHTML(card.team);
-            const class1Icon = createClassIconHTML(card.class1);
-            const class2Icon = createClassIconHTML(card.class2);
-            const class3Icon = createClassIconHTML(card.class3);
-
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name}</span>`;
-            li.setAttribute('data-card-id', card.id);
-
-            li.onmouseover = () => {
-                if (!activeImage) {
-                    heroImage.src = card.image;
-                    heroImage.style.display = 'block';
-                    oneChoiceHoverText.style.display = 'none';
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = card.image;
+            cardImage.alt = card.name;
+            cardImage.className = 'popup-card-image';
+            
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview - but only if no card is selected
+                if (selectedCard === null) {
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = card.image;
+                    previewImage.alt = card.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
                 }
             };
 
-            li.onmouseout = () => {
-                if (!activeImage) {
-                    heroImage.src = '';
-                    heroImage.style.display = 'none';
-                    oneChoiceHoverText.style.display = 'block';
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                // Only clear preview if no card is selected AND we're not hovering over another card
+                if (selectedCard === null) {
+                    setTimeout(() => {
+                        if (!selectionRow1.querySelector(':hover') && !isDragging) {
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                        }
+                    }, 50);
                 }
             };
 
-            li.onclick = () => toggleCardSelection(card, li);
-            cardsList.appendChild(li);
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
+
+            // Selection click handler
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                const cardId = cardElement.getAttribute('data-card-id');
+                
+                if (selectedCard && String(selectedCard.id) === cardId) {
+                    // Deselect current card
+                    selectedCard = null;
+                    cardImage.classList.remove('selected');
+                    selectedCardImage = null;
+                    
+                    // Clear preview and reset to hover state
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                    
+                    // Update instructions and confirm button
+                    instructionsElement.innerHTML = 'Select a non-grey Hero to KO from your hand. You will then be able to choose a Hero from the HQ with the same or lower cost and put it into your hand.';
+                    document.getElementById('card-choice-popup-confirm').disabled = true;
+                } else {
+                    // Deselect previous card if any
+                    if (selectedCardImage) {
+                        selectedCardImage.classList.remove('selected');
+                    }
+                    
+                    // Select new card
+                    selectedCard = card;
+                    selectedCardImage = cardImage;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview with selected card
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = card.image;
+                    previewImage.alt = card.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                    
+                    // Update instructions and confirm button
+                    instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will be KO'd.`;
+                    document.getElementById('card-choice-popup-confirm').disabled = false;
+                }
+            });
+
+            cardElement.appendChild(cardImage);
+            selectionRow1.appendChild(cardElement);
         });
 
-        // Handle confirmation
-        confirmButton.onclick = async () => {
-            if (selectedCard) {
+        if (displayCards.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (displayCards.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (displayCards.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
+        // Drag scrolling functionality
+        setupDragScrolling(selectionRow1);
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+
+        // Disable confirm initially and hide unnecessary buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'Confirm KO';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'none';
+
+        // Confirm button handler
+        confirmButton.onclick = async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedCard === null) return;
+
+            setTimeout(async () => {
                 console.log('Card KO\'d:', selectedCard);
 
                 // Find the selected card's current index in the *actual* hand
@@ -432,200 +496,269 @@ async function batheEarthInCosmicRaysTwist() {
                     koPile.push(koedCard);
                     onscreenConsole.log(`<span class="console-highlights">${koedCard.name}</span> has been KO'd.`);
                     koBonuses();
-                    closePopup();
                     updateGameBoard();
+                    
+                    // Close popup before proceeding to next phase
+                    closeCardChoicePopup();
+                    
+                    // Proceed to recruitment phase
                     await cosmicRaysRecruit(selectedCard.cost);
                 } else {
                     console.error('Selected card not found in player hand');
                     onscreenConsole.log("Error: Selected card not found in hand.");
+                    closeCardChoicePopup();
                 }
                 resolve();
-            }
+            }, 100);
         };
 
-        function closePopup() {
-            // Reset UI
-            popupTitle.textContent = 'Hero Ability!';
-            instructionsDiv.textContent = 'Context';
-            confirmButton.style.display = 'none';
-            confirmButton.disabled = true;
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-
-            // Hide popup
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-        }
+        // Show popup
+        modalOverlay.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
     });
 }
 
 async function cosmicRaysRecruit(maxCost) {
+    updateGameBoard();
     return new Promise((resolve) => {
-        // Filter HQ for eligible recruits
-        const eligibleHQ = (hq || []).filter(c =>
-  c && c.type === 'Hero' && Number.isFinite(c.cost) && c.cost <= maxCost
-);
+        const popup = document.querySelector('.card-choice-city-hq-popup');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const previewElement = document.querySelector('.card-choice-city-hq-popup-preview');
+        const titleElement = document.querySelector('.card-choice-city-hq-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-city-hq-popup-instructions');
 
-        if (eligibleHQ.length === 0) {
-            console.log(`No HQ Heroes with cost ≤ ${maxCost}.`);
+        // Set popup content
+        titleElement.textContent = 'Scheme Twist';
+        instructionsElement.textContent = `Choose a Hero from the HQ with ${maxCost} or less cost to put into your hand.`;
+
+        // Clear preview
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+
+        let selectedHQIndex = null;
+        let selectedCell = null;
+
+        // Get HQ slots (1-5) and explosion values
+        const hqSlots = [1, 2, 3, 4, 5];
+        const explosionValues = [hqExplosion1, hqExplosion2, hqExplosion3, hqExplosion4, hqExplosion5];
+
+        // Process each HQ slot
+        hqSlots.forEach((slot, index) => {
+            const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+            const cardImage = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+            const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+            const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+            
+            const hero = hq[index];
+            const explosionValue = explosionValues[index] || 0;
+            
+            // Update explosion indicators
+if (explosion && explosionCount) {  // Add this null check
+    if (explosionValue > 0) {
+        explosion.style.display = 'block';
+        explosionCount.style.display = 'block';
+        explosionCount.textContent = explosionValue;
+        
+        if (explosionValue >= 6) {
+            explosion.classList.add('max-explosions');
+            cell.classList.add('destroyed');
+        } else {
+            explosion.classList.remove('max-explosions');
+            cell.classList.remove('destroyed');
+        }
+    } else {
+        explosion.style.display = 'none';
+        explosionCount.style.display = 'none';
+        explosion.classList.remove('max-explosions');
+        cell.classList.remove('destroyed');
+    }
+}
+            
+            // Update label
+            document.getElementById(`hq-city-table-city-hq-${slot}-label`).textContent = `HQ-${slot}`;
+            
+            // Remove any existing selection classes from cell
+            cell.classList.remove('selected');
+            
+            if (hero) {
+                // Set the actual hero image
+                cardImage.src = hero.image;
+                cardImage.alt = hero.name;
+                
+                // Determine eligibility - Hero type and cost <= maxCost (not destroyed)
+                const isHeroType = hero.type === 'Hero';
+                const isEligibleCost = hero.cost <= maxCost;
+                const isDestroyed = explosionValue >= 6;
+                const isEligible = isHeroType && isEligibleCost && !isDestroyed;
+                
+                // Apply greyed out styling for ineligible cards
+                if (!isEligible) {
+                    cardImage.classList.add('greyed-out');
+                } else {
+                    cardImage.classList.remove('greyed-out');
+                }
+                
+                // Add click handler for eligible cards only
+                if (isEligible) {
+                    cardImage.style.cursor = 'pointer';
+                    
+                    // Click handler
+                    cardImage.onclick = (e) => {
+                        e.stopPropagation();
+                        
+                        if (selectedHQIndex === index) {
+                            // Deselect
+                            selectedHQIndex = null;
+                            cell.classList.remove('selected');
+                            selectedCell = null;
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                            
+                            // Update instructions and confirm button state
+                            instructionsElement.textContent = `Choose a Hero from the HQ with ${maxCost} or less cost to put into your hand.`;
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = true;
+                        } else {
+                            // Deselect previous
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                            }
+                            
+                            // Select new
+                            selectedHQIndex = index;
+                            selectedCell = cell;
+                            cell.classList.add('selected');
+                            
+                            // Update preview
+                            previewElement.innerHTML = '';
+                            const previewImage = document.createElement('img');
+                            previewImage.src = hero.image;
+                            previewImage.alt = hero.name;
+                            previewImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(previewImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                            
+                            // Update instructions and confirm button state
+                            instructionsElement.innerHTML = `Selected: <span class="console-highlights">${hero.name}</span> will be gained and put in your hand.`;
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = false;
+                        }
+                    };
+                    
+                    // Hover effects for eligible cards
+                    cardImage.onmouseover = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Update preview
+                        previewElement.innerHTML = '';
+                        const previewImage = document.createElement('img');
+                        previewImage.src = hero.image;
+                        previewImage.alt = hero.name;
+                        previewImage.className = 'popup-card-preview-image';
+                        previewElement.appendChild(previewImage);
+                        
+                        // Only change background if no card is selected
+                        if (selectedHQIndex === null) {
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    };
+                    
+                    cardImage.onmouseout = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Only clear preview if no card is selected AND we're not hovering over another eligible card
+                        if (selectedHQIndex === null) {
+                            setTimeout(() => {
+                                const hoveredCard = document.querySelector('.city-hq-chosen-card-image:hover:not(.greyed-out)');
+                                if (!hoveredCard) {
+                                    previewElement.innerHTML = '';
+                                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                                }
+                            }, 50);
+                        }
+                    };
+                } else {
+                    // For ineligible cards, remove event handlers and make non-clickable
+                    cardImage.style.cursor = 'not-allowed';
+                    cardImage.onclick = null;
+                    cardImage.onmouseover = null;
+                    cardImage.onmouseout = null;
+                }
+            } else {
+                // No hero in this slot - reset to card back and grey out
+                cardImage.src = "Visual Assets/CardBack.webp";
+                cardImage.alt = "Empty HQ Slot";
+                cardImage.classList.add('greyed-out');
+                cardImage.style.cursor = 'not-allowed';
+                cardImage.onclick = null;
+                cardImage.onmouseover = null;
+                cardImage.onmouseout = null;
+            }
+        });
+
+        // Check if any eligible heroes exist - same logic as original
+        const eligibleHeroes = hq.filter((hero, index) => {
+            const explosionValue = explosionValues[index] || 0;
+            return hero && 
+                   hero.type === 'Hero' && 
+                   hero.cost <= maxCost && 
+                   explosionValue < 6; // Not destroyed
+        });
+
+        if (eligibleHeroes.length === 0) {
             onscreenConsole.log(`No Heroes in the HQ with ${maxCost} or less cost.`);
-            updateGameBoard();
             resolve();
             return;
         }
 
-        // --- Popup wiring (same scaffold as your twist function) ---
-        const popup = document.getElementById('card-choice-one-location-popup');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const cardsList = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-        const closeBtn = document.getElementById('close-choice-button');
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-city-hq-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-city-hq-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-city-hq-popup-nothanks');
 
-        if (closeBtn) closeBtn.style.display = 'none';
-        popupTitle.textContent = 'Scheme Twist';
-        instructionsDiv.innerHTML = `Choose a Hero from the HQ with ${maxCost} or less cost to put into your hand.`;
-        cardsList.innerHTML = '';
-        confirmButton.style.display = 'inline-block';
+        // Disable confirm initially and set button text
         confirmButton.disabled = true;
         confirmButton.textContent = 'Gain';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'none';
+
+        // Confirm button handler
+        confirmButton.onclick = async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedHQIndex === null) return;
+
+            setTimeout(async () => {
+                const hero = hq[selectedHQIndex];
+                
+                // Remove from HQ and replace with new card from deck
+                const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+                hq[selectedHQIndex] = newCard;
+                
+                if (newCard) {
+                    onscreenConsole.log(`<span class="console-highlights">${newCard.name}</span> has entered the HQ.`);
+                }
+                
+                addHRToTopWithInnerHTML();
+                
+                if (!hq[selectedHQIndex] && heroDeck.length === 0) {
+                    heroDeckHasRunOut = true;
+                }
+
+                // Add to hand
+                playerHand.push(hero);
+                playSFX('recruit');
+                onscreenConsole.log(`<span class="console-highlights">${hero.name}</span> gained and put in your hand.`);
+
+                updateGameBoard();
+                closeHQCityCardChoicePopup();
+                resolve();
+            }, 100);
+        };
+
+        // Show popup
         modalOverlay.style.display = 'block';
         popup.style.display = 'block';
-
-        let selectedCard = null;
-        let activeImage = null;
-
-        const createTeamIconHTML = (value) => {
-            if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                return '<img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="popup-card-icons">';
-            }
-            return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-        };
-
-        const createClassIconHTML = (value) => {
-            if (!value || value === 'none' || value === 'null' || value === 'undefined' || value === 'None') {
-                return '';
-            }
-            return `<img src="Visual Assets/Icons/${value}.svg" alt="${value} Icon" class="popup-card-icons">`;
-        };
-
-        function updateConfirmButton() {
-            confirmButton.disabled = selectedCard === null;
-        }
-
-        function updateInstructions() {
-            if (!selectedCard) {
-                instructionsDiv.innerHTML = `Choose a Hero from the HQ with ${maxCost} or less cost to put into your hand.`;
-            } else {
-                instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be gained and put in your hand.`;
-            }
-        }
-
-        function updateHeroImage(card) {
-            if (card) {
-                heroImage.src = card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-                activeImage = card.image;
-            } else {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-                activeImage = null;
-            }
-        }
-
-        function toggleCardSelection(card, li) {
-            if (selectedCard === card) {
-                selectedCard = null;
-                li.classList.remove('selected');
-                updateHeroImage(null);
-            } else {
-                const prev = cardsList.querySelector('li.selected');
-                if (prev) prev.classList.remove('selected');
-                selectedCard = card;
-                li.classList.add('selected');
-                updateHeroImage(card);
-            }
-            updateConfirmButton();
-            updateInstructions();
-        }
-
-        // Render eligible HQ cards
-        eligibleHQ.forEach(card => {
-            const li = document.createElement('li');
-            const teamIcon = createTeamIconHTML(card.team);
-            const class1Icon = createClassIconHTML(card.class1);
-            const class2Icon = createClassIconHTML(card.class2);
-            const class3Icon = createClassIconHTML(card.class3);
-
-            li.innerHTML = `<span style="white-space: nowrap;">| ${teamIcon} | ${class1Icon} ${class2Icon} ${class3Icon} | ${card.name} (Cost ${card.cost})</span>`;
-            li.setAttribute('data-card-id', card.id ?? card.uniqueId ?? '');
-            li.onmouseover = () => { if (!activeImage) { heroImage.src = card.image; heroImage.style.display = 'block'; oneChoiceHoverText.style.display = 'none'; } };
-            li.onmouseout  = () => { if (!activeImage) { heroImage.src = ''; heroImage.style.display = 'none'; oneChoiceHoverText.style.display = 'block'; } };
-            li.onclick = () => toggleCardSelection(card, li);
-
-            cardsList.appendChild(li);
-        });
-
-        confirmButton.onclick = async () => {
-            if (!selectedCard) return;
-
-            // Remove from HQ
-const idx = hq.findIndex(c =>
-    (c && (c.id ?? c.uniqueId)) === (selectedCard.id ?? selectedCard.uniqueId)
-);
-
-if (idx !== -1) {
-    // Instead of splice + assignment, just replace the element directly
-    const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
-    hq[idx] = newCard; // ✅ Direct replacement maintains array structure
-    
-    if (newCard) {
-        onscreenConsole.log(`<span class="console-highlights">${newCard.name}</span> has entered the HQ.`);
-    }
-    
-    addHRToTopWithInnerHTML();
-    
-    if (!hq[idx] && heroDeck.length === 0) {
-        heroDeckHasRunOut = true;
-    }
-}
-            // Add to hand
-            playerHand.push(selectedCard);
-	playSFX('recruit');
-            onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> gained and put in your hand.`);
-
-
-
-            // Cleanup UI
-            closePopup();
-            updateGameBoard();
-            resolve();
-        };
-
-        function closePopup() {
-            popupTitle.textContent = 'Hero Ability!';
-            instructionsDiv.textContent = 'Context';
-            confirmButton.style.display = 'none';
-            confirmButton.disabled = true;
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-            if (closeBtn) closeBtn.style.display = ''; // restore default for future modals
-            popup.style.display = 'none';
-            modalOverlay.style.display = 'none';
-            cardsList.innerHTML = '';
-        }
     });
 }
-
 
 //Masterminds
 
@@ -677,379 +810,443 @@ function getEffectiveFrontIndex() {
 }
 
 async function galactusCosmicEntity() {
-    return new Promise((resolve) => {
-        const popup = document.getElementById('card-choice-one-location-popup');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const listContainer = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-        const closeBtn = document.getElementById('close-choice-button');
+  const CLASSES = ['Strength', 'Instinct', 'Covert', 'Tech', 'Range'];
 
-        // --- Constants & helpers
-        const CLASSES = ['Strength', 'Instinct', 'Covert', 'Tech', 'Range'];
+  // Build the same pool & counts as your original
+  const cardsPool = [
+    ...playerHand,
+    ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy),
+  ];
 
-        const cardsPool = [
-            ...playerHand,
-            ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy)
-        ];
+  const cardHasClass = (card, cls) =>
+    !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
 
-        const cardHasClass = (card, cls) =>
-            !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
+  const countsByClass = {};
+  for (const cls of CLASSES) {
+    countsByClass[cls] = cardsPool.reduce((acc, c) => acc + (cardHasClass(c, cls) ? 1 : 0), 0);
+  }
 
-        const countsByClass = {};
-        for (const cls of CLASSES) {
-            countsByClass[cls] = cardsPool.reduce((acc, c) => acc + (cardHasClass(c, cls) ? 1 : 0), 0);
-        }
+  return new Promise((resolve) => {
+    // Core elements
+    const popup = document.querySelector('.card-choice-city-hq-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const titleEl = document.querySelector('.card-choice-city-hq-popup-title');
+    const instrEl = document.querySelector('.card-choice-city-hq-popup-instructions');
+    const confirmBtn = document.getElementById('card-choice-city-hq-popup-confirm');
+    const otherBtn = document.getElementById('card-choice-city-hq-popup-otherchoice');
+    const noThanksBtn = document.getElementById('card-choice-city-hq-popup-nothanks');
 
-        // --- Local UI state
-        let selectedClass = null;
-        let selectedQty = null;
-        let phase = 'chooseClass'; // or 'chooseQuantity'
+    // Layout tweaks for THIS popup only
+    const previewContainer = document.querySelector('.card-choice-city-hq-popup-preview-container');
+    const selectionContainer = document.querySelector('.card-choice-city-hq-popup-selection-container');
+    if (previewContainer) previewContainer.style.display = 'none';
+    if (selectionContainer) selectionContainer.style.width = '95%';
 
-        // --- UI: initialise for this modal mode
-        if (closeBtn) closeBtn.style.display = 'none'; // hide cancel for this flow
-        
-        // SET GALACTUS IMAGE FOR BOTH PHASES
-        if (heroImage) { 
-            heroImage.src = 'Visual Assets/Masterminds/FantasticFour_Galactus_PanickedMobs.webp';
-            heroImage.style.display = 'block'; 
-        }
-        if (oneChoiceHoverText) oneChoiceHoverText.style.display = 'none'; // Hide hover text since we're showing Galactus
+    // Hide mastermind cell/label just in case
+    const mastermindImage = document.getElementById('hq-city-table-mastermind-image');
+    const mastermindLabel = document.getElementById('hq-city-table-mastermind');
+    if (mastermindImage) mastermindImage.style.display = 'none';
+    if (mastermindLabel) mastermindLabel.style.display = 'none';
 
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Confirm';
+    // Init UI
+    titleEl.textContent = 'MASTERMIND TACTIC';
+    instrEl.textContent = 'Select a class. You may reveal any number of cards of that class, then draw that many cards.';
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'CONFIRM CLASS';
+    otherBtn.style.display = 'none';
+    noThanksBtn.style.display = 'none';
 
-        popupTitle.textContent = 'Mastermind Tactic';
-        instructionsDiv.textContent = 'Select a class. You may reveal any number of cards of that class, then draw that many cards.';
+    modalOverlay.style.display = 'block';
+    popup.style.display = 'block';
 
-        listContainer.innerHTML = '';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+    // State
+    let phase = 'chooseClass'; // or 'chooseQuantity'
+    let selectedIndex = null;
+    let selectedCell = null;
+    let selectedClass = null;
+    let maxQty = 0;
+    let chosenQty = 0;
 
-        // --- Render helpers
-        const clearList = () => { listContainer.innerHTML = ''; };
+    // Render class choices into the five cells
+    function renderClassGrid() {
+      phase = 'chooseClass';
+      selectedIndex = null;
+      selectedCell = null;
+      selectedClass = null;
+      maxQty = 0;
+      chosenQty = 0;
 
-        function renderClassButtons() {
-            phase = 'chooseClass';
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'CONFIRM CLASS';
+      otherBtn.style.display = 'none';
+      noThanksBtn.style.display = 'none';
+
+      instrEl.textContent =
+        'Select a class. You may reveal any number of cards of that class, then draw that many cards.';
+
+      CLASSES.forEach((cls, idx) => {
+        const slot = idx + 1;
+        const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+        const img = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+        const labelEl = document.getElementById(`hq-city-table-city-hq-${slot}-label`);
+        const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+        const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+
+        if (!cell || !img || !labelEl) return;
+
+        // Neutralise any explosion UI
+        if (explosion) { explosion.style.display = 'none'; explosion.classList.remove('max-explosions'); }
+        if (explosionCount) explosionCount.style.display = 'none';
+
+        // Class icon
+        img.src = `Visual Assets/Icons/${cls}.svg`;
+        img.alt = `${cls} Icon`;
+        img.classList.remove('greyed-out', 'destroyed-space');
+        img.style.display = 'block';
+        img.style.cursor = 'pointer';
+
+        // Label with live count
+        const count = countsByClass[cls] || 0;
+        const plural = count === 1 ? 'CARD' : 'CARDS';
+        labelEl.textContent = `${cls.toUpperCase()} - ${count} ${plural}`;
+
+        // Reset selection styling & handlers
+        cell.classList.remove('selected');
+        img.onclick = null;
+
+        // All classes remain selectable (even when count = 0)
+        img.onclick = (e) => {
+          e.stopPropagation();
+
+          if (selectedIndex === idx) {
+            // deselect
+            selectedIndex = null;
+            selectedCell?.classList.remove('selected');
+            selectedCell = null;
             selectedClass = null;
-            selectedQty = null;
-            confirmButton.disabled = true;
-            popupTitle.textContent = 'Mastermind Tactic';
-            instructionsDiv.textContent = 'Select a class. You may reveal any number of cards of that class, then draw that many cards.';
-            clearList();
+            maxQty = 0;
+            chosenQty = 0;
+            confirmBtn.disabled = true;
+            instrEl.textContent =
+              'Select a class. You may reveal any number of cards of that class, then draw that many cards.';
+          } else {
+            // new selection
+            selectedCell?.classList.remove('selected');
+            selectedIndex = idx;
+            selectedCell = cell;
+            cell.classList.add('selected');
+            selectedClass = cls;
+            maxQty = countsByClass[cls] || 0;
+            chosenQty = Math.min(chosenQty, maxQty); // in case of reselection
+            confirmBtn.disabled = false;
 
-            CLASSES.forEach(cls => {
-                const count = countsByClass[cls] || 0;
-                const li = document.createElement('li');
-                
-                // Use innerHTML directly on the list item instead of creating a button
-                li.innerHTML = `<img src="Visual Assets/Icons/${cls}.svg" alt="${cls} Icon" class="console-card-icons"> — Up to ${count} card${count === 1 ? '' : 's'} to reveal`;
-                
-                li.onclick = () => {
-                    // Remove selection from any previously selected item
-                    document.querySelectorAll('#cards-to-choose-from li').forEach(item => {
-                        item.classList.remove('selected');
-                    });
-                    
-                    // Highlight selected item
-                    li.classList.add('selected');
-                    
-                    selectedClass = cls;
-                    selectedQty = null;
-                    confirmButton.disabled = false;
-                    instructionsDiv.innerHTML = `Selected: <img src="Visual Assets/Icons/${cls}.svg" alt="${cls} Icon" class="console-card-icons">. Press Confirm to choose how many cards to reveal (up to ${count}).`;
-                };
-                
-                listContainer.appendChild(li);
-            });
-        }
-
-        function renderQuantityButtons(max) {
-            phase = 'chooseQuantity';
-            selectedQty = null;
-            confirmButton.disabled = true;
-            popupTitle.innerHTML = `How many <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards to reveal?`;
-            clearList();
-
-            if (max <= 0) {
-                instructionsDiv.innerHTML = `You have 0 <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards. Confirm to reveal none (0).`;
-                confirmButton.disabled = false;
-                selectedQty = 0;
-                return;
-            }
-
-            instructionsDiv.innerHTML = `Select how many <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards you wish to reveal.`;
-            
-            for (let n = max; n >= 1; n--) {
-                const li = document.createElement('li');
-                li.textContent = `${n}`;
-                      
-                li.onclick = () => {
-                    // Remove selection from any previously selected item
-                    document.querySelectorAll('#cards-to-choose-from li').forEach(item => {
-                        item.classList.remove('selected');
-                    });
-                    
-                    // Highlight selected item
-                    li.classList.add('selected');
-                    
-                    selectedQty = n;
-                    confirmButton.disabled = false;
-                    instructionsDiv.innerHTML = `Reveal ${n} <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> card${n === 1 ? '' : 's'}. Press Confirm to proceed.`;
-                };
-                
-                listContainer.appendChild(li);
-            }
-        }
-
-        // --- Wire confirm behaviour for both phases
-        confirmButton.onclick = async () => {
-            if (phase === 'chooseClass') {
-                if (!selectedClass) return;
-                const max = countsByClass[selectedClass] || 0;
-                renderQuantityButtons(max);
-                return;
-            }
-
-            if (phase === 'chooseQuantity') {
-                if (selectedQty == null) return;
-
-                // Perform the extra draws
-                for (let i = 0; i < selectedQty; i++) {
-                    if (typeof extraDraw === 'function') extraDraw();
-                }
-
-                // Cleanup & restore popup to "normal" default state
-                if (typeof closePopup === 'function') closePopup();
-                
-                // Make sure to reset any tweaks we made so future popups behave normally
-                try {
-                    // Reset content
-                    listContainer.innerHTML = '';
-                    instructionsDiv.textContent = '';
-                    popupTitle.textContent = '';
-
-                    // Restore visibility defaults
-                    if (heroImage) { 
-                        heroImage.src = '';
-                        heroImage.style.display = 'none'; 
-                    }
-                    if (oneChoiceHoverText) oneChoiceHoverText.style.display = 'block';
-                    if (closeBtn) closeBtn.style.display = ''; // show default close for future uses
-
-                    // Reset confirm button
-                    confirmButton.textContent = 'Confirm';
-                    confirmButton.disabled = true;
-
-                    // Hide overlay/popup in case closePopup didn't do it
-                    modalOverlay.style.display = 'none';
-                    popup.style.display = 'none';
-                } catch (e) {
-                    // swallow any minor UI reset errors
-                }
-
-                // Update board & resolve
-                updateGameBoard();
-                resolve();
-            }
+            const msgPlural = maxQty === 1 ? 'card' : 'cards';
+            instrEl.innerHTML = `Selected: <span class="console-highlights">${cls}</span>. You can reveal up to ${maxQty} ${msgPlural}. Press <span class="bold-spans">Confirm</span> to set the quantity.`;
+          }
         };
+      });
+    }
 
-        // Initial render
-        renderClassButtons();
-    });
+    // Render quantity controls (repurpose the bottom buttons as – / +)
+    function renderQuantityPicker() {
+      phase = 'chooseQuantity';
+      confirmBtn.disabled = false; // Always allow confirming a number (including 0)
+      confirmBtn.textContent = 'CONFIRM QUANTITY';
+
+      // Show – / + buttons
+      otherBtn.style.display = 'inline-block';
+      noThanksBtn.style.display = 'inline-block';
+      otherBtn.textContent = '–';
+      noThanksBtn.textContent = '+';
+
+      // Start at 0 (player may choose to reveal none)
+      chosenQty = 0;
+
+      function updateQuantityText() {
+        const plural = chosenQty === 1 ? 'card' : 'cards';
+        const maxPlural = maxQty === 1 ? 'card' : 'cards';
+        titleEl.innerHTML = `How many <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards to reveal?`;
+        instrEl.innerHTML =
+          `Chosen: <span class="console-highlights">${chosenQty}</span> (max ${maxQty} ${maxPlural}). Use – / +, then confirm.`;
+      }
+
+      // Wire – / +
+      otherBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (chosenQty > 0) {
+          chosenQty -= 1;
+          updateQuantityText();
+        }
+      };
+
+      noThanksBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (chosenQty < maxQty) {
+          chosenQty += 1;
+          updateQuantityText();
+        }
+      };
+
+      updateQuantityText();
+    }
+
+    // Confirm button behaviour (phase-dependent)
+    confirmBtn.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (phase === 'chooseClass') {
+        if (selectedClass == null) return;
+        renderQuantityPicker();
+        return;
+      }
+
+      if (phase === 'chooseQuantity') {
+        // Execute draws
+        for (let i = 0; i < chosenQty; i++) {
+          if (typeof extraDraw === 'function') extraDraw();
+        }
+
+        // Close/reset via your centralised closer
+        if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
+
+        // Update board & resolve
+        updateGameBoard?.();
+        resolve();
+      }
+    };
+
+    // Optional: overlay click cancels
+    modalOverlay.onclick = (e) => {
+      if (e.target !== modalOverlay) return;
+      if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
+      resolve();
+    };
+
+    // Initial render
+    renderClassGrid();
+  });
 }
-
 
 async function galactusPanickedMobs() {
-    return new Promise((resolve) => {
-        const popup = document.getElementById('card-choice-one-location-popup');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const listContainer = document.getElementById('cards-to-choose-from');
-        const confirmButton = document.getElementById('card-choice-confirm-button');
-        const popupTitle = popup.querySelector('h2');
-        const instructionsDiv = document.getElementById('context');
-        const heroImage = document.getElementById('hero-one-location-image');
-        const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-        const closeBtn = document.getElementById('close-choice-button');
+  const CLASSES = ['Strength', 'Instinct', 'Covert', 'Tech', 'Range'];
 
-        // --- Constants & helpers
-        const CLASSES = ['Strength', 'Instinct', 'Covert', 'Tech', 'Range'];
+  // Build the pool & counts (same logic you use elsewhere)
+  const cardsPool = [
+    ...playerHand,
+    ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy),
+  ];
+  const cardHasClass = (card, cls) =>
+    !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
+  const countsByClass = {};
+  for (const cls of CLASSES) {
+    countsByClass[cls] = cardsPool.reduce((acc, c) => acc + (cardHasClass(c, cls) ? 1 : 0), 0);
+  }
 
-        const cardsPool = [
-            ...playerHand,
-            ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy)
-        ];
+  return new Promise((resolve) => {
+    // Core elements
+    const popup = document.querySelector('.card-choice-city-hq-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const titleEl = document.querySelector('.card-choice-city-hq-popup-title');
+    const instrEl = document.querySelector('.card-choice-city-hq-popup-instructions');
+    const confirmBtn = document.getElementById('card-choice-city-hq-popup-confirm');
+    const otherBtn = document.getElementById('card-choice-city-hq-popup-otherchoice');
+    const noThanksBtn = document.getElementById('card-choice-city-hq-popup-nothanks');
 
-        const cardHasClass = (card, cls) =>
-            !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
+    // This-popup-only layout tweaks
+    const previewContainer = document.querySelector('.card-choice-city-hq-popup-preview-container');
+    const selectionContainer = document.querySelector('.card-choice-city-hq-popup-selection-container');
+    if (previewContainer) previewContainer.style.display = 'none';
+    if (selectionContainer) selectionContainer.style.width = '95%';
 
-        const countsByClass = {};
-        for (const cls of CLASSES) {
-            countsByClass[cls] = cardsPool.reduce((acc, c) => acc + (cardHasClass(c, cls) ? 1 : 0), 0);
-        }
+    // Hide mastermind cell/label just in case
+    const mastermindImage = document.getElementById('hq-city-table-mastermind-image');
+    const mastermindLabel = document.getElementById('hq-city-table-mastermind');
+    if (mastermindImage) mastermindImage.style.display = 'none';
+    if (mastermindLabel) mastermindLabel.style.display = 'none';
 
-        // --- Local UI state
-        let selectedClass = null;
-        let selectedQty = null;
-        let phase = 'chooseClass'; // or 'chooseQuantity'
+    // Init UI
+    titleEl.textContent = 'MASTERMIND TACTIC';
+    instrEl.textContent = 'Select a class. You may reveal any number of cards of that class, then rescue that many Bystanders.';
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'CONFIRM CLASS';
+    otherBtn.style.display = 'none';
+    noThanksBtn.style.display = 'none';
 
-        // --- UI: initialise for this modal mode
-        if (closeBtn) closeBtn.style.display = 'none'; // hide cancel for this flow
-        
-        // SET GALACTUS IMAGE FOR BOTH PHASES
-        if (heroImage) { 
-            heroImage.src = 'Visual Assets/Masterminds/FantasticFour_Galactus_PanickedMobs.webp';
-            heroImage.style.display = 'block'; 
-        }
-        if (oneChoiceHoverText) oneChoiceHoverText.style.display = 'none'; // Hide hover text since we're showing Galactus
+    modalOverlay.style.display = 'block';
+    popup.style.display = 'block';
 
-        confirmButton.style.display = 'inline-block';
-        confirmButton.disabled = true;
-        confirmButton.textContent = 'Confirm';
+    // State
+    let phase = 'chooseClass';
+    let selectedIndex = null;
+    let selectedCell = null;
+    let selectedClass = null;
+    let maxQty = 0;
+    let chosenQty = 0;
 
-        popupTitle.textContent = 'Mastermind Tactic';
-        instructionsDiv.textContent = 'Select a class. You may reveal any number of cards of that class, then rescue that many Bystanders.';
+    // Render the 5 class cells
+    function renderClassGrid() {
+      phase = 'chooseClass';
+      selectedIndex = null;
+      selectedCell = null;
+      selectedClass = null;
+      maxQty = 0;
+      chosenQty = 0;
 
-        listContainer.innerHTML = '';
-        modalOverlay.style.display = 'block';
-        popup.style.display = 'block';
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'CONFIRM CLASS';
+      otherBtn.style.display = 'none';
+      noThanksBtn.style.display = 'none';
 
-        // --- Render helpers
-        const clearList = () => { listContainer.innerHTML = ''; };
+      instrEl.textContent =
+        'Select a class. You may reveal any number of cards of that class, then rescue that many Bystanders.';
 
-        function renderClassButtons() {
-            phase = 'chooseClass';
+      CLASSES.forEach((cls, idx) => {
+        const slot = idx + 1;
+        const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+        const img = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+        const labelEl = document.getElementById(`hq-city-table-city-hq-${slot}-label`);
+        const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+        const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+
+        if (!cell || !img || !labelEl) return;
+
+        // Neutralise any explosion UI
+        if (explosion) { explosion.style.display = 'none'; explosion.classList.remove('max-explosions'); }
+        if (explosionCount) explosionCount.style.display = 'none';
+
+        // Class icon
+        img.src = `Visual Assets/Icons/${cls}.svg`;
+        img.alt = `${cls} Icon`;
+        img.classList.remove('greyed-out', 'destroyed-space');
+        img.style.display = 'block';
+        img.style.cursor = 'pointer';
+
+        // Label with live count
+        const count = countsByClass[cls] || 0;
+        const plural = count === 1 ? 'CARD' : 'CARDS';
+        labelEl.textContent = `${cls.toUpperCase()} - ${count} ${plural}`;
+
+        // Reset selection styling & handlers
+        cell.classList.remove('selected');
+        img.onclick = null;
+
+        // All classes selectable (even at 0)
+        img.onclick = (e) => {
+          e.stopPropagation();
+
+          if (selectedIndex === idx) {
+            // Deselect
+            selectedIndex = null;
+            selectedCell?.classList.remove('selected');
+            selectedCell = null;
             selectedClass = null;
-            selectedQty = null;
-            confirmButton.disabled = true;
-            popupTitle.textContent = 'Mastermind Tactic';
-            instructionsDiv.textContent = 'Select a class. You may reveal any number of cards of that class, then rescue that many Bystanders.';
-            clearList();
+            maxQty = 0;
+            chosenQty = 0;
+            confirmBtn.disabled = true;
+            instrEl.textContent =
+              'Select a class. You may reveal any number of cards of that class, then rescue that many Bystanders.';
+          } else {
+            // Select
+            selectedCell?.classList.remove('selected');
+            selectedIndex = idx;
+            selectedCell = cell;
+            cell.classList.add('selected');
+            selectedClass = cls;
+            maxQty = countsByClass[cls] || 0;
+            chosenQty = Math.min(chosenQty, maxQty);
+            confirmBtn.disabled = false;
 
-            CLASSES.forEach(cls => {
-                const count = countsByClass[cls] || 0;
-                const li = document.createElement('li');
-                
-                // Use innerHTML directly on the list item instead of creating a button
-                li.innerHTML = `<img src="Visual Assets/Icons/${cls}.svg" alt="${cls} Icon" class="console-card-icons"> — Up to ${count} card${count === 1 ? '' : 's'} to reveal`;
-                
-                li.onclick = () => {
-                    // Remove selection from any previously selected item
-                    document.querySelectorAll('#cards-to-choose-from li').forEach(item => {
-                        item.classList.remove('selected');
-                    });
-                    
-                    // Highlight selected item
-                    li.classList.add('selected');
-                    
-                    selectedClass = cls;
-                    selectedQty = null;
-                    confirmButton.disabled = false;
-                    instructionsDiv.innerHTML = `Selected: <img src="Visual Assets/Icons/${cls}.svg" alt="${cls} Icon" class="console-card-icons">. Press Confirm to choose how many cards to reveal (up to ${count}).`;
-                };
-                
-                listContainer.appendChild(li);
-            });
-        }
-
-        function renderQuantityButtons(max) {
-            phase = 'chooseQuantity';
-            selectedQty = null;
-            confirmButton.disabled = true;
-            popupTitle.innerHTML = `How many <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards to reveal?`;
-            clearList();
-
-            if (max <= 0) {
-                instructionsDiv.innerHTML = `You have 0 <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards. Confirm to reveal none (0).`;
-                confirmButton.disabled = false;
-                selectedQty = 0;
-                return;
-            }
-
-            instructionsDiv.innerHTML = `Select how many <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards you wish to reveal.`;
-            
-            for (let n = max; n >= 1; n--) {
-                const li = document.createElement('li');
-                li.textContent = `${n}`;
-                      
-                li.onclick = () => {
-                    // Remove selection from any previously selected item
-                    document.querySelectorAll('#cards-to-choose-from li').forEach(item => {
-                        item.classList.remove('selected');
-                    });
-                    
-                    // Highlight selected item
-                    li.classList.add('selected');
-                    
-                    selectedQty = n;
-                    confirmButton.disabled = false;
-                    instructionsDiv.innerHTML = `Reveal ${n} <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> card${n === 1 ? '' : 's'}. Press Confirm to proceed.`;
-                };
-                
-                listContainer.appendChild(li);
-            }
-        }
-
-        // --- Wire confirm behaviour for both phases
-        confirmButton.onclick = async () => {
-            if (phase === 'chooseClass') {
-                if (!selectedClass) return;
-                const max = countsByClass[selectedClass] || 0;
-                renderQuantityButtons(max);
-                return;
-            }
-
-            if (phase === 'chooseQuantity') {
-                if (selectedQty == null) return;
-
-                // Perform the extra draws
-                for (let i = 0; i < selectedQty; i++) {
-                    if (typeof rescueBystander === 'function') await rescueBystander();
-                }
-
-                // Cleanup & restore popup to "normal" default state
-                if (typeof closePopup === 'function') closePopup();
-                
-                // Make sure to reset any tweaks we made so future popups behave normally
-                try {
-                    // Reset content
-                    listContainer.innerHTML = '';
-                    instructionsDiv.textContent = '';
-                    popupTitle.textContent = '';
-
-                    // Restore visibility defaults - KEEP GALACTUS IMAGE VISIBLE
-                    if (heroImage) { 
-                        heroImage.src = '';
-                        heroImage.style.display = 'none'; 
-                    }
-                    if (oneChoiceHoverText) oneChoiceHoverText.style.display = 'block';
-                    if (closeBtn) closeBtn.style.display = ''; // show default close for future uses
-
-                    // Reset confirm button
-                    confirmButton.textContent = 'Confirm';
-                    confirmButton.disabled = true;
-
-                    // Hide overlay/popup in case closePopup didn't do it
-                    modalOverlay.style.display = 'none';
-                    popup.style.display = 'none';
-                } catch (e) {
-                    // swallow any minor UI reset errors
-                }
-
-                // Update board & resolve
-                updateGameBoard();
-                resolve();
-            }
+            const msgPlural = maxQty === 1 ? 'card' : 'cards';
+            instrEl.innerHTML =
+              `Selected: <span class="console-highlights">${cls}</span>. You can reveal up to ${maxQty} ${msgPlural}. ` +
+              `Press <span class="bold-spans">Confirm</span> to set the quantity.`;
+          }
         };
+      });
+    }
 
-        // Initial render
-        renderClassButtons();
-    });
+    // Quantity picker using – / + on the bottom buttons
+    function renderQuantityPicker() {
+      phase = 'chooseQuantity';
+      confirmBtn.disabled = false; // allow 0..max
+      confirmBtn.textContent = 'CONFIRM QUANTITY';
+
+      otherBtn.style.display = 'inline-block';
+      noThanksBtn.style.display = 'inline-block';
+      otherBtn.textContent = '–';
+      noThanksBtn.textContent = '+';
+
+      chosenQty = 0;
+
+      function updateQuantityText() {
+        const plural = chosenQty === 1 ? 'card' : 'cards';
+        const maxPlural = maxQty === 1 ? 'card' : 'cards';
+        titleEl.innerHTML = `How many <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards to reveal?`;
+        instrEl.innerHTML =
+          `Chosen: <span class="console-highlights">${chosenQty}</span> (max ${maxQty} ${maxPlural}). Reveal that many, then rescue the same number of Bystanders.`;
+      }
+
+      otherBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (chosenQty > 0) {
+          chosenQty -= 1;
+          updateQuantityText();
+        }
+      };
+
+      noThanksBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (chosenQty < maxQty) {
+          chosenQty += 1;
+          updateQuantityText();
+        }
+      };
+
+      updateQuantityText();
+    }
+
+    // Confirm button behaviour
+    confirmBtn.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (phase === 'chooseClass') {
+        if (selectedClass == null) return;
+        renderQuantityPicker();
+        return;
+      }
+
+      if (phase === 'chooseQuantity') {
+        // Rescue that many Bystanders
+        for (let i = 0; i < chosenQty; i++) {
+          if (typeof rescueBystander === 'function') {
+            // rescueBystander appears async in your code
+            // eslint-disable-next-line no-await-in-loop
+            await rescueBystander();
+          }
+        }
+
+        // Close/reset via your centralised closer
+        if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
+
+        updateGameBoard?.();
+        resolve();
+      }
+    };
+
+    // Overlay click cancels
+    modalOverlay.onclick = (e) => {
+      if (e.target !== modalOverlay) return;
+      if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
+      resolve();
+    };
+
+    // Initial render
+    renderClassGrid();
+  });
 }
+
 
 function galactusForceOfEternity() {
         galactusForceOfEternityDraw = true;
@@ -1098,13 +1295,14 @@ function galactusForceOfEternityDiscard() {
     instructionsElement.innerHTML = 'Select six cards to discard.';
 
     // Hide row labels and row2
-    document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-    document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-    document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
     // Clear existing content
     selectionRow1.innerHTML = '';
@@ -1244,6 +1442,31 @@ function galactusForceOfEternityDiscard() {
       cardElement.appendChild(cardImage);
       selectionRow1.appendChild(cardElement);
     });
+
+    if (displayCards.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (displayCards.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (displayCards.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
     // Set up drag scrolling for the row
     setupDragScrolling(selectionRow1);
@@ -1412,10 +1635,11 @@ function moleManDigToFreedom() {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -1533,6 +1757,31 @@ function moleManDigToFreedom() {
             cardElement.appendChild(cardImage);
             selectionRow1.appendChild(cardElement);
         });
+
+        if (subterraneaInVP.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (subterraneaInVP.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (subterraneaInVP.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Set up drag scrolling for the row
         setupDragScrolling(selectionRow1);
@@ -1733,6 +1982,7 @@ function moloidsFight() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Played Cards';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -2194,6 +2444,7 @@ function stardustFight() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Played Cards';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -2476,6 +2727,7 @@ function humanTorchCallForBackup() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Discard Pile';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -2772,6 +3024,7 @@ function invisibleWomanDisappearingAct() {
         selectionRow1Label.style.display = 'block';
         selectionRow2Label.style.display = 'block';
         selectionRow2.style.display = 'flex';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'block';
         selectionRow1Label.textContent = 'Hand';
         selectionRow2Label.textContent = 'Discard Pile';
         document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
@@ -3313,6 +3566,7 @@ function thingCrimeStopperFocus() {
                 cardImage.alt = "Destroyed City Space";
                 cardImage.classList.add('destroyed-space');
                 cardContainer.appendChild(cardImage);
+                destroyedImage.classList.add('greyed-out');
                 
                 cityCellElement.classList.add('destroyed');
                 continue; // Skip the rest for destroyed spaces
@@ -3666,273 +3920,416 @@ updateGameBoard();
 }
 
 function silverSurferEpicDestiny() {
-onscreenConsole.log(`Focus! You have spent 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, allowing you to defeat a Villain with 5 or 6 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
-totalRecruitPoints -= 6;
-return new Promise((resolve, reject) => {
-    const eligibleVillains = [];
+    onscreenConsole.log(`Focus! You have spent 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, allowing you to defeat a Villain with 5 or 6 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
+    totalRecruitPoints -= 6;
+    updateGameBoard();
     
-    // Check city for eligible villains
-    city.forEach((card, index) => {
-        if (card && card.type === 'Villain') {  // Explicitly check for villain type
-            const villainAttack = recalculateVillainAttack(card);
-            if (villainAttack === 5 || villainAttack === 6) {  // Changed to target attack 5 or 6
-                if (card.name) {
-                    console.log(`${card.name} added to the eligible villain list.`);
-                    eligibleVillains.push({ ...card, index });
-                }
+    return new Promise((resolve) => {
+        const popup = document.querySelector('.card-choice-city-hq-popup');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const previewElement = document.querySelector('.card-choice-city-hq-popup-preview');
+        const titleElement = document.querySelector('.card-choice-city-hq-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-city-hq-popup-instructions');
+
+        // Set popup content
+        titleElement.textContent = 'DEFEAT VILLAIN';
+        instructionsElement.textContent = 'SELECT A VILLAIN WITH 5-6 ATTACK TO DEFEAT:';
+
+        // Clear preview
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+
+        let selectedCityIndex = null;
+        let selectedCell = null;
+        let telepathicProbeVillain = null;
+        let telepathicProbeSelected = false; // Moved to outer scope
+
+        // Check for eligible villains in city
+        const eligibleVillainsInCity = city.some((card, index) => {
+            if (card && card.type === 'Villain' && !destroyedSpaces[index]) {
+                const villainAttack = recalculateVillainAttack(card);
+                return villainAttack === 5 || villainAttack === 6;
             }
-        }
-    });
+            return false;
+        });
 
-    // Check for Professor X - Telepathic Probe revealed villain
-    const telepathicProbeCard = cardsPlayedThisTurn.find(card => 
-        card.name === "Professor X - Telepathic Probe" && 
-        card.villain && 
-        villainDeck.length > 0 &&
-        villainDeck[villainDeck.length - 1]?.name === card.villain.name &&
-        villainDeck.length === card.villain.deckLength
-    );
+        // Check for Professor X - Telepathic Probe revealed villain
+        const telepathicProbeCard = cardsPlayedThisTurn.find(card => 
+            card.name === "Professor X - Telepathic Probe" && 
+            card.villain && 
+            villainDeck.length > 0 &&
+            villainDeck[villainDeck.length - 1]?.name === card.villain.name &&
+            villainDeck.length === card.villain.deckLength
+        );
 
-    if (telepathicProbeCard && villainDeck.length > 0) {
-        const topVillainCard = villainDeck[villainDeck.length - 1];
-        const villainAttack = recalculateVillainAttack(topVillainCard);
-        
-        if (villainAttack === 5 || villainAttack === 6) {  // Changed to target attack 5 or 6
-            console.log(`${topVillainCard.name} (from Telepathic Probe) added to the eligible villain list.`);
-            eligibleVillains.push({ 
-                ...topVillainCard, 
-                index: 'telepathic-probe', // Special identifier for telepathic probe villains
-                telepathicProbe: true,
-                telepathicProbeCard: telepathicProbeCard
-            });
-        }
-    }
-
-    if (eligibleVillains.length === 0) {
-        onscreenConsole.log('There are no Villains available to defeat.');
-        totalRecruitPoints += 6;
-        updateGameBoard();
-        resolve();
-        return;
-    }
-
-    // Get popup elements - add null checks
-    const popup = document.getElementById('card-choice-one-location-popup');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const cardsList = document.getElementById('cards-to-choose-from');
-    const defeatButton = document.getElementById('card-choice-confirm-button');
-    const noThanksButton = document.getElementById('close-choice-button');
-    const popupTitle = popup.querySelector('h2');
-    const instructionsDiv = document.getElementById('context');
-    const heroImage = document.getElementById('hero-one-location-image');
-    const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-
-    // Initialize UI
-    popupTitle.textContent = 'Defeat Villain';
-    instructionsDiv.innerHTML = 'Select a Villain to defeat for free.';
-    cardsList.innerHTML = '';
-    defeatButton.style.display = 'inline-block';
-    defeatButton.disabled = true;
-    defeatButton.textContent = 'DEFEAT SELECTED VILLAIN';
-    noThanksButton.style.display = 'none';
-    modalOverlay.style.display = 'block';
-    popup.style.display = 'block';
-
-    let selectedVillain = null;
-    let selectedIndex = null;
-    let activeImage = null;
-
-    // Update defeat button state
-    function updateDefeatButton() {
-        defeatButton.disabled = selectedVillain === null;
-    }
-
-    // Update instructions with styled card name
-    function updateInstructions() {
-        if (selectedVillain === null) {
-            instructionsDiv.textContent = 'Select a Villain to defeat for free.';
-        } else {
-            instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedVillain.name}</span> will be defeated.`;
-        }
-    }
-
-    // Show/hide villain image
-    function updateVillainImage(card) {
-        if (card) {
-            heroImage.src = card.image;
-            heroImage.style.display = 'block';
-            oneChoiceHoverText.style.display = 'none';
-            activeImage = card.image;
-        } else {
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-            activeImage = null;
-        }
-    }
-
-    // Toggle villain selection
-    function toggleVillainSelection(card, listItem) {
-        if (selectedVillain === card) {
-            // Deselect if same villain clicked
-            selectedVillain = null;
-            selectedIndex = null;
-            listItem.classList.remove('selected');
-            updateVillainImage(null);
-        } else {
-            // Clear previous selection if any
-            if (selectedVillain) {
-                const prevListItem = document.querySelector('li.selected');
-                if (prevListItem) prevListItem.classList.remove('selected');
-            }
-            // Select new villain
-            selectedVillain = card;
-            selectedIndex = card.index;
-            listItem.classList.add('selected');
-            updateVillainImage(card);
-        }
-
-        updateDefeatButton();
-        updateInstructions();
-    }
-
-    eligibleVillains.forEach(card => {
-        const li = document.createElement('li');
-        
-        // Add special indicators for different villain types
-        if (card.telepathicProbe) {
-            li.textContent = `${card.name} (Telepathic Probe)`;
-            li.style.fontStyle = 'italic';
-        } else {
-            li.textContent = card.name;
-        }
-        
-        li.setAttribute('data-card-id', card.id || 'telepathic-probe');
-
-        li.onmouseover = () => {
-            if (!activeImage) {
-                heroImage.src = card.image;
-                heroImage.style.display = 'block';
-                oneChoiceHoverText.style.display = 'none';
-            }
-        };
-
-        li.onmouseout = () => {
-            if (!activeImage) {
-                heroImage.src = '';
-                heroImage.style.display = 'none';
-                oneChoiceHoverText.style.display = 'block';
-            }
-        };
-
-        li.onclick = () => toggleVillainSelection(card, li);
-        cardsList.appendChild(li);
-    });
-
-    // Handle defeat confirmation
-    defeatButton.onclick = async () => {
-        if (selectedVillain) {
-            if (selectedVillain.telepathicProbe) {
-                // Handle telepathic probe villain defeat (FREE version)
-                await freeTelepathicVillainDefeat(selectedVillain, selectedVillain.telepathicProbeCard);
-                console.log(`${selectedVillain.name} has been defeated via Telepathic Probe for free.`);
-                onscreenConsole.log(`You have defeated <span class="console-highlights">${selectedVillain.name}</span> for free using Telepathic Probe.`);
-            } else {
-                // Handle regular city villain defeat
-                await instantDefeatAttack(selectedVillain.index);
-                console.log(`${selectedVillain.name} has been defeated.`);
-                onscreenConsole.log(`You have defeated <span class="console-highlights">${selectedVillain.name}</span> for free.`);
-            }
+        if (telepathicProbeCard && villainDeck.length > 0) {
+            const topVillainCard = villainDeck[villainDeck.length - 1];
+            const villainAttack = recalculateVillainAttack(topVillainCard);
             
-            closePopup();
+            if (villainAttack === 5 || villainAttack === 6) {
+                telepathicProbeVillain = { 
+                    ...topVillainCard, 
+                    telepathicProbe: true,
+                    telepathicProbeCard: telepathicProbeCard
+                };
+            }
+        }
+
+        // If no eligible villains at all
+        if (!eligibleVillainsInCity && !telepathicProbeVillain) {
+            onscreenConsole.log('There are no Villains available to defeat.');
+            totalRecruitPoints += 6;
             updateGameBoard();
             resolve();
-        } else {
-            alert("You must select a valid Villain to defeat.");
-            reject("No villain selected");
-        }
-    };
-
-    function closePopup() {
-        // Reset UI
-        popupTitle.textContent = 'Hero Ability!';
-        instructionsDiv.textContent = 'Context';
-        defeatButton.style.display = 'none';
-        defeatButton.disabled = true;
-        heroImage.src = '';
-        heroImage.style.display = 'none';
-        oneChoiceHoverText.style.display = 'block';
-        activeImage = null;
-
-        // Hide popup
-        popup.style.display = 'none';
-        modalOverlay.style.display = 'none';
-    }
-
-    // Helper function for free telepathic probe villain defeat
-    async function freeTelepathicVillainDefeat(villainCard, telepathicProbeCard) {
-        if (telepathicProbeCard) {
-            telepathicProbeCard.villain = null; // Clear the reference after fighting
+            return;
         }
 
-        onscreenConsole.log(`Defeating <span class="console-highlights">${villainCard.name}</span> for free using <span class="console-highlights">Professor X - Telepathic Probe</span>.`);
-        
-        // Remove villain from deck and add to victory pile (NO point deduction)
-        villainDeck.pop();
-        victoryPile.push(villainCard);
+        // Process each city slot (0-4)
+        for (let i = 0; i < 5; i++) {
+            const slot = i + 1;
+            const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+            const cardImage = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+            
+            const card = city[i];
+            
+            // Update label to show city location
+            document.getElementById(`hq-city-table-city-hq-${slot}-label`).textContent = 
+                ['Bridge', 'Streets', 'Rooftops', 'Bank', 'Sewers'][i];
+            
+            // Remove any existing selection classes from cell
+            cell.classList.remove('selected');
+            cell.classList.remove('destroyed');
 
-        onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> has been defeated for free.`);
-        
-        // Handle rescue of extra bystanders
-        if (rescueExtraBystanders > 0) {
-            for (let i = 0; i < rescueExtraBystanders; i++) {
-                await rescueBystander();
+            const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+            const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+            
+            if (explosion) explosion.style.display = 'none';
+            if (explosionCount) explosionCount.style.display = 'none';
+            
+            // Remove any existing popup containers before creating a new one
+            const existingContainers = cell.querySelectorAll('.popup-card-container');
+            existingContainers.forEach(container => container.remove());
+            
+            // Create card container for overlays
+            const cardContainer = document.createElement('div');
+            cardContainer.className = 'card-container popup-card-container';
+            cell.appendChild(cardContainer);
+
+            // Check if this space is destroyed
+            if (destroyedSpaces[i]) {
+                // For destroyed spaces, use Master Strike image with same styling
+                const destroyedImage = document.createElement('img');
+                destroyedImage.src = "Visual Assets/Other/MasterStrike.webp";
+                destroyedImage.alt = "Destroyed City Space";
+                destroyedImage.className = 'city-hq-chosen-card-image';
+                destroyedImage.style.cursor = 'not-allowed';
+                cardContainer.appendChild(destroyedImage);
+                destroyedImage.classList.add('greyed-out');
+                
+                // Hide the original card image
+                cardImage.style.display = 'none';
+                
+                continue;
             }
-        }
 
-        defeatBonuses();
+            if (card) {
+                // Set the actual card image and MOVE IT INTO THE CONTAINER
+                cardImage.src = card.image;
+                cardImage.alt = card.name;
+                cardImage.className = 'city-hq-chosen-card-image';
+                cardImage.style.display = 'block';
+                cardContainer.appendChild(cardImage);
 
-        // Handle fight effect if the villain has one
-        let fightEffectPromise = Promise.resolve();
-        if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
-            const fightEffectFunction = window[villainCard.fightEffect];
-            console.log("Fight effect function found:", fightEffectFunction);
-            if (typeof fightEffectFunction === 'function') {
-                fightEffectPromise = new Promise((resolve, reject) => {
-                    try {
-                        const result = fightEffectFunction(villainCard);
-                        console.log("Fight effect executed:", result);
-                        resolve(result);
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
+                // Determine eligibility - Villains with 5-6 attack
+                const isVillain = card.type === 'Villain';
+                const villainAttack = isVillain ? recalculateVillainAttack(card) : 0;
+                const isEligible = isVillain && (villainAttack === 5 || villainAttack === 6);
+                
+                // Apply greyed out styling for ineligible cards
+                if (!isEligible) {
+                    cardImage.classList.add('greyed-out');
+                } else {
+                    cardImage.classList.remove('greyed-out');
+                }
+
+                // Add all relevant overlays
+                addCardOverlays(cardContainer, card, i);
+
+                // Add click handler for eligible cards only
+                if (isEligible) {
+                    cardImage.style.cursor = 'pointer';
+                    
+                    // Click handler
+                    cardImage.onclick = (e) => {
+                        e.stopPropagation();
+                        
+                        if (selectedCityIndex === i) {
+                            // Deselect
+                            selectedCityIndex = null;
+                            cell.classList.remove('selected');
+                            selectedCell = null;
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                            
+                            // Update instructions and confirm button
+                            instructionsElement.textContent = 'SELECT A VILLAIN WITH 5-6 ATTACK TO DEFEAT:';
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = true;
+                        } else {
+                            // Deselect previous
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                            }
+                            
+                            // Select new
+                            selectedCityIndex = i;
+                            selectedCell = cell;
+                            cell.classList.add('selected');
+                            
+                            // Deselect Telepathic Probe if it was selected
+                            if (telepathicProbeSelected) {
+    telepathicProbeSelected = false;
+    otherChoiceButton.style.backgroundColor = 'var(--panel-backgrounds)';
+    otherChoiceButton.style.transform = `none`;
+    otherChoiceButton.style.boxShadow = `none`;
+    otherChoiceButton.style.animation = `none`;
+                            }
+                            
+                            // Update preview
+                            previewElement.innerHTML = '';
+                            const previewImage = document.createElement('img');
+                            previewImage.src = card.image;
+                            previewImage.alt = card.name;
+                            previewImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(previewImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                            
+                            // Update instructions and confirm button
+                            instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will be defeated.`;
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = false;
+                        }
+                    };
+                    
+                    // Hover effects for eligible cards
+                    cardImage.onmouseover = () => {
+                        if (selectedCityIndex !== null && selectedCityIndex !== i) return;
+                        
+                        // Update preview
+                        previewElement.innerHTML = '';
+                        const previewImage = document.createElement('img');
+                        previewImage.src = card.image;
+                        previewImage.alt = card.name;
+                        previewImage.className = 'popup-card-preview-image';
+                        previewElement.appendChild(previewImage);
+                        
+                        // Only change background if no card is selected
+                        if (selectedCityIndex === null) {
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    };
+                    
+                    cardImage.onmouseout = () => {
+                        if (selectedCityIndex !== null && selectedCityIndex !== i) return;
+                        
+                        // Only clear preview if no card is selected AND we're not hovering over another eligible card
+                        if (selectedCityIndex === null) {
+                            setTimeout(() => {
+                                const hoveredCard = document.querySelector('.city-hq-chosen-card-image:hover:not(.greyed-out)');
+                                if (!hoveredCard) {
+                                    previewElement.innerHTML = '';
+                                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                                }
+                            }, 50);
+                        }
+                    };
+                } else {
+                    // For ineligible cards, remove event handlers and make non-clickable
+                    cardImage.style.cursor = 'not-allowed';
+                    cardImage.onclick = null;
+                    cardImage.onmouseover = null;
+                    cardImage.onmouseout = null;
+                }
             } else {
-                console.error(`Fight effect function ${villainCard.fightEffect} not found`);
+                // Empty city slot - show blank card and grey out
+                cardImage.src = "Visual Assets/BlankCardSpace.webp";
+                cardImage.alt = "Empty City Space";
+                cardImage.classList.add('greyed-out');
+                cardImage.style.cursor = 'not-allowed';
+                cardImage.onclick = null;
+                cardImage.onmouseover = null;
+                cardImage.onmouseout = null;
+                cardContainer.appendChild(cardImage);
             }
-        } else {
-            console.log("No fight effect found for this villain.");
         }
 
-        // Handle fight effect promise
-        await fightEffectPromise
-            .then(() => {
-                updateGameBoard(); // Update the game board after fight effect is handled
-            })
-            .catch(error => {
-                console.error(`Error in fight effect: ${error}`);
-                updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
-            });
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-city-hq-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-city-hq-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-city-hq-popup-nothanks');
 
-        if (hasProfessorXMindControl) {
-    await professorXMindControlGainVillain(villainCard);
-}
+        // Configure buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'DEFEAT SELECTED VILLAIN';
+        
+        // Set up Other Choice button for Telepathic Probe villain
+        if (telepathicProbeVillain) {
+            otherChoiceButton.style.display = 'inline-block';
+            otherChoiceButton.textContent = `DEFEAT ${telepathicProbeVillain.name} (TELEPATHIC PROBE)`;
+            otherChoiceButton.style.backgroundColor = 'var(--panel-backgrounds)'; // Different color to distinguish
+            otherChoiceButton.style.border = `0.5vh solid var(--accent)`;
+            otherChoiceButton.style.color = '#282828';
+            otherChoiceButton.disabled = false;
+            
+            // Other Choice button handler for Telepathic Probe villain
+            otherChoiceButton.onclick = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                if (telepathicProbeSelected) {
+                    // Deselect Telepathic Probe
+                    telepathicProbeSelected = false;
+                    otherChoiceButton.style.backgroundColor = 'var(--panel-backgrounds)';
+                    otherChoiceButton.style.transform = `none`;
+                    otherChoiceButton.style.boxShadow = `none`;
+                    otherChoiceButton.style.animation = `none`;
+                    selectedCityIndex = null;
+                    if (selectedCell) {
+                        selectedCell.classList.remove('selected');
+                        selectedCell = null;
+                    }
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                    instructionsElement.textContent = 'SELECT A VILLAIN WITH 5-6 ATTACK TO DEFEAT:';
+                    confirmButton.disabled = true;
+                } else {
+                    // Select Telepathic Probe
+                    telepathicProbeSelected = true;
+                    otherChoiceButton.style.backgroundColor = '#ccc';
+                    otherChoiceButton.style.color = '#282828';
+                    otherChoiceButton.style.transform = `scale(1.02)`;
+                    otherChoiceButton.style.boxShadow = `0 4px 12px rgba(0, 0, 0, 0.3)`;
+                    otherChoiceButton.style.animation = `filter-animation 1s infinite`;
 
-        // Reset the currentVillainLocation after the attack is resolved
-        currentVillainLocation = null;
-        updateGameBoard();
-    }
-});
+                    
+                    // Deselect any city selection
+                    selectedCityIndex = null;
+                    if (selectedCell) {
+                        selectedCell.classList.remove('selected');
+                        selectedCell = null;
+                    }
+                    
+                    // Update preview
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = telepathicProbeVillain.image;
+                    previewImage.alt = telepathicProbeVillain.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                    
+                    // Update instructions
+                    instructionsElement.innerHTML = `Selected: <span class="console-highlights">${telepathicProbeVillain.name}</span> (Telepathic Probe) will be defeated.`;
+                    confirmButton.disabled = false;
+                }
+            };
+        } else {
+            otherChoiceButton.style.display = 'none';
+        }
+        
+        noThanksButton.style.display = 'none';
+
+        // Store the original resolve function to use in event handler
+        const originalResolve = resolve;
+
+        // Confirm button handler
+        confirmButton.onclick = async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (selectedCityIndex === null && !telepathicProbeSelected) return;
+
+            closeHQCityCardChoicePopup();
+            modalOverlay.style.display = 'none';
+            updateGameBoard();
+
+            if (telepathicProbeSelected) {
+                // Handle telepathic probe villain defeat
+                onscreenConsole.log(`You have defeated <span class="console-highlights">${telepathicProbeVillain.name}</span> for free using Telepathic Probe.`);
+                await freeTelepathicVillainDefeat(telepathicProbeVillain, telepathicProbeVillain.telepathicProbeCard);
+                
+            } else {
+                // Handle regular city villain defeat
+                onscreenConsole.log(`You have defeated <span class="console-highlights">${city[selectedCityIndex].name}</span> for free.`);
+                await instantDefeatAttack(selectedCityIndex);
+                
+            }
+
+            originalResolve();                      
+        };
+
+        // Show popup
+        modalOverlay.style.display = 'block';
+        popup.style.display = 'block';
+
+        // Helper function for free telepathic probe villain defeat
+        async function freeTelepathicVillainDefeat(villainCard, telepathicProbeCard) {
+            if (telepathicProbeCard) {
+                telepathicProbeCard.villain = null; // Clear the reference after fighting
+            }
+            
+            // Remove villain from deck and add to victory pile (NO point deduction)
+            villainDeck.pop();
+            victoryPile.push(villainCard);
+            
+            // Handle rescue of extra bystanders
+            if (rescueExtraBystanders > 0) {
+                for (let i = 0; i < rescueExtraBystanders; i++) {
+                    await rescueBystander();
+                }
+            }
+
+            defeatBonuses();
+
+            // Handle fight effect if the villain has one
+            let fightEffectPromise = Promise.resolve();
+            if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
+                const fightEffectFunction = window[villainCard.fightEffect];
+                console.log("Fight effect function found:", fightEffectFunction);
+                if (typeof fightEffectFunction === 'function') {
+                    fightEffectPromise = new Promise((resolve, reject) => {
+                        try {
+                            const result = fightEffectFunction(villainCard);
+                            console.log("Fight effect executed:", result);
+                            resolve(result);
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+                } else {
+                    console.error(`Fight effect function ${villainCard.fightEffect} not found`);
+                }
+            } else {
+                console.log("No fight effect found for this villain.");
+            }
+
+            // Handle fight effect promise
+            await fightEffectPromise
+                .then(() => {
+                    updateGameBoard(); // Update the game board after fight effect is handled
+                })
+                .catch(error => {
+                    console.error(`Error in fight effect: ${error}`);
+                    updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
+                });
+
+            if (hasProfessorXMindControl) {
+                await professorXMindControlGainVillain(villainCard);
+            }
+
+            // Reset the currentVillainLocation after the attack is resolved
+            currentVillainLocation = null;
+            updateGameBoard();
+        }
+    });
 }
 
 function silverSurferThePowerCosmic(){

@@ -4175,165 +4175,189 @@ async function processVillainCard() {
 function showHeroSelectPopup() {
     updateGameBoard();
     return new Promise((resolve) => {
-        const cardchoicepopup = document.querySelector('.card-choice-popup');
+        const popup = document.querySelector('.card-choice-city-hq-popup');
         const modalOverlay = document.getElementById('modal-overlay');
-        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
-        const selectionContainer = document.querySelector('.card-choice-popup-selection-container');
-        const previewElement = document.querySelector('.card-choice-popup-preview');
-        const titleElement = document.querySelector('.card-choice-popup-title');
-        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
+        const previewElement = document.querySelector('.card-choice-city-hq-popup-preview');
+        const titleElement = document.querySelector('.card-choice-city-hq-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-city-hq-popup-instructions');
 
         // Set popup content
         titleElement.textContent = 'SCHEME TWIST';
         instructionsElement.textContent = 'SELECT A HERO FROM THE HQ TO RETURN TO THE BOTTOM OF THE HERO DECK:';
 
-        // Hide row labels and row2
-        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
-
-        // Clear existing content
-        selectionRow1.innerHTML = '';
+        // Clear preview
         previewElement.innerHTML = '';
         previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
 
         let selectedHQIndex = null;
-        let selectedCardImage = null;
-        let isDragging = false;
-        let startX, startY, scrollLeft, startTime;
+        let selectedCell = null;
 
-        // Build a list of eligible heroes with their HQ indices
-        const eligible = hq
-            .map((hero, hqIndex) => ({ hero, hqIndex }))
-            .filter(x => x.hero && x.hero.type === 'Hero' && x.hero.cost <= 6);
+        // Get HQ slots (1-5) and explosion values
+        const hqSlots = [1, 2, 3, 4, 5];
+        const explosionValues = [hqExplosion1, hqExplosion2, hqExplosion3, hqExplosion4, hqExplosion5];
 
-        if (eligible.length === 0) {
+        // Process each HQ slot
+        hqSlots.forEach((slot, index) => {
+            const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+            const cardImage = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+            const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+            const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+            
+            const hero = hq[index];
+            const explosionValue = explosionValues[index] || 0;
+            
+            // Update explosion indicators
+            if (explosionValue > 0) {
+                explosion.style.display = 'block';
+                explosionCount.style.display = 'block';
+                explosionCount.textContent = explosionValue;
+                
+                if (explosionValue >= 6) {
+                    explosion.classList.add('max-explosions');
+                    cell.classList.add('destroyed');
+                } else {
+                    explosion.classList.remove('max-explosions');
+                    cell.classList.remove('destroyed');
+                }
+            }
+            
+            // Update label
+            document.getElementById(`hq-city-table-city-hq-${slot}-label`).textContent = `HQ-${slot}`;
+            
+            // Remove any existing selection classes from cell
+            cell.classList.remove('selected');
+            
+            if (hero) {
+                // Set the actual hero image
+                cardImage.src = hero.image;
+                cardImage.alt = hero.name;
+                
+                // Determine eligibility
+                const isHeroType = hero.type === 'Hero';
+                const isEligibleCost = hero.cost <= 6;
+                const isDestroyed = explosionValue >= 6;
+                const isEligible = isHeroType && isEligibleCost && !isDestroyed;
+                
+                // Apply greyed out styling for ineligible cards
+                if (!isEligible) {
+                    cardImage.classList.add('greyed-out');
+                } else {
+                    cardImage.classList.remove('greyed-out');
+                }
+                
+                // Add click handler for eligible cards only
+                if (isEligible) {
+                    cardImage.style.cursor = 'pointer';
+                    
+                    // Click handler
+                    cardImage.onclick = (e) => {
+                        e.stopPropagation();
+                        
+                        if (selectedHQIndex === index) {
+                            // Deselect
+                            selectedHQIndex = null;
+                            cell.classList.remove('selected');
+                            selectedCell = null;
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                            
+                            // Update confirm button state
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = true;
+                        } else {
+                            // Deselect previous
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                            }
+                            
+                            // Select new
+                            selectedHQIndex = index;
+                            selectedCell = cell;
+                            cell.classList.add('selected');
+                            
+                            // Update preview
+                            previewElement.innerHTML = '';
+                            const previewImage = document.createElement('img');
+                            previewImage.src = hero.image;
+                            previewImage.alt = hero.name;
+                            previewImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(previewImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                            
+                            // Update confirm button state
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = false;
+                        }
+                    };
+                    
+                    // Hover effects for eligible cards
+                    cardImage.onmouseover = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Update preview
+                        previewElement.innerHTML = '';
+                        const previewImage = document.createElement('img');
+                        previewImage.src = hero.image;
+                        previewImage.alt = hero.name;
+                        previewImage.className = 'popup-card-preview-image';
+                        previewElement.appendChild(previewImage);
+                        
+                        // Only change background if no card is selected
+                        if (selectedHQIndex === null) {
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    };
+                    
+                    cardImage.onmouseout = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Only clear preview if no card is selected AND we're not hovering over another eligible card
+                        if (selectedHQIndex === null) {
+                            setTimeout(() => {
+                                const hoveredCard = document.querySelector('.city-hq-chosen-card-image:hover:not(.greyed-out)');
+                                if (!hoveredCard) {
+                                    previewElement.innerHTML = '';
+                                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                                }
+                            }, 50);
+                        }
+                    };
+                } else {
+                    // For ineligible cards, remove event handlers and make non-clickable
+                    cardImage.style.cursor = 'not-allowed';
+                    cardImage.onclick = null;
+                    cardImage.onmouseover = null;
+                    cardImage.onmouseout = null;
+                }
+            } else {
+                // No hero in this slot - reset to card back and grey out
+                cardImage.src = "Visual Assets/CardBack.webp";
+                cardImage.alt = "Empty HQ Slot";
+                cardImage.classList.add('greyed-out');
+                cardImage.style.cursor = 'not-allowed';
+                cardImage.onclick = null;
+                cardImage.onmouseover = null;
+                cardImage.onmouseout = null;
+            }
+        });
+
+        // Check if any eligible heroes exist
+        const eligibleHeroes = hq.filter((hero, index) => {
+            const explosionValue = explosionValues[index] || 0;
+            return hero && 
+                   hero.type === 'Hero' && 
+                   hero.cost <= 6 && 
+                   explosionValue < 6; // Not destroyed
+        });
+
+        if (eligibleHeroes.length === 0) {
             onscreenConsole.log('No Heroes available with a cost of 6 or less.');
             resolve();
             return;
         }
 
-         const row1 = selectionRow1; // row1 is selectionRow1
-        const row2Visible = false; // Since we're hiding row2 in this popup
-
-        // Initialize scroll gradient detection on the container
-        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
-
-        // Create card elements for each eligible hero
-        eligible.forEach(({ hero, hqIndex }) => {
-            const cardElement = document.createElement('div');
-            cardElement.className = 'popup-card';
-            cardElement.setAttribute('data-hq-index', String(hqIndex));
-            
-            // Create card image
-            const cardImage = document.createElement('img');
-            cardImage.src = hero.image;
-            cardImage.alt = hero.name;
-            cardImage.className = 'popup-card-image';
-            
-            // Hover effects
-            const handleHover = () => {
-                if (isDragging) return;
-                
-                // Update preview
-                previewElement.innerHTML = '';
-                const previewImage = document.createElement('img');
-                previewImage.src = hero.image;
-                previewImage.alt = hero.name;
-                previewImage.className = 'popup-card-preview-image';
-                previewElement.appendChild(previewImage);
-                
-                // Only change background if no card is selected
-                if (selectedHQIndex === null) {
-                    previewElement.style.backgroundColor = 'var(--accent)';
-                }
-            };
-
-            const handleHoverOut = () => {
-                if (isDragging) return;
-                
-                // Only clear preview if no card is selected AND we're not hovering over another card
-                if (selectedHQIndex === null) {
-                    // Use a small timeout to ensure we're not moving to another card
-                    setTimeout(() => {
-                        if (!selectionRow1.querySelector(':hover') && !isDragging) {
-                            previewElement.innerHTML = '';
-                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
-                        }
-                    }, 50);
-                }
-            };
-
-            cardElement.addEventListener('mouseover', handleHover);
-            cardElement.addEventListener('mouseout', handleHoverOut);
-
-            // Selection click handler
-            cardElement.addEventListener('click', (e) => {
-                if (isDragging) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
-                }
-
-                const thisHQIndex = Number(cardElement.getAttribute('data-hq-index'));
-                
-                if (selectedHQIndex === thisHQIndex) {
-                    // Deselect
-                    selectedHQIndex = null;
-                    cardImage.classList.remove('selected');
-                    selectedCardImage = null;
-                    previewElement.innerHTML = '';
-                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
-                    
-                    // Update confirm button state
-                    document.getElementById('card-choice-popup-confirm').disabled = true;
-                } else {
-                    // Deselect previous
-                    if (selectedCardImage) {
-                        selectedCardImage.classList.remove('selected');
-                    }
-                    
-                    // Select new
-                    selectedHQIndex = thisHQIndex;
-                    selectedCardImage = cardImage;
-                    cardImage.classList.add('selected');
-                    
-                    // Update preview
-                    previewElement.innerHTML = '';
-                    const previewImage = document.createElement('img');
-                    previewImage.src = hero.image;
-                    previewImage.alt = hero.name;
-                    previewImage.className = 'popup-card-preview-image';
-                    previewElement.appendChild(previewImage);
-                    previewElement.style.backgroundColor = 'var(--accent)';
-                    
-                    // Update confirm button state
-                    document.getElementById('card-choice-popup-confirm').disabled = false;
-                }
-            });
-
-            cardElement.appendChild(cardImage);
-            selectionRow1.appendChild(cardElement);
-        });
-
-        const maxCardsBeforeWrap = 5; // Adjust this number as needed
-        if (eligible.length > maxCardsBeforeWrap) {
-            selectionRow1.classList.add('multi-row');
-        } else {
-            selectionRow1.classList.remove('multi-row');
-        }
-
-        // Drag scrolling functionality
-        setupDragScrolling(selectionRow1);
-
         // Set up button handlers
-        const confirmButton = document.getElementById('card-choice-popup-confirm');
-        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
-        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+        const confirmButton = document.getElementById('card-choice-city-hq-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-city-hq-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-city-hq-popup-nothanks');
 
         // Disable confirm initially
         confirmButton.disabled = true;
@@ -4355,14 +4379,14 @@ function showHeroSelectPopup() {
                 }
                 returnHeroToDeck(selectedHQIndex);
                 updateGameBoard();
-                closeCardChoicePopup();
+                closeHQCityCardChoicePopup();
                 resolve();
             }, 100);
         };
 
         // Show popup
         modalOverlay.style.display = 'block';
-        cardchoicepopup.style.display = 'block';
+        popup.style.display = 'block';
     });
 }
 
@@ -4704,7 +4728,19 @@ function setupMinimizeSystem() {
             const popup = e.target.closest('.villain-movement-popup-class');
             if (popup) minimizePopup(popup);
         }
-             
+
+        // Handle minimize buttons for city-hq popups
+        if (e.target.closest('.card-choice-city-hq-popup-minimizebutton')) {
+            const popup = e.target.closest('.card-choice-city-hq-popup');
+            if (popup) minimizePopup(popup);
+        }
+
+        // Handle minimize buttons for order-choice popups
+        if (e.target.closest('.order-choice-popup-minimizebutton')) {
+            const popup = e.target.closest('.order-choice-popup');
+            if (popup) minimizePopup(popup);
+        }
+           
         // Handle maximize buttons
         if (e.target.closest('.reopen-popup-btn')) {
             maximizeAllPopups();
@@ -7919,146 +7955,185 @@ async function executeOperationsInPlayerOrder(operations, villainCopy) {
 async function showOperationSelectionPopup(options) {
   return new Promise((resolve) => {
     try {
-      const popup = document.getElementById('card-choice-one-location-popup');
+      const popup = document.querySelector('.order-choice-popup');
       const modalOverlay = document.getElementById('modal-overlay');
-      const cardsList = document.getElementById('cards-to-choose-from');
-      const confirmButton = document.getElementById('card-choice-confirm-button');
-      const popupTitle = popup.querySelector('h2');
-      const instructionsDiv = document.getElementById('context');
-      const heroImage = document.getElementById('hero-one-location-image');
-      const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
 
-      popupTitle.textContent = options.title || 'Choose Order';
-      instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
-      cardsList.innerHTML = '';
+      if (!popup || !modalOverlay) {
+        console.error('Popup or modal overlay not found');
+        resolve(null);
+        return;
+      }
+
+      // 🔒 Scope all queries to THIS popup so we don’t collide with others
+      const selectionContainer = popup.querySelector('.order-choice-popup-selection-container');
+      const confirmButton = popup.querySelector('#order-choice-popup-confirm');
+      const popupTitle = popup.querySelector('.card-choice-popup-title');
+      const instructionsDiv = popup.querySelector('.card-choice-popup-instructions');
+      const previewDiv = popup.querySelector('.card-choice-popup-preview');
+      const minimizeButton = popup.querySelector('.order-choice-popup-minimizebutton');
+      const closeButton = popup.querySelector('.card-choice-popup-closebutton');
+
+      // Safety guards
+      if (!selectionContainer || !confirmButton || !popupTitle || !instructionsDiv || !previewDiv || !minimizeButton || !closeButton) {
+        console.error('One or more required popup elements are missing inside .order-choice-popup');
+        resolve(null);
+        return;
+      }
+
+      // Init content
+      popupTitle.textContent = options?.title || 'Choose Order';
+      instructionsDiv.innerHTML = options?.instructions || 'Select next action to resolve:';
+      selectionContainer.innerHTML = '';
+      previewDiv.innerHTML = '';
       confirmButton.style.display = 'inline-block';
       confirmButton.disabled = true;
-      confirmButton.textContent = options.confirmText || 'CONFIRM';
+      confirmButton.textContent = options?.confirmText || 'CONFIRM';
       modalOverlay.style.display = 'block';
       popup.style.display = 'block';
 
       let selectedOperation = null;
-      let activeImage = null;
+      let activeButton = null;
 
       const cleanup = () => {
         confirmButton.onclick = null;
-        const listItems = cardsList.querySelectorAll('li');
-        listItems.forEach(li => {
-          li.onmouseover = null;
-          li.onmouseout = null;
-          li.onclick = null;
+        minimizeButton.onclick = null;
+        closeButton.onclick = null;
+        modalOverlay.onclick = null;
+
+        const buttons = selectionContainer.querySelectorAll('button.order-choice-button');
+        buttons.forEach((button) => {
+          button.onclick = null;
+          button.onmouseover = null;
+          button.onmouseout = null;
         });
       };
 
       function updateConfirmButton() {
-        confirmButton.disabled = selectedOperation === null;
+        confirmButton.disabled = (selectedOperation === null);
       }
 
       function updateInstructions() {
         if (selectedOperation === null) {
-          instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
+          instructionsDiv.innerHTML = options?.instructions || 'Select next action to resolve:';
         } else {
           instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedOperation.name}</span> will be resolved next.`;
         }
       }
 
-      function updateOperationImage(operation) {
-        if (operation) {
-          heroImage.src = operation.image;
-          heroImage.style.display = 'block';
-          oneChoiceHoverText.style.display = 'none';
-          activeImage = operation.image;
+      function updatePreview(operation) {
+        if (operation && operation.image) {
+          // Use a simple img; layout/cropping handled by your CSS container
+          previewDiv.innerHTML = `<img src="${operation.image}" alt="${operation.name}" style="width:100%;height:100%;">`;
         } else {
-          heroImage.src = '';
-          heroImage.style.display = 'none';
-          oneChoiceHoverText.style.display = 'block';
-          activeImage = null;
+          previewDiv.innerHTML = '';
         }
       }
 
-      function toggleOperationSelection(operation, listItem) {
-        if (selectedOperation === operation) {
+      function toggleOperationSelection(operation, button) {
+        const isSame = selectedOperation === operation;
+
+        // Clear previous selection
+        if (activeButton) activeButton.classList.remove('selected');
+
+        if (isSame) {
+          // Deselect
           selectedOperation = null;
-          listItem.classList.remove('selected');
-          updateOperationImage(null);
+          activeButton = null;
+          updatePreview(null);
         } else {
-          if (selectedOperation) {
-            const prevListItem = document.querySelector('li.selected');
-            if (prevListItem) prevListItem.classList.remove('selected');
-          }
+          // Select new
           selectedOperation = operation;
-          listItem.classList.add('selected');
-          updateOperationImage(operation);
+          activeButton = button;
+          button.classList.add('selected');
+          updatePreview(operation);
         }
 
         updateConfirmButton();
         updateInstructions();
       }
 
-      options.items.forEach((item, index) => {
-        const li = document.createElement('li');
-        li.textContent = item.name;
-        li.setAttribute('data-operation-id', index);
+      // Build buttons
+      (options?.items || []).forEach((item, index) => {
+        const button = document.createElement('button');
+        button.className = 'order-choice-button';
+        button.textContent = item.name;
+        button.setAttribute('data-operation-id', String(index));
 
-        li.onmouseover = () => {
-          if (!activeImage) {
-            heroImage.src = item.image;
-            heroImage.style.display = 'block';
-            oneChoiceHoverText.style.display = 'none';
-          }
+        button.onmouseover = () => {
+          // Show preview on hover only if nothing is selected
+          if (selectedOperation === null) updatePreview(item);
         };
 
-        li.onmouseout = () => {
-          if (!activeImage) {
-            heroImage.src = '';
-            heroImage.style.display = 'none';
-            oneChoiceHoverText.style.display = 'block';
-          }
+        button.onmouseout = () => {
+          // Revert preview on mouseout only if nothing is selected
+          if (selectedOperation === null) updatePreview(null);
         };
 
-        li.onclick = () => toggleOperationSelection(item, li);
-        cardsList.appendChild(li);
+        button.onclick = () => toggleOperationSelection(item, button);
+
+        selectionContainer.appendChild(button);
       });
 
+      // Confirm
       confirmButton.onclick = async () => {
-        if (selectedOperation) {
-          try {
-            closePopup();
-            cleanup();
-            resolve(selectedOperation);
-          } catch (error) {
-            cleanup();
-            throw error;
-          }
+        if (!selectedOperation) return;
+        try {
+          cleanup();
+          closePopup();
+          resolve(selectedOperation);
+        } catch (err) {
+          cleanup();
+          closePopup();
+          throw err;
         }
       };
 
-      function closePopup() {
-        popupTitle.textContent = 'Hero Ability!';
-        instructionsDiv.textContent = 'Context';
-        cardsList.innerHTML = '';
-        confirmButton.style.display = 'none';
-        confirmButton.disabled = true;
-        heroImage.src = '';
-        heroImage.style.display = 'none';
-        oneChoiceHoverText.style.display = 'block';
-        activeImage = null;
-        popup.style.display = 'none';
-        modalOverlay.style.display = 'none';
-      }
+      // Minimise
+      minimizeButton.onclick = () => {
+        minimizeButton.style.display = 'none';
+        closeButton.style.display = 'block';
+        popup.classList.add('minimized');
+      };
 
-      modalOverlay.onclick = () => {
-        closePopup();
+      // Close
+      closeButton.onclick = () => {
         cleanup();
+        closePopup();
         resolve(null);
       };
 
+      // Clicking outside closes
+      modalOverlay.onclick = () => {
+        cleanup();
+        closePopup();
+        resolve(null);
+      };
+
+      function closePopup() {
+        // Reset to default state (scoped!)
+        popupTitle.textContent = 'POPUP TITLE';
+        instructionsDiv.textContent = 'Instructions will go in here...';
+        selectionContainer.innerHTML = '';
+        previewDiv.innerHTML = '';
+        confirmButton.style.display = 'none';
+        confirmButton.disabled = true;
+        popup.classList.remove('minimized');
+        minimizeButton.style.display = 'block';
+        closeButton.style.display = 'none';
+
+        popup.style.display = 'none';
+        modalOverlay.style.display = 'none';
+
+        selectedOperation = null;
+        activeButton = null;
+      }
     } catch (error) {
       console.error('Error in operation selection popup:', error);
       resolve(null);
     }
   });
 }
+
 
 // ---------------------------------
 // Post-defeat handling (burrow, bonuses, HYDRA draws)
@@ -8080,13 +8155,13 @@ async function handlePostDefeat(villainCard, villainCopy, villainAttack, cityInd
 
   // Plutonium back into deck (shuffle)
 if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCaptured.length) {
+    onscreenConsole.log(`${villainCard.plutoniumCaptured.length} Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled into the Villain Deck.`);
   for (const plutonium of villainCard.plutoniumCaptured) {
     // Insert at a random position 0..villainDeck.length (0 = bottom, length = top)
     const pos = Math.floor(Math.random() * (villainDeck.length + 1));
     villainDeck.splice(pos, 0, plutonium);
   }
   villainCard.plutoniumCaptured.length = 0;
-  onscreenConsole.log(`${villainCard.plutoniumCaptured.length} Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled into the Villain Deck.`);
 }
 
   // X-Cutioner Heroes
@@ -8274,78 +8349,133 @@ function removeMastermindCosmicThreatBuff() {
 }
 
 async function showGalactusClassChoicePopup() {
-  return new Promise((resolve) => {
-    const popup = document.getElementById('card-choice-one-location-popup');
-    const modalOverlay = document.getElementById('modal-overlay');
-    const cardsList = document.getElementById('cards-to-choose-from');
-    const confirmButton = document.getElementById('card-choice-confirm-button');
-    const popupTitle = popup.querySelector('h2');
-    const instructionsDiv = document.getElementById('context');
-    const heroImage = document.getElementById('hero-one-location-image');
-    const oneChoiceHoverText = document.getElementById('oneChoiceHoverText');
-    const closeBtn = document.getElementById('close-choice-button'); // <- use this
+  const CLASSES = ['Strength','Instinct','Covert','Tech','Range'];
 
-    // Init UI (same as you had)
-    popupTitle.textContent = 'Choose a Class';
-    instructionsDiv.textContent = 'Select a class to reveal for Galactus’s Cosmic Threat.';
-    cardsList.innerHTML = '';
-    confirmButton.style.display = 'inline-block';
-    confirmButton.disabled = true;
-    confirmButton.textContent = 'Select Class';
+  // --- Build the same pool & counting logic you use elsewhere
+  const cardsPool = [
+    ...playerHand,
+    ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy),
+  ];
+
+  const cardHasClass = (card, cls) =>
+    !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
+
+  const countsByClass = {};
+  for (const cls of CLASSES) {
+    countsByClass[cls] = cardsPool.reduce((acc, c) => acc + (cardHasClass(c, cls) ? 1 : 0), 0);
+  }
+
+  return new Promise((resolve) => {
+    // Core elements
+    const popup = document.querySelector('.card-choice-city-hq-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const titleEl = document.querySelector('.card-choice-city-hq-popup-title');
+    const instrEl = document.querySelector('.card-choice-city-hq-popup-instructions');
+
+    const confirmBtn = document.getElementById('card-choice-city-hq-popup-confirm');
+    const otherBtn = document.getElementById('card-choice-city-hq-popup-otherchoice');
+    const noThanksBtn = document.getElementById('card-choice-city-hq-popup-nothanks');
+
+    // Containers we’re temporarily tweaking for THIS popup
+    const previewContainer = document.querySelector('.card-choice-city-hq-popup-preview-container');
+    const selectionContainer = document.querySelector('.card-choice-city-hq-popup-selection-container');
+
+    // Hide mastermind cell/label just in case
+    const mastermindImage = document.getElementById('hq-city-table-mastermind-image');
+    const mastermindLabel = document.getElementById('hq-city-table-mastermind');
+    if (mastermindImage) mastermindImage.style.display = 'none';
+    if (mastermindLabel) mastermindLabel.style.display = 'none';
+
+    // --- Apply this-popup-only layout tweaks
+    if (previewContainer) previewContainer.style.display = 'none';
+    if (selectionContainer) selectionContainer.style.width = '95%';
+
+    // Init UI
+    titleEl.textContent = 'CHOOSE A CLASS';
+    instrEl.textContent = 'Select a class to reveal for Galactus’s Cosmic Threat.';
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'SELECT CLASS';
+    otherBtn.style.display = 'none';
+    noThanksBtn.style.display = 'none';
+
     modalOverlay.style.display = 'block';
     popup.style.display = 'block';
 
-    heroImage.src = 'Visual Assets/Masterminds/FantasticFour_Galactus.webp';
-    heroImage.style.display = 'block';
-    oneChoiceHoverText.style.display = 'none';
+    // Selection state
+    let selectedIndex = null;
+    let selectedCell = null;
 
-    const options = ['Strength','Instinct','Covert','Tech','Range'];
-    let selected = null;
+    // Wire the five cells to the five classes
+    CLASSES.forEach((cls, idx) => {
+      const slot = idx + 1;
+      const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+      const img = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+      const labelEl = document.getElementById(`hq-city-table-city-hq-${slot}-label`);
 
-    function resetPopupUI() {
-      popupTitle.textContent = 'Hero Ability!';
-      instructionsDiv.textContent = 'Context';
-      confirmButton.textContent = 'Confirm';
-      confirmButton.disabled = true;
-      heroImage.src = '';
-      heroImage.style.display = 'none';
-      oneChoiceHoverText.style.display = 'block';
-      popup.style.display = 'none';
-      modalOverlay.style.display = 'none';
-    }
+      // Safety checks
+      if (!cell || !img || !labelEl) return;
 
-    function finish(result) {
-      resetPopupUI();
-      resolve(result); // 'Strength' | 'Instinct' | 'Covert' | 'Tech' | 'Range' | null
-    }
+      // Ensure explosion UI is hidden/neutral for this popup
+      const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+      const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+      if (explosion) { explosion.style.display = 'none'; explosion.classList.remove('max-explosions'); }
+      if (explosionCount) explosionCount.style.display = 'none';
 
-    options.forEach(opt => {
-      const li = document.createElement('li');
-      li.innerHTML = `<span style="white-space: nowrap;">
-        <img src="Visual Assets/Icons/${opt}.svg" alt="${opt} Icon" class="popup-card-icons"> ${opt}
-      </span>`;
-      li.onclick = () => {
-        Array.from(cardsList.children).forEach(n => n.classList.remove('selected'));
-        li.classList.add('selected');
-        selected = opt;
-        confirmButton.disabled = false;
-        instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${opt}</span>`;
+      // Swap image to class icon
+      img.src = `Visual Assets/Icons/${cls}.svg`;
+      img.alt = `${cls} Icon`;
+      img.classList.remove('greyed-out', 'destroyed-space');
+      img.style.display = 'block';
+      img.style.cursor = 'pointer';
+
+      // Update label with live count
+      const count = countsByClass[cls] || 0;
+      const plural = count === 1 ? 'CARD' : 'CARDS';
+      labelEl.textContent = `${cls.toUpperCase()} - ${count} ${plural}`;
+
+      // Reset previous selection & handlers
+      cell.classList.remove('selected');
+      img.onclick = null;
+      img.onmouseover = null;
+      img.onmouseout = null;
+
+      // Click to select/deselect (all classes selectable even at 0)
+      img.onclick = (e) => {
+        e.stopPropagation();
+
+        if (selectedIndex === idx) {
+          // Deselect
+          selectedIndex = null;
+          if (selectedCell) selectedCell.classList.remove('selected');
+          selectedCell = null;
+          confirmBtn.disabled = true;
+          instrEl.textContent = 'Select a class to reveal for Galactus’s Cosmic Threat.';
+        } else {
+          if (selectedCell) selectedCell.classList.remove('selected');
+          selectedIndex = idx;
+          selectedCell = cell;
+          cell.classList.add('selected');
+          instrEl.innerHTML = `Selected: <span class="console-highlights">${cls}</span>`;
+          confirmBtn.disabled = false;
+        }
       };
-      cardsList.appendChild(li);
     });
 
-    confirmButton.onclick = () => {
-      if (selected) finish(selected);
+    // Confirm handler
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedIndex === null) return;
+      const chosen = CLASSES[selectedIndex];
+      if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
+      resolve(chosen);
     };
 
-    // NEW: cancel path with the provided button
-    if (closeBtn) {
-      closeBtn.style.display = 'inline-block';
-      closeBtn.onclick = () => finish(null);
-    }
-    // (Optional) overlay click to cancel:
+    // Overlay click cancels
     modalOverlay.onclick = (e) => {
-      if (e.target === modalOverlay) finish(null);
+      if (e.target !== modalOverlay) return;
+      if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
+      resolve(null);
     };
   });
 }
@@ -8357,163 +8487,195 @@ function getSelectedScheme() {
 }
 
 function showHeroKOPopup() {
+    updateGameBoard();
     return new Promise((resolve) => {
-        const cardchoicepopup = document.querySelector('.card-choice-popup');
+        const popup = document.querySelector('.card-choice-city-hq-popup');
         const modalOverlay = document.getElementById('modal-overlay');
-        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
-        const selectionContainer = document.querySelector('.card-choice-popup-selection-container');
-        const previewElement = document.querySelector('.card-choice-popup-preview');
-        const titleElement = document.querySelector('.card-choice-popup-title');
-        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
+        const previewElement = document.querySelector('.card-choice-city-hq-popup-preview');
+        const titleElement = document.querySelector('.card-choice-city-hq-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-city-hq-popup-instructions');
 
         // Set popup content
         titleElement.textContent = 'VILLAIN ESCAPE KO';
         instructionsElement.textContent = 'A VILLAIN HAS ESCAPED! WHICH HERO DO THEY KO?';
 
-        // Hide row labels and row2
-        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
-
-        // Clear existing content
-        selectionRow1.innerHTML = '';
+        // Clear preview
         previewElement.innerHTML = '';
         previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
 
         let selectedHQIndex = null;
-        let selectedCardImage = null;
-        let isDragging = false;
+        let selectedCell = null;
 
-        updateGameBoard();
+        // Get HQ slots (1-5) and explosion values
+        const hqSlots = [1, 2, 3, 4, 5];
+        const explosionValues = [hqExplosion1, hqExplosion2, hqExplosion3, hqExplosion4, hqExplosion5];
 
-        // Build a list of eligible heroes with their HQ indices
-        const eligible = hq
-            .map((hero, hqIndex) => ({ hero, hqIndex }))
-            .filter(x => x.hero && x.hero.type === 'Hero' && x.hero.cost <= 6);
+        // Process each HQ slot
+        hqSlots.forEach((slot, index) => {
+            const cell = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-cell`);
+            const cardImage = document.querySelector(`#hq-city-table-city-hq-${slot} .city-hq-chosen-card-image`);
+            const explosion = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion`);
+            const explosionCount = document.querySelector(`#hq-city-table-city-hq-${slot} .hq-popup-explosion-count`);
+            
+            const hero = hq[index];
+            const explosionValue = explosionValues[index] || 0;
+            
+            // Update explosion indicators
+            if (explosionValue > 0) {
+                explosion.style.display = 'block';
+                explosionCount.style.display = 'block';
+                explosionCount.textContent = explosionValue;
+                
+                if (explosionValue >= 6) {
+                    explosion.classList.add('max-explosions');
+                    cell.classList.add('destroyed');
+                } else {
+                    explosion.classList.remove('max-explosions');
+                    cell.classList.remove('destroyed');
+                }
+            }
+            
+            // Update label
+            document.getElementById(`hq-city-table-city-hq-${slot}-label`).textContent = `HQ-${slot}`;
+            
+            // Remove any existing selection classes from cell
+            cell.classList.remove('selected');
+            
+            if (hero) {
+                // Set the actual hero image
+                cardImage.src = hero.image;
+                cardImage.alt = hero.name;
+                
+                // Determine eligibility - same logic as original: Hero type and cost <= 6
+                const isHeroType = hero.type === 'Hero';
+                const isEligibleCost = hero.cost <= 6;
+                const isDestroyed = explosionValue >= 6;
+                const isEligible = isHeroType && isEligibleCost && !isDestroyed;
+                
+                // Apply greyed out styling for ineligible cards
+                if (!isEligible) {
+                    cardImage.classList.add('greyed-out');
+                } else {
+                    cardImage.classList.remove('greyed-out');
+                }
+                
+                // Add click handler for eligible cards only
+                if (isEligible) {
+                    cardImage.style.cursor = 'pointer';
+                    
+                    // Click handler
+                    cardImage.onclick = (e) => {
+                        e.stopPropagation();
+                        
+                        if (selectedHQIndex === index) {
+                            // Deselect
+                            selectedHQIndex = null;
+                            cell.classList.remove('selected');
+                            selectedCell = null;
+                            previewElement.innerHTML = '';
+                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                            
+                            // Update instructions and confirm button state
+                            instructionsElement.textContent = 'A VILLAIN HAS ESCAPED! WHICH HERO DO THEY KO?';
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = true;
+                        } else {
+                            // Deselect previous
+                            if (selectedCell) {
+                                selectedCell.classList.remove('selected');
+                            }
+                            
+                            // Select new
+                            selectedHQIndex = index;
+                            selectedCell = cell;
+                            cell.classList.add('selected');
+                            
+                            // Update preview
+                            previewElement.innerHTML = '';
+                            const previewImage = document.createElement('img');
+                            previewImage.src = hero.image;
+                            previewImage.alt = hero.name;
+                            previewImage.className = 'popup-card-preview-image';
+                            previewElement.appendChild(previewImage);
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                            
+                            // Update instructions and confirm button state
+                            instructionsElement.innerHTML = `Selected: <span class="console-highlights">${hero.name}</span> will be KO'd.`;
+                            document.getElementById('card-choice-city-hq-popup-confirm').disabled = false;
+                        }
+                    };
+                    
+                    // Hover effects for eligible cards
+                    cardImage.onmouseover = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Update preview
+                        previewElement.innerHTML = '';
+                        const previewImage = document.createElement('img');
+                        previewImage.src = hero.image;
+                        previewImage.alt = hero.name;
+                        previewImage.className = 'popup-card-preview-image';
+                        previewElement.appendChild(previewImage);
+                        
+                        // Only change background if no card is selected
+                        if (selectedHQIndex === null) {
+                            previewElement.style.backgroundColor = 'var(--accent)';
+                        }
+                    };
+                    
+                    cardImage.onmouseout = () => {
+                        if (selectedHQIndex !== null && selectedHQIndex !== index) return;
+                        
+                        // Only clear preview if no card is selected AND we're not hovering over another eligible card
+                        if (selectedHQIndex === null) {
+                            setTimeout(() => {
+                                const hoveredCard = document.querySelector('.city-hq-chosen-card-image:hover:not(.greyed-out)');
+                                if (!hoveredCard) {
+                                    previewElement.innerHTML = '';
+                                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                                }
+                            }, 50);
+                        }
+                    };
+                } else {
+                    // For ineligible cards, remove event handlers and make non-clickable
+                    cardImage.style.cursor = 'not-allowed';
+                    cardImage.onclick = null;
+                    cardImage.onmouseover = null;
+                    cardImage.onmouseout = null;
+                }
+            } else {
+                // No hero in this slot - reset to card back and grey out
+                cardImage.src = "Visual Assets/CardBack.webp";
+                cardImage.alt = "Empty HQ Slot";
+                cardImage.classList.add('greyed-out');
+                cardImage.style.cursor = 'not-allowed';
+                cardImage.onclick = null;
+                cardImage.onmouseover = null;
+                cardImage.onmouseout = null;
+            }
+        });
 
-        if (eligible.length === 0) {
+        // Check if any eligible heroes exist - same logic as original
+        const eligibleHeroes = hq.filter((hero, index) => {
+            const explosionValue = explosionValues[index] || 0;
+            return hero && 
+                   hero.type === 'Hero' && 
+                   hero.cost <= 6 && 
+                   explosionValue < 6; // Not destroyed
+        });
+
+        if (eligibleHeroes.length === 0) {
             onscreenConsole.log('No Heroes available with a cost of 6 or less.');
             resolve();
             return;
         }
 
-        const row1 = selectionRow1; // row1 is selectionRow1
-        const row2Visible = false; // Since we're hiding row2 in this popup
-
-        // Initialize scroll gradient detection on the container
-        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
-
-        // Create card elements for each eligible hero
-        eligible.forEach(({ hero, hqIndex }) => {
-            const cardElement = document.createElement('div');
-            cardElement.className = 'popup-card';
-            cardElement.setAttribute('data-hq-index', String(hqIndex));
-            
-            // Create card image
-            const cardImage = document.createElement('img');
-            cardImage.src = hero.image;
-            cardImage.alt = hero.name;
-            cardImage.className = 'popup-card-image';
-            
-            // Hover effects
-            const handleHover = () => {
-                if (isDragging) return;
-                
-                // Update preview
-                previewElement.innerHTML = '';
-                const previewImage = document.createElement('img');
-                previewImage.src = hero.image;
-                previewImage.alt = hero.name;
-                previewImage.className = 'popup-card-preview-image';
-                previewElement.appendChild(previewImage);
-                
-                // Only change background if no card is selected
-                if (selectedHQIndex === null) {
-                    previewElement.style.backgroundColor = 'var(--accent)';
-                }
-            };
-
-            const handleHoverOut = () => {
-                if (isDragging) return;
-                
-                // Only clear preview if no card is selected AND we're not hovering over another card
-                if (selectedHQIndex === null) {
-                    setTimeout(() => {
-                        if (!selectionRow1.querySelector(':hover') && !isDragging) {
-                            previewElement.innerHTML = '';
-                            previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
-                        }
-                    }, 50);
-                }
-            };
-
-            cardElement.addEventListener('mouseover', handleHover);
-            cardElement.addEventListener('mouseout', handleHoverOut);
-
-            // Selection click handler
-            cardElement.addEventListener('click', (e) => {
-                if (isDragging) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
-                }
-
-                const thisHQIndex = Number(cardElement.getAttribute('data-hq-index'));
-                
-                if (selectedHQIndex === thisHQIndex) {
-                    // Deselect
-                    selectedHQIndex = null;
-                    cardImage.classList.remove('selected');
-                    selectedCardImage = null;
-                    previewElement.innerHTML = '';
-                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
-                    
-                    // Update instructions and confirm button
-                    instructionsElement.textContent = 'A VILLAIN HAS ESCAPED! WHICH HERO DO THEY KO?';
-                    document.getElementById('card-choice-popup-confirm').disabled = true;
-                } else {
-                    // Deselect previous
-                    if (selectedCardImage) {
-                        selectedCardImage.classList.remove('selected');
-                    }
-                    
-                    // Select new
-                    selectedHQIndex = thisHQIndex;
-                    selectedCardImage = cardImage;
-                    cardImage.classList.add('selected');
-                    
-                    // Update preview
-                    previewElement.innerHTML = '';
-                    const previewImage = document.createElement('img');
-                    previewImage.src = hero.image;
-                    previewImage.alt = hero.name;
-                    previewImage.className = 'popup-card-preview-image';
-                    previewElement.appendChild(previewImage);
-                    previewElement.style.backgroundColor = 'var(--accent)';
-                    
-                    // Update instructions and confirm button
-                    instructionsElement.innerHTML = `Selected: <span class="console-highlights">${hero.name}</span> will be KO'd.`;
-                    document.getElementById('card-choice-popup-confirm').disabled = false;
-                }
-            });
-
-            cardElement.appendChild(cardImage);
-            selectionRow1.appendChild(cardElement);
-        });
-
-        // Drag scrolling functionality
-        setupDragScrolling(selectionRow1);
-
         // Set up button handlers
-        const confirmButton = document.getElementById('card-choice-popup-confirm');
-        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
-        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+        const confirmButton = document.getElementById('card-choice-city-hq-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-city-hq-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-city-hq-popup-nothanks');
 
-        // Disable confirm initially and hide unnecessary buttons
+        // Disable confirm initially and set button text
         confirmButton.disabled = true;
         confirmButton.textContent = 'KO HERO';
         otherChoiceButton.style.display = 'none';
@@ -8527,25 +8689,18 @@ function showHeroKOPopup() {
 
             setTimeout(() => {
                 const hero = hq[selectedHQIndex];
-                if (hero) {
-                    onscreenConsole.log(
-                        `<span class="console-highlights">${hero.name}</span> has been KO'd from the HQ.`
-                    );
-                }
                 koHeroInHQ(selectedHQIndex);
                 updateGameBoard();
-                closeCardChoicePopup();
+                closeHQCityCardChoicePopup();
                 resolve();
             }, 100);
         };
 
         // Show popup
         modalOverlay.style.display = 'block';
-        cardchoicepopup.style.display = 'block';
+        popup.style.display = 'block';
     });
 }
-
-
 
 function koHeroInHQ(index) {
     const hero = hq[index];
@@ -8637,10 +8792,11 @@ function showDiscardCardPopup(escapedVillain) {
         document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
         document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
-        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '55%';
-        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '50%';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
         document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
 
         // Clear existing content
         selectionRow1.innerHTML = '';
@@ -8768,6 +8924,31 @@ function showDiscardCardPopup(escapedVillain) {
             cardElement.appendChild(cardImage);
             selectionRow1.appendChild(cardElement);
         });
+
+        if (availableCards.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (availableCards.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (availableCards.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
 
         // Drag scrolling functionality
         setupDragScrolling(selectionRow1);
@@ -12508,6 +12689,7 @@ function closeCardChoicePopup() {
     const row1Title = document.querySelector('.card-choice-popup-selectionrow1label');
     const row1 = document.querySelector('.card-choice-popup-selectionrow1');
     const row1container = document.querySelector('.card-choice-popup-selectionrow1-container');
+    const row2container = document.querySelector('.card-choice-popup-selectionrow2-container');
     const row2Title = document.querySelector('.card-choice-popup-selectionrow2label');
     const row2 = document.querySelector('.card-choice-popup-selectionrow2');
     const preview = document.querySelector('.card-choice-popup-preview');
@@ -12525,11 +12707,19 @@ function closeCardChoicePopup() {
     }
     if (row1) {
         row1.innerHTML = '';
+        // Reset multi-row and three-row classes
+        row1.classList.remove('multi-row');
+        row1.classList.remove('three-row');
+        // Reset gap style
+        row1.style.gap = '';
     }
     if (row1container) {
         row1container.style.height = '40%';
         row1container.style.top = '0';
         row1container.style.transform = 'none';
+    }
+    if (row2container) {
+        row2container.style.display = 'none';
     }
     if (row2Title) {
         row2Title.textContent = 'ROW 2';
@@ -12539,9 +12729,18 @@ function closeCardChoicePopup() {
         row2.innerHTML = '';
         row2.style.display = 'none';
     }
-    if (preview) preview.innerHTML = '';
+    if (preview) {
+        preview.innerHTML = '';
+        preview.style.backgroundColor = 'var(--panel-backgrounds)';
+    }
     if (otherChoice) otherChoice.style.display = 'none';
     if (nothanks) nothanks.style.display = 'none';
+    
+    // Reset confirm button
+    if (confirm) {
+        confirm.disabled = true;
+        confirm.textContent = 'Confirm';
+    }
     
     // Hide modal overlay
     const modalOverlay = document.getElementById('modal-overlay');
@@ -12580,6 +12779,198 @@ function closeInfoChoicePopup() {
     if (otherChoice) otherChoice.innerHTML = 'OTHER CHOICE';
     if (nothanks) nothanks.style.display = 'none';
     if (nothanks) nothanks.innerHTML = 'NO THANKS';
+    
+    // Hide modal overlay
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) modalOverlay.style.display = 'none';
+}
+
+function closeHQCityCardChoicePopup() {
+    const cardchoicepopup = document.querySelector('.card-choice-city-hq-popup');
+    const title = document.querySelector('.card-choice-city-hq-popup-title');
+    const instructions = document.querySelector('.card-choice-city-hq-popup-instructions');
+    const preview = document.querySelector('.card-choice-city-hq-popup-preview');
+    const confirm = document.getElementById('card-choice-city-hq-popup-confirm');
+    const otherChoice = document.getElementById('card-choice-city-hq-popup-otherchoice');
+    const nothanks = document.getElementById('card-choice-city-hq-popup-nothanks');
+    const mastermindImage = document.getElementById('hq-city-table-mastermind-image');
+    const mastermindLabel = document.getElementById('hq-city-table-mastermind');
+
+    if (cardchoicepopup) cardchoicepopup.style.display = 'none';
+    if (title) title.textContent = 'POPUP TITLE';
+    if (instructions) instructions.textContent = 'INSTRUCTIONS';
+    
+    if (mastermindImage) {
+        mastermindImage.style.display = 'none';
+        mastermindLabel.style.display = 'none';
+    }
+
+    if (preview) preview.innerHTML = '';
+    if (otherChoice) otherChoice.style.display = 'none';
+    if (nothanks) nothanks.style.display = 'none';
+    
+    // Reset all HQ slots
+    for (let i = 1; i <= 5; i++) {
+        const cell = document.querySelector(`#hq-city-table-city-hq-${i} .hq-popup-cell`);
+        const cardImage = document.querySelector(`#hq-city-table-city-hq-${i} .city-hq-chosen-card-image`);
+        const explosion = document.querySelector(`#hq-city-table-city-hq-${i} .hq-popup-explosion`);
+        const explosionCount = document.querySelector(`#hq-city-table-city-hq-${i} .hq-popup-explosion-count`);
+        const recruitContainer = document.querySelector(`#hq-city-table-city-hq-${i} .hq-popup-recruit-container`);
+        
+        // Reset card image
+        cardImage.src = "Visual Assets/CardBack.webp";
+        cardImage.alt = `HQ City Cell ${i}`;
+        cardImage.classList.remove('greyed-out', 'selected');
+        
+        // Reset explosion indicators
+        explosion.style.display = 'none';
+        explosionCount.style.display = 'none';
+        explosion.classList.remove('max-explosions');
+        cell.classList.remove('destroyed');
+        
+        // Reset recruit button
+        if (recruitContainer) recruitContainer.style.display = 'none';
+        
+    }
+
+    document.getElementById('hq-city-table-city-hq-1-label').innerHTML = 'Bridge';
+    document.getElementById('hq-city-table-city-hq-2-label').innerHTML = 'Rooftops';
+    document.getElementById('hq-city-table-city-hq-3-label').innerHTML = 'Streets';
+    document.getElementById('hq-city-table-city-hq-4-label').innerHTML = 'Bank';
+    document.getElementById('hq-city-table-city-hq-5-label').innerHTML = 'Sewers';
+    
+    // Hide modal overlay
+    const modalOverlay = document.getElementById('modal-overlay');
+    if (modalOverlay) modalOverlay.style.display = 'none';
+}
+
+function closeHQCityCardChoicePopup() {
+    const cardchoicepopup = document.querySelector('.card-choice-city-hq-popup');
+    const title = document.querySelector('.card-choice-city-hq-popup-title');
+    const instructions = document.querySelector('.card-choice-city-hq-popup-instructions');
+    const preview = document.querySelector('.card-choice-city-hq-popup-preview');
+    const confirm = document.getElementById('card-choice-city-hq-popup-confirm');
+    const otherChoiceButton = document.getElementById('card-choice-city-hq-popup-otherchoice');
+    const nothanks = document.getElementById('card-choice-city-hq-popup-nothanks');
+    const mastermindImage = document.getElementById('hq-city-table-mastermind-image');
+    const mastermindLabel = document.getElementById('hq-city-table-mastermind');
+
+    if (cardchoicepopup) cardchoicepopup.style.display = 'none';
+    if (title) title.textContent = 'POPUP TITLE';
+    if (instructions) instructions.textContent = 'INSTRUCTIONS';
+    
+    if (mastermindImage) {
+        mastermindImage.style.display = 'none';
+        mastermindLabel.style.display = 'none';
+    }
+
+    if (preview) preview.innerHTML = '';
+    if (confirm) confirm.innerHTML = 'CONFIRM';
+
+    if (otherChoiceButton) {
+        otherChoiceButton.style.backgroundColor = '';
+        otherChoiceButton.style.border = '';
+        otherChoiceButton.style.color = '';
+        otherChoiceButton.style.transform = '';
+        otherChoiceButton.style.boxShadow = '';
+        otherChoiceButton.style.animation = '';
+        otherChoiceButton.textContent = 'OTHER';
+        otherChoiceButton.style.display = 'none';
+    }
+
+        if (nothanks) {
+        nothanks.style.backgroundColor = '';
+        nothanks.style.border = '';
+        nothanks.style.color = '';
+        nothanks.style.transform = '';
+        nothanks.style.boxShadow = '';
+        nothanks.style.animation = '';
+        nothanks.textContent = 'NO THANKS!';
+        nothanks.style.display = 'none';
+    }
+
+    const previewContainer = document.querySelector('.card-choice-city-hq-popup-preview-container');
+const selectionContainer = document.querySelector('.card-choice-city-hq-popup-selection-container');
+
+// ...
+
+// After your other resets (before hiding overlay is fine):
+if (selectionContainer) selectionContainer.style.width = '70%';
+if (previewContainer) previewContainer.style.removeProperty('display'); // removes inline 'display:none'
+    
+    // Reset all HQ slots and restore the original HTML structure
+    for (let i = 1; i <= 5; i++) {
+        const cell = document.querySelector(`#hq-city-table-city-hq-${i} .hq-popup-cell`);
+        const explosion = document.querySelector(`#hq-city-table-city-hq-${i} .hq-popup-explosion`);
+        const explosionCount = document.querySelector(`#hq-city-table-city-hq-${i} .hq-popup-explosion-count`);
+        
+        // Reset cell selection and destroyed state
+        cell.classList.remove('selected');
+        cell.classList.remove('destroyed');
+        
+        // Remove the popup card container and all its content
+        const popupContainer = cell.querySelector('.popup-card-container');
+        if (popupContainer) {
+            popupContainer.remove();
+        }
+        
+        // Recreate the original card image element if it's missing
+        let cardImage = cell.querySelector('.city-hq-chosen-card-image');
+        if (!cardImage) {
+            cardImage = document.createElement('img');
+            cardImage.className = 'city-hq-chosen-card-image';
+            cardImage.src = "Visual Assets/CardBack.webp";
+            cardImage.alt = `HQ City Cell ${i}`;
+            cell.appendChild(cardImage);
+        }
+        
+        // Reset card image properties
+        cardImage.src = "Visual Assets/CardBack.webp";
+        cardImage.alt = `HQ City Cell ${i}`;
+        cardImage.classList.remove('greyed-out', 'destroyed-space');
+        cardImage.style.cursor = 'default';
+        cardImage.style.display = 'block';
+        
+        // Remove event handlers
+        cardImage.onclick = null;
+        cardImage.onmouseover = null;
+        cardImage.onmouseout = null;
+        
+        // Ensure the card image is in the correct position (before explosion elements)
+        const explosionEl = cell.querySelector('.hq-popup-explosion');
+        const explosionCountEl = cell.querySelector('.hq-popup-explosion-count');
+        if (explosionEl && cardImage.nextSibling !== explosionEl) {
+            // If card image is not before explosion, move it there
+            cell.insertBefore(cardImage, explosionEl);
+        }
+       
+        if(explosion) { // Reset explosion indicators
+            explosion.style.display = 'none';
+            if (explosionCount) {
+                explosionCount.style.display = 'none';
+            }
+            explosion.classList.remove('max-explosions');
+        }        
+    }
+
+    // Remove location attack overlays
+    const locationLabels = ['bridge-label', 'rooftops-label', 'streets-label', 'bank-label', 'sewers-label'];
+    locationLabels.forEach(label => {
+        const locationElement = document.getElementById(label);
+        if (locationElement) {
+            const locationAttackOverlay = locationElement.querySelector('.location-attack-changes');
+            if (locationAttackOverlay) {
+                locationAttackOverlay.remove();
+            }
+        }
+    });
+
+    // Reset location labels
+    document.getElementById('hq-city-table-city-hq-1-label').innerHTML = 'Bridge';
+    document.getElementById('hq-city-table-city-hq-2-label').innerHTML = 'Rooftops';
+    document.getElementById('hq-city-table-city-hq-3-label').innerHTML = 'Streets';
+    document.getElementById('hq-city-table-city-hq-4-label').innerHTML = 'Bank';
+    document.getElementById('hq-city-table-city-hq-5-label').innerHTML = 'Sewers';
     
     // Hide modal overlay
     const modalOverlay = document.getElementById('modal-overlay');

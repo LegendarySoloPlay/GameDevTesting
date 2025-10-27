@@ -4332,6 +4332,17 @@ letter-spacing: var(--letter-spacing);
     cursor: pointer;
 }
 
+.XCutioner-overlay {
+    position: absolute;
+    top: 0;
+    left: -1px;
+    color: white;
+    border-radius: 5px;
+    font-size: calc(0.4vh + 0.4vw);
+    width: 2vw;
+    cursor: pointer;
+}
+
 .mastermind .XCutioner-overlay {
     position: absolute;
     top: 0;
@@ -4371,7 +4382,7 @@ letter-spacing: var(--letter-spacing);
     width: auto;
     position: absolute;
     z-index: 1;
-    filter: drop-shadow(0 0 1vh var(--accent));
+    filter: drop-shadow(0 0 1vh #f28b0f);
     transition: all 0.3s ease;
 }
 
@@ -4842,7 +4853,7 @@ margin-left: 10%;
     --hoverAccent: #0070A3;
     --selectedButton: #0070A3;
     --endTurnHoldButton: #0070A3;    
-    --accentGlow: #bff2ff;
+    --accentGlow: #073b80;
     --popupText: #282828;
     --buttonText: #282828;
     --contrastText: #f4f1f1;
@@ -5851,22 +5862,9 @@ hr {
     display: none;
 }
 
-@media (max-height: 600px) {
-    .card-choice-popup-selectionrow1,
-    .card-choice-popup-selectionrow2 {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
-    }
-
-        .card-choice-popup-selectionrow1::-webkit-scrollbar,
-    .card-choice-popup-selectionrow2::-webkit-scrollbar {
-        display: none; /* Chrome, Safari and Opera */
-    }
-}
-
 .card-choice-popup-selectionrow1::-webkit-scrollbar,
 .card-choice-popup-selectionrow2::-webkit-scrollbar {
-    height: 8px; /* Horizontal scrollbar height */
+    height: 6px; /* Horizontal scrollbar height */
 }
 
 .card-choice-popup-selectionrow1::-webkit-scrollbar-track,
@@ -5927,32 +5925,28 @@ hr {
 }
 
 /* Multi-row mode for cards - FIXED VERSION */
-.card-choice-popup-selectionrow1.multi-row,
-.card-choice-popup-selectionrow2.multi-row {
+.card-choice-popup-selectionrow1.multi-row {
     flex-wrap: wrap;
     align-content: flex-start;
     max-height: 100%;
-    overflow-y: hidden;
-    /* Force horizontal scrolling to work with wrapped content */
-    flex-direction: column; /* This is key! */
-    height: 100%; /* Ensure it takes full container height */
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-direction: row; /* Keep it row-based for horizontal scrolling */
+    height: 100%;
+    gap: 0.3vw;
 }
 
-/* Create an inner container for the wrapped rows */
-.card-choice-popup-selectionrow1.multi-row .popup-card-wrapper,
-.card-choice-popup-selectionrow2.multi-row .popup-card-wrapper {
-    display: flex;
-    flex-wrap: nowrap; /* Don't wrap inside the wrapper */
-    height: 50%; /* Each row takes half height */
-    flex-shrink: 0; /* Prevent shrinking */
+.card-choice-popup-selectionrow1.multi-row.three-row .popup-card {
+    height: 32%; /* Even smaller for 3 rows */
+    margin: 0;
 }
 
 /* Smaller cards in multi-row mode */
-.card-choice-popup-selectionrow1.multi-row .popup-card,
-.card-choice-popup-selectionrow2.multi-row .popup-card {
-    height: 90%; /* Slightly smaller to fit in row */
-    margin: 1% 0.5%;
-    flex: 0 0 auto; /* Don't grow or shrink */
+.card-choice-popup-selectionrow1.multi-row .popup-card {
+    height: 45%; /* Smaller for 2 rows */
+    margin: 0;
+    flex: 0 0 auto;
+    max-width: calc(16.666% - 1%); /* About 6 cards per row */
 }
 
 .popup-card-preview-image {
@@ -6806,4 +6800,374 @@ hr {
     bottom: 0;
     left: 0;
     cursor: default;
+}
+
+.card-choice-city-hq-popup {
+    position: absolute;
+    width: 76.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(11px, 1.2%, 17px);
+    height: 83%;
+    top: clamp(37px, 7.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+    display: none;
+}
+
+.card-choice-city-hq-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.card-choice-city-hq-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.card-choice-city-hq-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+.card-choice-city-hq-popup-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.card-choice-city-hq-popup-choiceandpreview {
+    position: relative;
+    height: calc(100% - 9vh);
+    width: 100%;
+    overflow: hidden;
+}
+
+.card-choice-city-hq-popup-selection-container {
+    height: 96%;
+    width: 70%;
+    left: 2vw;
+    position: relative;
+    align-content: center;
+    overflow: hidden;
+}
+
+.card-choice-city-hq-popup-selectionrow1-container {
+    position: relative;
+    height: 40%;
+    margin-top: 1vh;
+    overflow: hidden;
+    height: 55%;
+    top: 35%;
+    transform: translateY(-50%);
+}
+
+#hq-city-table {
+    border-collapse: collapse;
+    border-color: var(--accent);
+    border-style: solid;
+    border-width: medium;
+    width: 100%;
+}
+
+.hq-city-table-image-boxes {
+    border-color: var(--accent);
+    border-style: solid;
+    width: 16%;
+    height: 20vh;
+    text-align: center;
+    border-width: medium;
+    padding: 0.5vh;
+}
+
+.hq-city-table-labels {
+    border-color: var(--accent);
+    border-style: solid;
+    width: 16%;
+    text-align: center;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    border-width: medium;
+    color: var(--popupText);
+}
+
+.card-choice-city-hq-popup-preview-container {
+    position: absolute;
+    bottom: 1vh;
+    right: 3vw;
+    width: 20%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5vh;
+    height: 95%;
+}
+
+.card-choice-city-hq-popup-previewtitle {
+    width: 100%;
+    text-align: center;
+    padding: 0.5vh 0;
+    box-sizing: border-box;
+    margin: 0;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--accent);
+}
+
+.card-choice-city-hq-popup-preview {
+    width: auto;
+    height: 85%;
+    aspect-ratio: 738 / 1039;
+    background-color: var(--panel-backgrounds);
+    border: 0.5vh solid var(--accent);
+    border-radius: 1.5vh;
+    box-sizing: border-box;
+}
+
+.card-choice-city-hq-popup-buttonhousing {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+}
+
+#card-choice-city-hq-popup-confirm, #card-choice-city-hq-popup-otherchoice, #card-choice-city-hq-popup-nothanks {
+    padding: 0vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(3vh + 3vw);
+    max-height: 6vh;
+    text-transform: uppercase;
+}
+
+#card-choice-city-hq-popup-confirm:disabled, #card-choice-city-hq-popup-otherchoice:disabled, #card-choice-city-hq-popup-nothanks:disabled {
+    background-color: var(--disabledAccent);
+    cursor: not-allowed;
+}
+
+#card-choice-city-hq-popup-confirm:hover, #card-choice-city-hq-popup-otherchoice:hover, #card-choice-city-hq-popup-nothanks:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.city-hq-chosen-card-image {
+    width: auto;
+    height: 20vh;
+    cursor: default;
+}
+
+.hq-popup-cell {
+    position: relative;
+    display: inline-block;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.hq-popup-cell.selected {
+    background-color: var(--accent);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.hq-popup-explosion {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 80%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.hq-popup-explosion-count {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #f2d80f;
+    font-weight: bold;
+    font-size: 1.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    pointer-events: none;
+    z-index: 3;
+}
+
+.city-hq-chosen-card-image.greyed-out {
+    filter: grayscale(30%) brightness(0.6);
+    opacity: 0.6;
+}
+
+.city-hq-chosen-card-image {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    border-radius: 4px;
+}
+
+.city-hq-chosen-card-image:hover:not(.greyed-out) {
+    transform: scale(1.05);
+}
+
+/* For completely destroyed slots (6+ explosions) */
+.hq-popup-cell.destroyed .city-hq-chosen-card-image {
+    filter: grayscale(100%) brightness(0.3);
+}
+
+.hq-popup-explosion.max-explosions {
+    height: 100% !important;
+    opacity: 1 !important;
+    filter: drop-shadow(0 0 8px red) !important;
+    top: 0%;
+    left: -20%;
+}
+
+.order-choice-popup {
+    display: none;
+    opacity: 1;
+    position: absolute;
+    width: 76.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(11px, 1.2%, 17px);
+    height: 83%;
+    top: clamp(37px, 7.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+}
+
+.order-choice-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.order-choice-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+#order-choice-popup-confirm {
+    padding: 0vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(3vh + 3vw);
+    max-height: 6vh;
+    text-transform: uppercase;
+}
+
+#order-choice-popup-confirm:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.order-choice-popup-choiceandpreview {
+    position: relative;
+    height: calc(100% - 9vh);
+    width: 100%;
+    overflow: hidden;
+}
+
+.order-choice-popup-selection-container {
+    height: 96%;
+    width: 70%;
+    left: 2vw;
+    position: relative;
+    align-content: center;
+    overflow: auto;
+}
+
+.order-choice-button {
+    margin-top: 1vh;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
 }
