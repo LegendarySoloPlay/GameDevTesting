@@ -1,4 +1,5 @@
-//02.10.2025 07.50
+// Core Mechanics
+//27.10.2025 17.55
 
 console.log('Script loaded');
 console.log(window.henchmen);

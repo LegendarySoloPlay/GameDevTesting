@@ -1,4 +1,5 @@
-//30.09.2025 20.55
+// Card Database
+// //27.10.2025 17.55
 
 const bystanders = [
 { id: 1, name: 'Bystander', type: 'Bystander', victoryPoints: 1, image: "Visual Assets/Other/Bystander.webp" },

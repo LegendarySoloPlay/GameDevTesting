@@ -1,4 +1,5 @@
-//30.09.2025 20.55
+// Card Abilities for Sidekicks
+// //27.10.2025 17.55
 
 function returnToSidekickDeck(card) {
     if (!card) {
