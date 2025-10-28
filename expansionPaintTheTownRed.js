@@ -731,4 +731,340 @@ async function mysterioMistsOfDeception() {
     }
 }
 
+{
+    id: 38,
+    name: "Black Cat",
+    cards: [
+{
+  id:149, heroName: "Black Cat", 
+  name: "Black Cat - Pickpocket", 
+  type: "Hero", rarity: "Common", 
+  team: "Spider Friends", classes: ["Covert"], 
+  color: "Red", cost: 1, attack: 0, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "blackCatPickpocket", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_BlackCat_Pickpocket.webp"
+},
+{
+  id:150, heroName: "Black Cat", 
+  name: "Black Cat - Casual Bank Robbery", 
+  type: "Hero", rarity: "Common 2", 
+  team: "Spider Friends", classes: ["Covert"], 
+  color: "Red", cost: 4, attack: 0, recruit: 2, 
+  attackIcon: false, recruitIcon: true, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "blackCatCasualBankRobbery", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_BlackCat_CasualBankRobbery.webp"
+},
+{
+  id:151, heroName: "Black Cat", 
+  name: "Black Cat - Jinx", 
+  type: "Hero", rarity: "Uncommon", 
+  team: "Spider Friends", classes: ["Instinct"], 
+  color: "Yellow", cost: 5, attack: 3, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "blackCatJinx", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_BlackCat_Jinx.webp"
+},
+{
+  id:152, heroName: "Black Cat", 
+  name: "Black Cat - Cat Burglar", 
+  type: "Hero", rarity: "Rare", 
+  team: "Spider Friends", classes: ["Covert"], 
+  color: "Red", cost: 8, attack: 5, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "blackCatCatBurglar", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_BlackCat_CatBurglar.webp"
+}
+  ]
+}, 
+{
+    id: 39,
+    name: "Moon Knight",
+    cards: [
+{
+  id:153, heroName: "Moon Knight", 
+  name: "Moon Knight - Climbing Claws", 
+  type: "Hero", rarity: "Common", 
+  team: "Marvel Knights", classes: ["Tech"], 
+  color: "Black", cost: 3, attack: 0, recruit: 2, 
+  attackIcon: false, recruitIcon: true, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "None", 
+  conditionalAbility: "moonKnightClimbingClaws", conditionType: "playedCards", condition: "Instinct", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_ClimbingClaws.webp"
+},
+{
+  id:154, heroName: "Moon Knight", 
+  name: "Moon Knight - Lunar Communion", 
+  type: "Hero", rarity: "Common 2", 
+  team: "Marvel Knights", classes: ["Instinct"], 
+  color: "Yellow", cost: 3, attack: 2, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "moonKnightLunarCommunion", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_LunarCommunion.webp"
+},
+{
+  id:155, heroName: "Moon Knight", 
+  name: "Moon Knight - Crescent Moon Darts", 
+  type: "Hero", rarity: "Uncommon", 
+  team: "Marvel Knights", classes: ["Tech"], 
+  color: "Black", cost: 5, attack: 3, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "moonKnightCrescentMoonDarts", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_CrescentMoonDarts.webp"
+},
+{
+  id:156, heroName: "Moon Knight", 
+  name: "Moon Knight - Golden Ankh of Khonshu", 
+  type: "Hero", rarity: "Rare", 
+  team: "Marvel Knights", classes: ["Instinct"], 
+  color: "Yellow", cost: 8, attack: 6, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "moonKnightGoldenAnkhOfKhonshu", 
+  conditionalAbility: "moonKnightGoldenAnkhOfKhonshuTech", conditionType: "playedCards", condition: "Tech", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_MoonKnight_GoldenAnkhOfKhonshu.webp"
+}
+  ]
+}, 
+{
+    id: 40,
+    name: "Scarlet Spider",
+    cards: [
+{
+  id:157, heroName: "Scarlet Spider", 
+  name: "Scarlet Spider - Flip Out", 
+  type: "Hero", rarity: "Common", 
+  team: "Spider Friends", classes: ["Strength"], 
+  color: "Green", cost: 2, attack: 0, recruit: 1, 
+  attackIcon: false, recruitIcon: true, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "None", 
+  conditionalAbility: "scarletSpiderFlipOut", conditionType: "playedCards", condition: "Spider Friends", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_FlipOut.webp"
+},
+{
+  id:158, heroName: "Scarlet Spider", 
+  name: "Scarlet Spider - Perfect Hunter", 
+  type: "Hero", rarity: "Common 2", 
+  team: "Spider Friends", classes: ["Instinct"], 
+  color: "Yellow", cost: 4, attack: 1, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "scarletSpiderPerfectHunter", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_PerfectHunter.webp"
+},
+{
+  id:159, heroName: "Scarlet Spider", 
+  name: "Scarlet Spider - Leap from Above", 
+  type: "Hero", rarity: "Uncommon", 
+  team: "Spider Friends", classes: ["Covert"], 
+  color: "Red", cost: 6, attack: 3, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "None", 
+  conditionalAbility: "scarletSpiderLeapFromAbove", conditionType: "playedCards", condition: "Instinct", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_LeapFromAbove.webp"
+},
+{
+  id:160, heroName: "Scarlet Spider", 
+  name: "Scarlet Spider - Sting of the Spider", 
+  type: "Hero", rarity: "Rare", 
+  team: "Spider Friends", classes: ["Strength"], 
+  color: "Green", cost: 7, attack: 5, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "scarletSpiderStingOfTheSpider", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_StingOfTheSpider.webp"
+}
+  ]
+},
+{
+    id: 41,
+    name: "Spider-Woman",
+    cards: [
+{
+  id:161, heroName: "Spider-Woman", 
+  name: "Spider-Woman - Radioactive Spider", 
+  type: "Hero", rarity: "Common", 
+  team: "Spider Friends", classes: ["Strength"], 
+  color: "Green", cost: 2, attack: 0, recruit: 3, 
+  attackIcon: false, recruitIcon: true, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "spiderWomanRadioactiveSpider", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_RadioactiveSpider.webp"
+},
+{
+  id:162, heroName: "Spider-Woman", 
+  name: "Spider-Woman - Bioelectric Shock", 
+  type: "Hero", rarity: "Common 2", 
+  team: "Spider Friends", classes: ["Range"], 
+  color: "Blue", cost: 4, attack: 2, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "spiderWomanBioelectricShock", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_BioelectricShock.webp"
+},
+{
+  id:163, heroName: "Spider-Woman", 
+  name: "Spider-Woman - Venom Blast", 
+  type: "Hero", rarity: "Uncommon", 
+  team: "Spider Friends", classes: ["Range"], 
+  color: "Blue", cost: 6, attack: 3, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "spiderWomanVenomBlast", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_VenomBlast.webp"
+},
+{
+  id:164, heroName: "Spider-Woman", 
+  name: "Spider-Woman - Arachno-Pheromones", 
+  type: "Hero", rarity: "Rare", 
+  team: "Spider Friends", classes: ["Covert"], 
+  color: "Red", cost: 7, attack: 0, recruit: 0, 
+  attackIcon: false, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "spiderWomanArachnoPheromones", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_ArachnoPheromones.webp"
+}
+  ]
+},
+{
+    id: 42,
+    name: "Symbiote Spider-Man",
+    cards: [
+{
+  id:165, heroName: "Symbiote Spider-Man", 
+  name: "Symbiote Spider-Man - Dark Strength", 
+  type: "Hero", rarity: "Common", 
+  team: "Spider Friends", classes: ["Strength"], 
+  color: "Green", cost: 2, attack: 1, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "symbioteSpiderManDarkStrength", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_DarkStrength.webp"
+},
+{
+  id:166, heroName: "Symbiote Spider-Man", 
+  name: "Symbiote Spider-Man - Spider-Sense Tingling", 
+  type: "Hero", rarity: "Common 2", 
+  team: "Spider Friends", classes: ["Instinct"], 
+  color: "Yellow", cost: 2, attack: 0, recruit: 0, 
+  attackIcon: false, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "symbioteSpiderManSpiderSenseTingling", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_SpiderSenseTingling.webp"
+},
+{
+  id:167, heroName: "Symbiote Spider-Man", 
+  name: "Symbiote Spider-Man - Shadowed Spider", 
+  type: "Hero", rarity: "Uncommon", 
+  team: "Spider Friends", classes: ["Covert"], 
+  color: "Red", cost: 2, attack: 1, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "symbioteSpiderManShadowedSpider", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: ["Wall-Crawl"], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_ShadowedSpider.webp"
+},
+{
+  id:168, heroName: "Symbiote Spider-Man", 
+  name: "Symbiote Spider-Man - Thwip!", 
+  type: "Hero", rarity: "Rare", 
+  team: "Spider Friends", classes: ["Range"], 
+  color: "Blue", cost: 2, attack: 4, recruit: 0, 
+  attackIcon: true, recruitIcon: false, 
+  bonusAttack: 0, bonusRecruit: 0, 
+  multiplier: "None", multiplierAttribute: "None", multiplierLocation: "None", 
+  unconditionalAbility: "symbioteSpiderManThwip", 
+  conditionalAbility: "None", conditionType: "None", condition: "None", 
+  invulnerability: "None", keywords: [], 
+  image: "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_Thwip.webp"
+}
+  ]
+}
+
+
+{
+  id: 16,
+  name: "Maximum Carnage",
+  cards: [
+      { id: 61, villainId: 16, team: "Maximum Carnage", name: "Carrion", type: "Villain", classes: [], attack: 4, originalAttack: 4, victoryPoints: 3, ambushEffect: "None", fightEffect: "carrionFeast", escapeEffect: "None", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: ["Feast"], image: "Visual Assets/Villains/PtTR_MaximumCarnage_Carrion.webp" },
+      { id: 62, villainId: 16, team: "Maximum Carnage", name: "Demogoblin", type: "Villain", classes: [], attack: 5, originalAttack: 5, victoryPoints: 3, ambushEffect: "demogoblinAmbush", fightEffect: "demogoblinFeast", escapeEffect: "None", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: ["Feast"], image: "Visual Assets/Villains/PtTR_MaximumCarnage_Demogoblin.webp" },
+      { id: 63, villainId: 16, team: "Maximum Carnage", name: "Doppelganger", type: "Villain", classes: [], attack: 0, originalAttack: 0, victoryPoints: 3, ambushEffect: "None", fightEffect: "doppelgangerFeast", escapeEffect: "None", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: ["Feast"], image: "Visual Assets/Villains/PtTR_MaximumCarnage_Doppelganger.webp" },
+      { id: 64, villainId: 16, team: "Maximum Carnage", name: "Shriek", type: "Villain", classes: [], attack: 6, originalAttack: 6, victoryPoints: 4, ambushEffect: "None", fightEffect: "shriekFeast", escapeEffect: "shriekEscape", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: ["Feast"], image: "Visual Assets/Villains/PtTR_MaximumCarnage_Shriek.webp" }
+        ]
+},
+{
+  id: 17,
+  name: "Sinister Six",
+  cards: [
+      { id: 65, villainId: 17, team: "Sinister Six", name: "Chameleon", type: "Villain", classes: [], quantity: 1, attack: 6, originalAttack: 6, victoryPoints: 2, ambushEffect: "None", fightEffect: "chameleonFight", escapeEffect: "None", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: [], image: "Visual Assets/Villains/PtTR_SinisterSix_Chameleon.webp" },
+      { id: 66, villainId: 17, team: "Sinister Six", name: "Hobgoblin", type: "Villain", classes: [], quantity: 1, attack: 5, originalAttack: 5, victoryPoints: 3, ambushEffect: "hobgoblinAmbush", fightEffect: "None", escapeEffect: "None", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: [], image: "Visual Assets/Villains/PtTR_SinisterSix_Hobgoblin.webp" },
+      { id: 67, villainId: 17, team: "Sinister Six", name: "Kraven the Hunter", type: "Villain", classes: [], quantity: 1, attack: 0, originalAttack: 0, victoryPoints: 4, ambushEffect: "None", fightEffect: "None", escapeEffect: "kravenTheHunterEscape", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: [], image: "Visual Assets/Villains/PtTR_SinisterSix_KravenTheHunter.webp" },
+      { id: 68, villainId: 17, team: "Sinister Six", name: "Sandman", type: "Villain", classes: [], quantity: 1, attack: 0, originalAttack: 0, victoryPoints: 4, ambushEffect: "None", fightEffect: "None", escapeEffect: "sandmanEscape", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: [], image: "Visual Assets/Villains/PtTR_SinisterSix_Sandman.webp" },
+      { id: 69, villainId: 17, team: "Sinister Six", name: "Shocker", type: "Villain", classes: [], quantity: 2, attack: 5, originalAttack: 5, victoryPoints: 3, ambushEffect: "shockerAmbush", fightEffect: "None", escapeEffect: "None", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: [], image: "Visual Assets/Villains/PtTR_SinisterSix_Shocker.webp" },
+      { id: 70, villainId: 17, team: "Sinister Six", name: "Vulture", type: "Villain", classes: [], quantity: 2, attack: 4, originalAttack: 4, victoryPoints: 2, ambushEffect: "vultureAmbush", fightEffect: "None", escapeEffect: "vultureEscape", fightCondition: "None", conditionType: "None", condition: "None", alwaysLeads: "false", keywords: [], image: "Visual Assets/Villains/PtTR_SinisterSix_Vulture.webp" },
+          ]
+}
+
+
 
