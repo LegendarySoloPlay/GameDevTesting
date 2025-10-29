@@ -3,6 +3,21 @@
 
 //Schemes
 
+//adapt and add to updatehighlights:
+
+const bystandersInVP = playerVictoryPile.filter(card => card.type === "Bystander")
+
+const selectedScheme = document.querySelector('#scheme-section input[type="radio"]:checked');
+    const schemeName = selectedScheme.value;
+    const scheme = schemes.find(s => s.name === schemeName); // Assuming `schemes` is an array of scheme objects
+
+//Edit this line:
+
+const canAttackMastermind = canAttack && 
+                            ((scheme.name === "Weave a Web of Lies" && bystandersInVP >= schemeTwistCount) || scheme.name !== "Weave a Web of Lies") &&
+                          (hasTacticsRemaining || 
+                           (finalBlowEnabled && defeatedMasterminds.length === 4));
+
 async function spliceHumansWithSpiderDNATwist() {
     updateGameBoard();
     
