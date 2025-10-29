@@ -1,6 +1,241 @@
 // Paint the Town Red Expansion
 // 01.10.2025
 
+//Schemes
+
+async function spliceHumansWithSpiderDNATwist() {
+    updateGameBoard();
+    
+    // Filter victory pile for sinisterSix cards
+    const sinisterSixInVP = victoryPile.filter(card => card.team === "Sinister Six");
+    
+    if (sinisterSixInVP.length === 0) {
+        onscreenConsole.log("No Sinister Six Villains available in Victory Pile.");
+        return false;
+    }
+
+    if (sinisterSixInVP.length === 1) {
+        // Only one sinisterSix - automatically return it to villain deck
+        const sinisterVillain = sinisterSixInVP[0];
+        const index = victoryPile.findIndex(card => card.id === sinisterVillain.id);
+        if (index !== -1) {
+            onscreenConsole.log(`<span class="console-highlights">${sinisterVillain.name}</span> was the only Sinister Six Villain in your Victory Pile. Playing now.`);
+            victoryPile.splice(index, 1);
+            villainDeck.push(sinisterVillain);
+            await drawVillainCard(); // Trigger villain card draw
+            return true;
+        }
+        return false;
+    }
+
+    // Multiple sinisterSix - show selection popup
+    return new Promise((resolve) => {
+        const cardchoicepopup = document.querySelector('.card-choice-popup');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const selectionRow1 = document.querySelector('.card-choice-popup-selectionrow1');
+        const previewElement = document.querySelector('.card-choice-popup-preview');
+        const titleElement = document.querySelector('.card-choice-popup-title');
+        const instructionsElement = document.querySelector('.card-choice-popup-instructions');
+
+        // Set popup content
+        titleElement.textContent = 'SCHEME TWIST';
+        instructionsElement.innerHTML = 'Select a Sinister Six Villain from your Victory Pile to play.';
+
+        // Hide row labels and row2
+        document.querySelector('.card-choice-popup-selectionrow1label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2label').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow2-container').style.display = 'none';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+        document.querySelector('.card-choice-popup-selectionrow1-container').style.transform = 'translateY(-50%)';
+        document.querySelector('.card-choice-popup-closebutton').style.display = 'none';
+
+        // Clear existing content
+        selectionRow1.innerHTML = '';
+        previewElement.innerHTML = '';
+        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+
+        let selectedCard = null;
+        let isDragging = false;
+
+        const row1 = selectionRow1;
+        const row2Visible = false;
+        setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+        // Update instructions with card name
+        function updateInstructions() {
+            if (selectedCard === null) {
+                instructionsElement.innerHTML = 'Select a Sinister Six Villain from your Victory Pile to play.';
+            } else {
+                instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be played.`;
+            }
+        }
+
+        // Update confirm button state
+        function updateConfirmButton() {
+            const confirmButton = document.getElementById('card-choice-popup-confirm');
+            confirmButton.disabled = selectedCard === null;
+        }
+
+        // Create card elements for each sinisterSix in victory pile
+        sinisterSixInVP.forEach((card) => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'popup-card';
+            cardElement.setAttribute('data-card-id', card.id);
+            
+            // Create card image
+            const cardImage = document.createElement('img');
+            cardImage.src = card.image;
+            cardImage.alt = card.name;
+            cardImage.className = 'popup-card-image';
+            
+            // Check if this card is currently selected
+            if (selectedCard && selectedCard.id === card.id) {
+                cardImage.classList.add('selected');
+            }
+            
+            // Hover effects
+            const handleHover = () => {
+                if (isDragging) return;
+                
+                // Update preview
+                previewElement.innerHTML = '';
+                const previewImage = document.createElement('img');
+                previewImage.src = card.image;
+                previewImage.alt = card.name;
+                previewImage.className = 'popup-card-preview-image';
+                previewElement.appendChild(previewImage);
+                previewElement.style.backgroundColor = 'var(--accent)';
+            };
+
+            const handleHoverOut = () => {
+                if (isDragging) return;
+                
+                setTimeout(() => {
+                    if (!selectionRow1.querySelector(':hover') && !isDragging) {
+                        previewElement.innerHTML = '';
+                        previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                    }
+                }, 50);
+            };
+
+            cardElement.addEventListener('mouseover', handleHover);
+            cardElement.addEventListener('mouseout', handleHoverOut);
+
+            // Selection click handler - single selection
+            cardElement.addEventListener('click', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+
+                if (selectedCard === card) {
+                    // Deselect
+                    selectedCard = null;
+                    cardImage.classList.remove('selected');
+                    previewElement.innerHTML = '';
+                    previewElement.style.backgroundColor = 'var(--panel-backgrounds)';
+                } else {
+                    // Deselect previous
+                    if (selectedCard) {
+                        const prevSelectedElement = document.querySelector(`[data-card-id="${selectedCard.id}"] img`);
+                        if (prevSelectedElement) {
+                            prevSelectedElement.classList.remove('selected');
+                        }
+                    }
+                    
+                    // Select new card
+                    selectedCard = card;
+                    cardImage.classList.add('selected');
+                    
+                    // Update preview to show selected card
+                    previewElement.innerHTML = '';
+                    const previewImage = document.createElement('img');
+                    previewImage.src = card.image;
+                    previewImage.alt = card.name;
+                    previewImage.className = 'popup-card-preview-image';
+                    previewElement.appendChild(previewImage);
+                    previewElement.style.backgroundColor = 'var(--accent)';
+                }
+
+                updateInstructions();
+                updateConfirmButton();
+            });
+
+            cardElement.appendChild(cardImage);
+            selectionRow1.appendChild(cardElement);
+        });
+
+        if (sinisterSixInVP.length > 20) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.add('three-row'); // Add a special class for 3-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '75%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '40%';
+    selectionRow1.style.gap = '0.3vw';
+} else if (sinisterSixInVP.length > 10) {
+    selectionRow1.classList.add('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles when in multi-row mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else if (sinisterSixInVP.length > 5) {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '42%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '25%';
+} else {
+    selectionRow1.classList.remove('multi-row');
+    selectionRow1.classList.remove('three-row'); // Remove 3-row class if present
+    // Reset container styles for normal mode
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.height = '50%';
+    document.querySelector('.card-choice-popup-selectionrow1-container').style.top = '28%';
+}
+
+        // Set up drag scrolling for the row
+        setupDragScrolling(selectionRow1);
+
+        // Set up button handlers
+        const confirmButton = document.getElementById('card-choice-popup-confirm');
+        const otherChoiceButton = document.getElementById('card-choice-popup-otherchoice');
+        const noThanksButton = document.getElementById('card-choice-popup-nothanks');
+
+        // Configure buttons
+        confirmButton.disabled = true;
+        confirmButton.textContent = 'CONFIRM';
+        otherChoiceButton.style.display = 'none';
+        noThanksButton.style.display = 'none'; // No cancellation allowed for mandatory selection
+
+        // Confirm button handler
+        confirmButton.onclick = async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (selectedCard === null) return;
+
+            setTimeout(async () => {
+                // Remove from victory pile and add to villain deck
+                const indexInVP = victoryPile.findIndex(card => card.id === selectedCard.id);
+                if (indexInVP !== -1) {
+                    onscreenConsole.log(`Playing <span class="console-highlights">${selectedCard.name}</span> now.`);
+                    victoryPile.splice(indexInVP, 1);
+                    villainDeck.push(selectedCard);
+                    
+                    updateGameBoard();
+                    closeCardChoicePopup();
+                    await drawVillainCard(); // Trigger villain card draw
+                }
+
+                resolve(true);
+            }, 100);
+        };
+
+        // Show popup
+        modalOverlay.style.display = 'block';
+        cardchoicepopup.style.display = 'block';
+    });
+}
+
 //Keywords
 
 function feast() {
