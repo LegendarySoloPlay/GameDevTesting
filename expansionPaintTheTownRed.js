@@ -1066,5 +1066,42 @@ async function mysterioMistsOfDeception() {
           ]
 }
 
+{
+        id: 12,
+        name: "Carnage",
+        attack: 9,
+        bonusAttack: 0,
+        fightCondition: "None",
+        victoryPoints: 6,
+masterStrike: "carnageMasterStrike",
+masterStrikeConsoleLog: `Feast on each player. Whenever this Master Strike feasts on a player's 0-cost Hero, that player gains a Wound.`,
+keywords: ["Feast"],
+image: "Visual Assets/Masterminds/PtTR_Carnage.webp",
 
+        tactics: [
+            { id: 33, mastermindId: 12, fightEffect: "carnage", victoryPoints: 6, name: "Dig to Freedom", type: "Mastermind", effect: "Each other player chooses a Subterranea Villain in their Victory Pile and puts it into the Escaped Villains pile.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_DigToFreedom.webp" },
+            { id: 34, mastermindId: 12, fightEffect: "c", victoryPoints: 6, name: "Master of Monsters", type: "Mastermind", effect: "If this is not the final Tactic, reveal the top six cards of the Villain Deck. Play all the Subterranea Villains you revealed. Put the rest on the bottom of the Villain Deck in random order.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_MasterOfMonsters.webp" },
+            { id: 35, mastermindId: 12, fightEffect: "moleManSecretTunnel", victoryPoints: 6, name: "Secret Tunnel", type: "Mastermind", effect: "You get +6<img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='card-icons'> usable only against Villains in the Streets.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_SecretTunnel.webp" },
+            { id: 36, mastermindId: 12, fightEffect: "moleManUndergroundRiches", victoryPoints: 6, name: "Underground Riches", type: "Mastermind", effect: "You get +6<img src='Visual Assets/Icons/Recruit.svg' alt='Recruit Icon' class='card-icons'> usable only to recruit Heroes in the HQ space under the Streets.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_UndergroundRiches.webp" }
+        ]
+    },
+{
+        id: 13,
+        name: "Mysterio",
+        attack: 9,
+        bonusAttack: 0,
+        fightCondition: "None",
+        victoryPoints: 6,
+masterStrike: "carnageMasterStrike",
+masterStrikeConsoleLog: `Feast on each player. Whenever this Master Strike feasts on a player's 0-cost Hero, that player gains a Wound.`,
+keywords: [],
+image: "Visual Assets/Masterminds/PtTR_Carnage.webp",
+
+        tactics: [
+            { id: 37, mastermindId: 11, fightEffect: "moleManDigToFreedom", victoryPoints: 6, name: "Dig to Freedom", type: "Mastermind", effect: "Each other player chooses a Subterranea Villain in their Victory Pile and puts it into the Escaped Villains pile.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_DigToFreedom.webp" },
+            { id: 38, mastermindId: 11, fightEffect: "moleManMasterOfMonsters", victoryPoints: 6, name: "Master of Monsters", type: "Mastermind", effect: "If this is not the final Tactic, reveal the top six cards of the Villain Deck. Play all the Subterranea Villains you revealed. Put the rest on the bottom of the Villain Deck in random order.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_MasterOfMonsters.webp" },
+            { id: 39, mastermindId: 11, fightEffect: "moleManSecretTunnel", victoryPoints: 6, name: "Secret Tunnel", type: "Mastermind", effect: "You get +6<img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='card-icons'> usable only against Villains in the Streets.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_SecretTunnel.webp" },
+            { id: 40, mastermindId: 11, fightEffect: "moleManUndergroundRiches", victoryPoints: 6, name: "Underground Riches", type: "Mastermind", effect: "You get +6<img src='Visual Assets/Icons/Recruit.svg' alt='Recruit Icon' class='card-icons'> usable only to recruit Heroes in the HQ space under the Streets.", image: "Visual Assets/Masterminds/FantasticFour_MoleMan_UndergroundRiches.webp" }
+        ]
+    }
 
