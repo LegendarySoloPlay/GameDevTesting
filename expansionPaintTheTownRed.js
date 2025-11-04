@@ -1,6 +1,168 @@
 // Paint the Town Red Expansion
 // 01.10.2025
 
+//Card Popups
+
+<div id="played-cards-window" class="deck-windows">
+    <div id="played-cards-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="played-cards-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">PLAYED CARDS</div>
+    <div id="played-cards-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="played-cards-window-close-butron" class="deck-windows-close-button">CLOSE</div>
+        </div>
+</div>
+
+<div id="ko-pile-window" class="deck-windows">
+    <div id="ko-pile-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="ko-pile-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">KO PILE</div>
+    <div id="ko-pile-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="ko-pile-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="escaped-villains-window" class="deck-windows">
+    <div id="escaped-villains-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="escaped-villains-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">ESCAPED VILLAINS</div>
+    <div id="escaped-villains-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="escaped-villains-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="victory-pile-window" class="deck-windows">
+    <div id="victory-pile-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="victory-pile-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">VICTORY PILE</div>
+    <div id="victory-pile-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="victory-pile-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="wound-stack-window" class="deck-windows">
+    <div id="wound-stack-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="wound-stack-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">WOUND STACK</div>
+    <div id="wound-stack-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="wound-stack-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="bystander-deck-window" class="deck-windows">
+    <div id="bystander-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="bystander-deck-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">BYSTANDER DECK</div>
+    <div id="bystander-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="bystander-deck-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="villain-deck-window" class="deck-windows">
+    <div id="villain-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="villain-deck-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">VILLAIN DECK</div>
+    <div id="villain-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="villain-deck-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="hero-deck-window" class="deck-windows">
+    <div id="hero-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="hero-deck-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">HERO DECK</div>
+    <div id="hero-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="hero-deck-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="shield-deck-window" class="deck-windows">
+    <div id="shield-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="shield-deck-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">SHIELD DECK</div>
+    <div id="shield-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="shield-deck-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="sidekick-stack-window" class="deck-windows">
+    <div id="sidekick-stack-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="sidekick-stack-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">SIDEKICK STACK</div>
+    <div id="sidekick-stack-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="sidekick-stack-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="discard-pile-window" class="deck-windows">
+    <div id="discard-pile-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="discard-pile-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">DISCARD PILE</div>
+    <div id="discard-pile-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="discard-pile-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+<div id="player-deck-window" class="deck-windows">
+    <div id="player-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="player-deck-window-close" class="deck-windows-closebutton" style="display:none;">✕</div>
+    <div class="deck-windows-title">PLAYER DECK</div>
+    <div id="player-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="player-deck-window-close-button" class="deck-windows-close-button">CLOSE</div>
+    </div>
+</div>
+
+.deck-windows {
+
+}
+
+.deck-windows-minimizebutton {
+
+}
+
+.deck-windows-minimizebutton:hover {
+
+}
+
+.deck-windows-closebutton {
+
+}
+
+.deck-windows-closebutton:hover {
+
+}
+
+.deck-windows-title {
+
+}
+
+.deck-windows-cards {
+
+}
+
+.deck-windows-button-housing {
+
+}
+
+.deck-windows-close-button {
+
+}
+
+.deck-windows-close-button:hover {
+
+}
+
 //Schemes
 
 //adapt and add to updatehighlights:
