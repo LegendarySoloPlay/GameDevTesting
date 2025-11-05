@@ -1,5 +1,5 @@
 // Card Abilities for Sidekicks
-// //27.10.2025 17.55
+//05.11.2025 10.45
 
 function returnToSidekickDeck(card) {
     if (!card) {
@@ -41,8 +41,14 @@ function sidekickExtraDraw() {
                 "No"
             );
 
-            const cardImage = document.querySelector('.info-or-choice-popup-preview');
-            cardImage.style.backgroundImage = 'url(${playedSidekick.image})';
+        const previewArea = document.querySelector('.info-or-choice-popup-preview');
+        if (previewArea) {
+        previewArea.style.backgroundImage = `url('${playedSidekick.image}')`;
+        previewArea.style.backgroundSize = 'contain';
+        previewArea.style.backgroundRepeat = 'no-repeat';
+        previewArea.style.backgroundPosition = 'center';
+        previewArea.style.display = 'block';
+        }
 
             confirmButton.onclick = () => {
                 try {
@@ -102,7 +108,7 @@ let playedSidekick = [...cardsPlayedThisTurn].reverse().find(card => card.name =
     }
 
     onscreenConsole.log(`<span class="console-highlights">Lockheed</span> played.`);
-    if (cardsPlayedThisTurn.filter(card => card.class1 === "Range").length > 1) {
+if (cardsPlayedThisTurn.filter(card => card.classes && card.classes.includes("Range")).length > 1) {
      totalAttackPoints += 1;
 	cumulativeAttackPoints += 1;
     onscreenConsole.log(`<img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`);
@@ -187,8 +193,15 @@ function lockjawPhasing() {
             "Play"
         );
 
-        const cardImage = document.querySelector('.info-or-choice-popup-preview');
-        cardImage.style.backgroundImage = 'url(${playedSidekick.image})';
+        const previewArea = document.querySelector('.info-or-choice-popup-preview');
+        if (previewArea) {
+        previewArea.style.backgroundImage = `url('${playedSidekick.image}')`;
+        previewArea.style.backgroundSize = 'contain';
+        previewArea.style.backgroundRepeat = 'no-repeat';
+        previewArea.style.backgroundPosition = 'center';
+        previewArea.style.display = 'block';
+        }
+        
 
         confirmButton.onclick = () => {
             // Player chose to Phase
@@ -730,19 +743,27 @@ async function chooseReturnOrderSingleRow(cards, title = 'Return Cards to Deck')
 
   ordered.forEach(card => playerDeck.push(card));
 
-// Format console message with correct order wording
-if (ordered.length === 1) {
-  onscreenConsole.log(`Returned <span class="console-highlights">${ordered[0].name}</span> to deck.`);
-} 
-else if (ordered.length === 2) {
-  onscreenConsole.log(
-    `Returned <span class="console-highlights">${ordered[0].name}</span> to deck and ` +
-    `<span class="console-highlights">${ordered[1].name}</span> placed on top.`
-  );
-} 
+  // Format console message with correct order wording
+  if (ordered.length === 1) {
+    onscreenConsole.log(`Returned <span class="console-highlights">${ordered[0].name}</span> to deck.`);
+  } 
+  else if (ordered.length === 2) {
+    onscreenConsole.log(
+      `Returned <span class="console-highlights">${ordered[0].name}</span> to deck and ` +
+      `<span class="console-highlights">${ordered[1].name}</span> placed on top.`
+    );
+  } 
 
   closeCardChoicePopup();
-  updateGameBoard();
+updateGameBoard();
+    // Handle stingOfTheSpider trigger for each card added to top
+  if (stingOfTheSpider) {
+    // Process in reverse order (top card first) since last selected goes on top
+    for (let i = ordered.length - 1; i >= 0; i--) {
+      await scarletSpiderStingOfTheSpiderDrawChoice(ordered[i]);
+    }
+  }
+  
 }
 
 function RustyRevealTopTwoAndHandle() {
@@ -887,10 +908,14 @@ function boomBoomNicknames() {
       true
     );
 
-    const cardImage = document.querySelector(".info-or-choice-popup-preview");
-    
-    if (cardImage && cardHoverText) {
-      cardImage.style.backgroundImage = `url('Visual Assets/Sidekicks/Boom_Boom.webp')`;
+            const previewArea = document.querySelector('.info-or-choice-popup-preview');
+        if (previewArea) {
+        previewArea.style.backgroundImage = `url('Visual Assets/Sidekicks/Boom_Boom.webp')`;
+        previewArea.style.backgroundSize = 'contain';
+        previewArea.style.backgroundRepeat = 'no-repeat';
+        previewArea.style.backgroundPosition = 'center';
+        previewArea.style.display = 'block';
+        }
 
       confirmButton.onclick = () => {
         boomboomTimeBomb();
@@ -901,16 +926,15 @@ function boomBoomNicknames() {
       denyButton.onclick = () => {
         boomboomBoomer();
         closeInfoChoicePopup();
-        resolve("Boomer");
+        resolve("Meltdown");
       };
 
       extraButton.onclick = () => {
         boomboomMeltdown();
         closeInfoChoicePopup();
-        resolve("Meltdown");
+        resolve("Boomer");
       };
-    }
-  });
+    });
 }
 
 function boomboomMeltdown() {
@@ -993,7 +1017,7 @@ return;
   }
 }
 
-function boomboomTimeBomb() {
+async function boomboomTimeBomb() {
  let playedSidekick = [...cardsPlayedThisTurn].reverse().find(card => 
   card.name === "Boom-Boom" || 
   card.originalAttributes?.name === "Boom-Boom"
@@ -1027,6 +1051,10 @@ return;
     playerDeck.push(playedSidekick);  // Move original to player deck
 playedSidekick.revealed = true;
       onscreenConsole.log(`You chose to play <span class="console-highlights">${playedSidekick.name}</span><span class="bold-spans">’s</span> Time Bomb ability. You have gained +1 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. <span class="console-highlights">${playedSidekick.name}</span> has been returned to the top of your deck.`);
+      if (stingOfTheSpider) {
+await scarletSpiderStingOfTheSpiderDrawChoice(playedSidekick);
+}
+
   } else {
     console.error("playedSidekick not found in cardsPlayedThisTurn.");
   }
@@ -1285,9 +1313,7 @@ async function prodigyCopyPowers() {
           type: prodigyCard.type,
           rarity: prodigyCard.rarity,
           team: prodigyCard.team,
-          class1: prodigyCard.class1,
-          class2: prodigyCard.class2,
-          class3: prodigyCard.class3,
+          classes: prodigyCard.classes,
           color: prodigyCard.color,
           cost: prodigyCard.cost,
           attack: prodigyCard.attack,
@@ -1304,18 +1330,17 @@ async function prodigyCopyPowers() {
           conditionType: prodigyCard.conditionType,
           condition: prodigyCard.condition,
           invulnerability: prodigyCard.invulnerability,
+          keywords: prodigyCard.keywords,
           image: prodigyCard.image
         };
 
-        // Copy selected hero’s attributes (keep Tech as class1)
+        // Copy selected hero’s attributes (keep Tech)
         Object.assign(prodigyCard, {
           name: hero.name || "None",
           type: hero.type || "None",
           rarity: hero.rarity || "None",
           team: hero.team || "None",
-          class1: 'Tech',
-          class2: hero.class1 || "None",
-          class3: hero.class2 || "None",
+          classes: hero.classes ? hero.classes.includes('Tech') ? [...hero.classes] : ['Tech', ...hero.classes] : ['Tech'],
           color: hero.color || "None",
           cost: hero.cost || 0,
           attack: hero.attack || 0,
@@ -1332,6 +1357,7 @@ async function prodigyCopyPowers() {
           conditionType: hero.conditionType || "None",
           condition: hero.condition || "None",
           invulnerability: hero.invulnerability || "None",
+          keywords: hero.keywords || [],
           image: hero.image || "None"
         });
 
@@ -1982,10 +2008,13 @@ async function handleCardPlacement(card, options = {}) {
     if (noThanksBtn) noThanksBtn.onclick = null;
 
     // Handlers
-    confirmBtn.onclick = () => {
+    confirmBtn.onclick = async () => {
       playerDeck.push(card);
       onscreenConsole.log(`You returned <span class="console-highlights">${card.name}</span> to the top of your deck.`);
       cleanup();
+      if (stingOfTheSpider) {
+      await scarletSpiderStingOfTheSpiderDrawChoice(card);
+      }
     };
 
     otherBtn.onclick = () => {

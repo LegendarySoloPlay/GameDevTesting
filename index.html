@@ -16,9 +16,9 @@
 <body>
   <div class="fullscreen-background"></div>
 
-  <div style="display:none;">27.10.2025 17.55</div>
+  <div style="display:none;">05.11.2025 10.45</div>
   
-  <div id="background-for-expansion-popup"></div>
+  <div id="background-for-expansion-popup"><canvas id="mycanvas"></canvas></div>
   
     <div id="expansion-popup-container">
       <div id="skip-button">SKIP</div>
@@ -26,12 +26,18 @@
             <div class="splash-content circular" id="splashContent">
                 <div class="splash-text" id="splashText">
                     <h2 class="splash-title-legendary">LEGENDARY</h2>
-                    <h2 class="splash-title-expansion">FANTASTIC 4</h2>
-                    <p class="splash-description">Before the Avengers, there was a family.</p>
-                    <p class="splash-description">When a cosmic hunger awakens, a silver herald turns from destroyer to ally.</p>
-                    <p class="splash-description">To save the world from Galactus, you must guide the Fantastic Four—and their newfound companion—into the cosmos. Will they overcome Earth's own threats before saving the universe?</p>
-                    <p class="splash-description">Their first steps begin with you.</p>
-                    <button id="start-expansion">Flame On!</button>
+                    <h2 class="splash-title-expansion">PAINT THE TOWN RED</h2>
+                    <p class="splash-description">The city is a canvas. And tonight, the villains are painting it with lies and blood.</p>
+                    <p class="splash-description">Carnage feasts upon chaos. Mysterio warps reality around you. The Sinister Six unleash a reign of terror.</p>
+                    <p class="splash-description">From the shadows, new heroes and vigilantes emerge.</p>
+                    <p class="splash-description">Grab your mask and join the fight before the entire town is painted red.</p>
+                    <button id="start-expansion">Let's Go!</button>
+                      <div class="drip-1"></div>
+                      <div class="drip-2"></div>
+                      <div class="drip-3"></div>
+                      <div class="drip-4"></div>
+                      <div class="drip-5"></div>
+                      <div class="drip-6"></div>
                 </div>
             </div>
         </div>
@@ -49,7 +55,7 @@
       <div id="intro-popup-content">
         <div id="intro" class="tab-content active">
 <h3 class="pulsing-glow-text">
-  <strong>FANTASTIC FOUR <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="popup-card-icons"> -</strong> Please see the <i>Updates</i> tab for Expansion patch notes.
+  <strong>Paint the Town Red <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="popup-card-icons"> -</strong> Please see the <i>Updates</i> tab for Expansion patch notes.
 </h3>
   <p>Get ready to dive into the <strong>Marvel Legendary</strong> universe in this fan-made digital adaptation of the classic deck-building game! Assemble a team of heroes, take down powerful villains, and stop the mastermind’s nefarious schemes—all in <strong>solo mode</strong>, optimised with the latest <i>"What If...?"</i> variations to the Advanced Solo rules.</p>
 
@@ -74,7 +80,7 @@
     <li>✅ Any effect that targets "each other player" applies to you instead.</li>
   </ul>
 
-  <h3>💖 Support the Project</h3>
+  <h3 style="color: var(--popupText)">💖 Support the Project</h3>
   <p>This project is a passion-driven endeavor, and every bit of support helps keep development going. If you're enjoying this <strong>free</strong> digital version, please consider <strong>donating</strong> to help bring more heroes, villains, and expansions to life!</p>
 
   <p style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</p>
@@ -106,6 +112,7 @@
     <li><label><input type="checkbox" data-set="Core"/> Core</label></li>
     <li><label><input type="checkbox" data-set="Dark City"/> Dark City</label></li>
     <li><label><input type="checkbox" data-set="Fantastic Four"/> Fantastic Four</label></li>
+    <li><label><input type="checkbox" data-set="Paint the Town Red"/> Paint the Town Red</label></li>
   </ul>
 </div>
 </div>
@@ -125,7 +132,7 @@
     <li><label><input type="checkbox" data-set="Core"/> Core</label></li>
     <li><label><input type="checkbox" data-set="Dark City"/> Dark City</label></li>
     <li><label><input type="checkbox" data-set="Fantastic Four"/> Fantastic Four</label></li>
-
+    <li><label><input type="checkbox" data-set="Paint the Town Red"/> Paint the Town Red</label></li>
   </ul>
 </div>
 </div>
@@ -141,7 +148,7 @@
             <label><input type="radio" name="scheme" value="Superhero Civil War" data-set="Core"> Superhero Civil War</label>
             <label><input type="radio" name="scheme" value="The Legacy Virus" data-set="Core"> The Legacy Virus</label>
             <label><input type="radio" name="scheme" value="Unleash the Power of the Cosmic Cube" data-set="Core"> Unleash the Power of the Cosmic Cube</label>
-          <hr>
+          <hr data-set="Core">
             <label><input type="radio" name="scheme" value="Capture Baby Hope" data-set="Dark City"> Capture Baby Hope</label>
             <label><input type="radio" name="scheme" value="Detonate the Helicarrier" data-set="Dark City"> Detonate the Helicarrier</label>
             <label><input type="radio" name="scheme" value="Massive Earthquake Generator" data-set="Dark City"> Massive Earthquake Generator</label>
@@ -150,11 +157,16 @@
             <label><input type="radio" name="scheme" value="Steal the Weaponized Plutonium" data-set="Dark City"> Steal the Weaponized Plutonium</label>
             <label><input type="radio" name="scheme" value="Transform Citizens Into Demons" data-set="Dark City"> Transform Citizens Into Demons</label>
             <label><input type="radio" name="scheme" value="X-Cutioner's Song" data-set="Dark City"> X-Cutioner's Song</label>
-          <hr>
+          <hr data-set="Dark City">
             <label><input type="radio" name="scheme" value="Bathe Earth in Cosmic Rays" data-set="Fantastic Four"> Bathe Earth in Cosmic Rays</label>
             <label><input type="radio" name="scheme" value="Flood the Planet with Melted Glaciers" data-set="Fantastic Four"> Flood the Planet with Melted Glaciers</label>
             <label><input type="radio" name="scheme" value="Invincible Force Field" data-set="Fantastic Four"> Invincible Force Field</label>
             <label><input type="radio" name="scheme" value="Pull Reality Into the Negative Zone" data-set="Fantastic Four"> Pull Reality Into the Negative Zone</label>
+          <hr data-set="Fantastic Four">
+            <label><input type="radio" name="scheme" value="The Clone Saga" data-set="Paint the Town Red"> The Clone Saga</label>
+            <label><input type="radio" name="scheme" value="Invade the Daily Bugle News HQ" data-set="Paint the Town Red"> Invade the Daily Bugle News HQ</label>
+            <label><input type="radio" name="scheme" value="Splice Humans with Spider DNA" data-set="Paint the Town Red"> Splice Humans with Spider DNA</label>
+            <label><input type="radio" name="scheme" value="Weave a Web of Lies" data-set="Paint the Town Red"> Weave a Web of Lies</label>
           </form>
         </div>
         
@@ -183,6 +195,7 @@
     <li><label><input type="checkbox" data-set="Core"/> Core</label></li>
     <li><label><input type="checkbox" data-set="Dark City"/> Dark City</label></li>
     <li><label><input type="checkbox" data-set="Fantastic Four"/> Fantastic Four</label></li>
+    <li><label><input type="checkbox" data-set="Paint the Town Red"/> Paint the Town Red</label></li>
   </ul>
 </div>
 </div>
@@ -194,15 +207,18 @@
             <label><input type="radio" name="mastermind" value="Loki" data-set="Core"> Loki</label>
             <label><input type="radio" name="mastermind" value="Red Skull" data-set="Core"> Red Skull</label>
             <label><input type="radio" name="mastermind" value="Magneto" data-set="Core"> Magneto</label>
-            <hr>
+            <hr data-set="Core">
             <label><input type="radio" name="mastermind" value="Apocalypse" data-set="Dark City"> Apocalypse</label>
             <label><input type="radio" name="mastermind" value="Kingpin" data-set="Dark City"> Kingpin</label>
             <label><input type="radio" name="mastermind" value="Mephisto" data-set="Dark City"> Mephisto</label>
             <label><input type="radio" name="mastermind" value="Mr. Sinister" data-set="Dark City"> Mr. Sinister</label>
             <label><input type="radio" name="mastermind" value="Stryfe" data-set="Dark City"> Stryfe</label>
-            <hr>
+            <hr data-set="Dark City">
             <label><input type="radio" name="mastermind" value="Galactus" data-set="Fantastic Four"> Galactus</label>
             <label><input type="radio" name="mastermind" value="Mole Man" data-set="Fantastic Four"> Mole Man</label>
+            <hr data-set="Fantastic Four">
+            <label><input type="radio" name="mastermind" value="Carnage" data-set="Paint the Town Red"> Carnage</label>
+            <label><input type="radio" name="mastermind" value="Mysterio" data-set="Paint the Town Red"> Mysterio</label>            
           </form>
         </div>
               </div>
@@ -228,6 +244,7 @@
     <li><label><input type="checkbox" data-set="Core"/> Core</label></li>
     <li><label><input type="checkbox" data-set="Dark City"/> Dark City</label></li>
     <li><label><input type="checkbox" data-set="Fantastic Four"/> Fantastic Four</label></li>
+    <li><label><input type="checkbox" data-set="Paint the Town Red"/> Paint the Town Red</label></li>
   </ul>
 </div>
 </div>
@@ -242,16 +259,19 @@
             <label><input type="checkbox" name="villain" value="Radiation" data-set="Core"> Radiation</label>
             <label><input type="checkbox" name="villain" value="Skrulls" data-set="Core"> Skrulls</label>
             <label><input type="checkbox" name="villain" value="Spider-Foes" data-set="Core"> Spider-Foes</label>          
-            <hr>
+            <hr data-set="Core">
             <label><input type="checkbox" name="villain" value="Emissaries of Evil" data-set="Dark City"> Emissaries of Evil</label>
             <label><input type="checkbox" name="villain" value="Four Horsemen" data-set="Dark City"> Four Horsemen</label>
             <label><input type="checkbox" name="villain" value="Marauders" data-set="Dark City"> Marauders</label>
             <label><input type="checkbox" name="villain" value="Mutant Liberation Front" data-set="Dark City"> Mutant Liberation Front</label>
             <label><input type="checkbox" name="villain" value="Streets of New York" data-set="Dark City"> Streets of New York</label>
             <label><input type="checkbox" name="villain" value="Underworld" data-set="Dark City"> Underworld</label> 
-            <hr>
+            <hr data-set="Dark City">
             <label><input type="checkbox" name="villain" value="Heralds of Galactus" data-set="Fantastic Four"> Heralds of Galactus</label>
-            <label><input type="checkbox" name="villain" value="Subterranea" data-set="Fantastic Four"> Subterranea</label>      
+            <label><input type="checkbox" name="villain" value="Subterranea" data-set="Fantastic Four"> Subterranea</label>  
+            <hr data-set="Fantastic Four">
+            <label><input type="checkbox" name="villain" value="Maximum Carnage" data-set="Paint the Town Red"> Maximum Carnage</label>
+            <label><input type="checkbox" name="villain" value="Sinister Six" data-set="Paint the Town Red"> Sinister Six</label>     
           </form>
         </div>
         
@@ -290,7 +310,7 @@
             <label><input type="checkbox" name="henchmen" value="Hand Ninjas" data-set="Core"> Hand Ninjas</label>
             <label><input type="checkbox" name="henchmen" value="Savage Land Mutates" data-set="Core"> Savage Land Mutates</label>
             <label><input type="checkbox" name="henchmen" value="Sentinel" data-set="Core"> Sentinel</label>
-            <hr>
+            <hr data-set="Core">
             <label><input type="checkbox" name="henchmen" value="Maggia Goons" data-set="Dark City"> Maggia Goons</label>
             <label><input type="checkbox" name="henchmen" value="Phalanx" data-set="Dark City" data-set="Fantastic Four"> Phalanx</label>
    </form>
@@ -365,6 +385,7 @@
     <li><label><input type="checkbox" data-set="Core"/> Core</label></li>
     <li><label><input type="checkbox" data-set="Dark City"/> Dark City</label></li>
     <li><label><input type="checkbox" data-set="Fantastic Four"/> Fantastic Four</label></li>
+    <li><label><input type="checkbox" data-set="Paint the Town Red"/> Paint the Town Red</label></li>
   </ul>
 </div>
 <div id="heroteamfilter" class="dropdown-check-list" tabindex="100">
@@ -400,7 +421,7 @@
             <label><input type="checkbox" name="hero" value="Storm" data-set="Core" data-team="X-Men"> <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="card-icons"> Storm</label>
             <label><input type="checkbox" name="hero" value="Thor" data-set="Core" data-team="Avengers"> <img src="Visual Assets/Icons/Avengers.svg" alt="Avengers Icon" class="card-icons"> Thor</label>
             <label><input type="checkbox" name="hero" value="Wolverine" data-set="Core" data-team="X-Men"> <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="card-icons"> Wolverine</label>  
-            <hr>
+            <hr data-set="Core">
             <label><input type="checkbox" name="hero" value="Angel" data-set="Dark City" data-team="X-Men"> <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="card-icons"> Angel</label>
             <label><input type="checkbox" name="hero" value="Bishop" data-set="Dark City" data-team="X-Men"> <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="card-icons"> Bishop</label>
             <label><input type="checkbox" name="hero" value="Blade" data-set="Dark City" data-team="Marvel Knights"> <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="card-icons"> Blade</label>
@@ -418,12 +439,18 @@
             <label><input type="checkbox" name="hero" value="Professor X" data-set="Dark City" data-team="X-Men"> <img src="Visual Assets/Icons/X-Men.svg" alt="X-Men Icon" class="card-icons"> Professor X</label>  
             <label><input type="checkbox" name="hero" value="Punisher" data-set="Dark City" data-team="Marvel Knights"> <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="card-icons"> Punisher</label>
             <label><input type="checkbox" name="hero" value="X-Force Wolverine" data-set="Dark City" data-team="X-Force"> <img src="Visual Assets/Icons/X-Force.svg" alt="X-Force Icon" class="card-icons"> X-Force Wolverine</label>  
-            <hr>
+            <hr data-set="Dark City">
             <label><input type="checkbox" name="hero" value="Human Torch" data-set="Fantastic Four" data-team="Fantastic Four"> <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="card-icons"> Human Torch</label>
             <label><input type="checkbox" name="hero" value="Invisible Woman" data-set="Fantastic Four" data-team="Fantastic Four"> <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="card-icons"> Invisible Woman</label>
             <label><input type="checkbox" name="hero" value="Mr. Fantastic" data-set="Fantastic Four" data-team="Fantastic Four"> <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="card-icons"> Mr. Fantastic</label>
             <label><input type="checkbox" name="hero" value="Silver Surfer" data-set="Fantastic Four" data-team=""> <img src="Visual Assets/Icons/Unaffiliated.svg" alt="Unaffiliated Icon" class="card-icons"> Silver Surfer</label>
             <label><input type="checkbox" name="hero" value="Thing" data-set="Fantastic Four" data-team="Fantastic Four"> <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="card-icons"> Thing</label>
+            <hr data-set="Fantastic Four">
+            <label><input type="checkbox" name="hero" value="Black Cat" data-set="Paint the Town Red" data-team="Spider Friends"> <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="card-icons"> Black Cat</label>
+            <label><input type="checkbox" name="hero" value="Moon Knight" data-set="Paint the Town Red" data-team="Marvel Knights"> <img src="Visual Assets/Icons/Marvel Knights.svg" alt="Marvel Knights Icon" class="card-icons"> Moon Knight</label>
+            <label><input type="checkbox" name="hero" value="Scarlet Spider" data-set="Paint the Town Red" data-team="Spider Friends"> <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="card-icons"> Scarlet Spider</label>
+            <label><input type="checkbox" name="hero" value="Spider-Woman" data-set="Paint the Town Red" data-team="Spider Friends"> <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="card-icons"> Spider-Woman</label>
+            <label><input type="checkbox" name="hero" value="Symbiote Spider-Man" data-set="Paint the Town Red" data-team="Spider Friends"> <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="card-icons"> Symbiote Spider-Man</label>
           </form>
         </div>
         
@@ -647,9 +674,6 @@
     <div id="zoom-preview-top" class="zoom-preview-top"><img id="zoomed-image-top" src="" alt="Zoomed Preview Top" style="display:none;"></div>
     <div id="zoom-preview" class="zoom-preview">Hover/Tap for Card Text<img id="zoomed-image" src="" alt="Zoomed Preview" style="display:none;"></div>
 <div class="keywords"><h2>Keywords</h2><div id="keyword-content">
-<p><span id="keyword1" class="keywordTitles"></span><span id="keyword1Description" class="keywordDescriptions"></span></p>
-<p><span id="keyword2" class="keywordTitles"></span><span id="keyword2Description" class="keywordDescriptions"></span></p>
-<p><span id="keyword3" class="keywordTitles"></span></span><span id="keyword3Description" class="keywordDescriptions"></span></p>
 <p><span id="errata" class="keywordTitles"></span></span><span id="errataDescription" class="keywordDescriptions"></span></p></div></div>
     <div class="console-log"><h2>Console</h2><div class="inner-console-log"><div class="scroll-gradient"></div></div></div>
     <div style="display:flex; gap:1vw;"><button id="donate-call-to-action-in-game" class="side-panel-bottom-buttons">DONATE</button><button id="console-log-export" class="side-panel-bottom-buttons">EXPORT ▼</button></div>
@@ -832,41 +856,34 @@
   </div>
   
 
-  <div id="draw-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-    <div class="popup-content">
-      <h1>DRAW!</h1>
-      <p style="margin-bottom: 10px;" id="draw-context">You've run out of Villains to battle. The Mastermind has not succeeded, but neither have you.</p>
+  <div id="draw-popup" class="draw-popup-class" style="display: none;">
+<div class="draw-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+      <div class="end-game-title">DRAW!</div>
+      <br>
+      <div class="end-game-context" style="margin-bottom: 10px;" id="draw-context">You've run out of Villains to battle. The Mastermind has not succeeded, but neither have you.</div>
       <button id="return-home-button">Restart</button>
 <br>
-<h3>💖 Support the Project 💖</h3>
-  <p>If you enjoyed this game of Marvel Legendary, please consider donating to keep the project alive.</p>
+<h3 style="color: var(--popupText)">💖 Support the Project 💖</h3>
+  <div class="end-game-context">If you enjoyed this game of Marvel Legendary, please consider donating to keep the project alive.</div>
 
-  <p style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</p>
-
-    </div>
+  <button style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button" style="color: var(--buttonText); text-decoration: none;"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</button>
   </div>
 
-     <div id="defeat-popup" class="popup" style="display: none;">
-        <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-    <div class="popup-content">
-      <h1>EVIL WINS!</h1>
-      <p style="margin-bottom: 10px;" id="defeat-context">The Mastermind has succeeded in their scheme. All hope is lost!</p> 
+     <div id="defeat-popup" class="defeat-popup-class" style="display: none;">
+<div class="defeat-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+      <div class="end-game-title">EVIL WINS!</div>
+      <br>
+      <div class="end-game-context" style="margin-bottom: 10px;" id="defeat-context">The Mastermind has succeeded in their scheme. All hope is lost!</div> 
       <button id="defeat-return-home-button">Restart</button>
 <br>
-<h3>💖 Support the Project 💖</h3>
-  <p>If you enjoyed this game of Marvel Legendary, please consider donating to keep the project alive.</p>
+<h3 style="color: var(--popupText)">💖 Support the Project 💖</h3>
+  <div class="end-game-context">If you enjoyed this game of Marvel Legendary, please consider donating to keep the project alive.</div>
 
-  <p style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</p>
+  <button style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button" style="color: var(--buttonText); text-decoration: none;"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</button>
 
-    </div>
   </div>
 
-  <div id="finish-turn-popup" class="popup" style="display: none;">
+  <div id="finish-turn-popup" style="display: none;">
       <div class="minimize-triangle-btn" aria-label="Minimize">
   <span class="inner-triangle"></span>
 </div>
@@ -877,21 +894,17 @@
     </div>
   </div>
 
-  <div id="win-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-    <div class="popup-content">
-      <h1>GOOD WINS!</h1>
-      <p style="margin-bottom: 10px;" id="win-context">You have defeated the Mastermind and prevented their nefarious scheme! Excellent work!</p>
+  <div id="win-popup" class="win-popup-class" style="display: none;">
+<div class="win-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+      <div class="end-game-title">GOOD WINS!</div>
+      <br>
+      <div class="end-game-context" style="margin-bottom: 10px;" id="win-context">You have defeated the Mastermind and prevented their nefarious scheme! Excellent work!</div>
       <button id="win-return-home-button">Return Home</button>
 <br>
-<h3>💖 Support the Project 💖</h3>
-  <p>If you enjoyed this game of Marvel Legendary, please consider donating to keep the project alive.</p>
+<h3 style="color: var(--popupText)">💖 Support the Project 💖</h3>
+  <div class="end-game-context">If you enjoyed this game of Marvel Legendary, please consider donating to keep the project alive.</div>
 
-  <p style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</p>
-
-    </div>
+  <button style="text-align: center;">➡️ <a href="https://www.paypal.me/benjaminb21" target="_blank" class="donate-button" style="color: var(--buttonText); text-decoration: none;"><strong>SUPPORT FUTURE EXPANSIONS</strong></a> ⬅️</button>
   </div>
 
 <div id="score-content" style="display: none;">
@@ -951,17 +964,14 @@
   <div id="stats-content" style="display: none;">
   </div>
 
-    <div id="final-blow-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-    <div class="close-triangle-btn" aria-label="Close" onclick="closeFinalBlowPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-    <div class="popup-content">
-      <h2>Final Blow!</h2>
-      <p>The Mastermind is out of tactics! You only need to attack one more time!</p>
-      <button onclick="closeFinalBlowPopup()">Confirm</button>
+    <div id="final-blow-popup" class="final-blow-popup-class" style="display: none;">
+      <div class="final-blow-popup-minimizebutton"><span style="font-size:6vh;">⇱</span></div>
+      <div class="info-or-choice-popup-closebutton" onclick="closeFinalBlowPopup()">✕</div>
+      <div class="final-blow-popup-title">FINAL BLOW</div>
+      <div class="final-blow-popup-instructions">The Mastermind is out of tactics! You only need to attack one more time!</div>
+      <div class="final-blow-popup-preview"></div>
+      <div class="info-or-choice-popup-buttonhousing">
+        <button id="final-blow-popup-confirm" onclick="closeFinalBlowPopup()">CONFIRM</button>
     </div>
   </div>
 
@@ -1136,180 +1146,130 @@
     </div>
 </div>
 
-  <div id="played-cards-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
+<div id="played-cards-window" class="deck-windows">
+    <div id="played-cards-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="played-cards-window-close" class="deck-windows-closebutton" onclick="closePlayedCardsPopup()">✕</div>
+    <div class="deck-windows-title">PLAYED CARDS</div>
+    <div id="played-cards-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="played-cards-window-close-butron" class="deck-windows-close-button" onclick="closePlayedCardsPopup()">CLOSE</div>
+        </div>
 </div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closePlayedCardsPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-    <div class="popup-content">
-      <h2>PLAYED CARDS</h2>
-      <div id="playedCardsTable" class="pile-table"></div>
-      <button class="pile-button" onclick="closePlayedCardsPopup()">CLOSE</button>
+
+<div id="ko-pile-window" class="deck-windows">
+    <div id="ko-pile-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="ko-pile-window-close" class="deck-windows-closebutton" onclick="closeKOPilePopup()">✕</div>
+    <div class="deck-windows-title">KO PILE</div>
+    <div id="ko-pile-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="ko-pile-window-close-button" class="deck-windows-close-button" onclick="closeKOPilePopup()">CLOSE</div>
     </div>
-  </div>
+</div>
 
-  <div id="victory-pile-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeVictoryPilePopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-    <div class="popup-content">
-      <h2>VICTORY PILE</h2>
-      <div id="victoryPileTable" class="pile-table"></div>
-      <button class="pile-button" onclick="closeVictoryPilePopup()">CLOSE</button>
+<div id="escaped-villains-window" class="deck-windows">
+    <div id="escaped-villains-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="escaped-villains-window-close" class="deck-windows-closebutton" onclick="closeEscapedVillainsPopup()">✕</div>
+    <div class="deck-windows-title">ESCAPED VILLAINS</div>
+    <div id="escaped-villains-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="escaped-villains-window-close-button" class="deck-windows-close-button" onclick="closeEscapedVillainsPopup()">CLOSE</div>
     </div>
-  </div>
+</div>
 
-  <div id="escaped-villains-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeEscapedVillainsPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-    <div class="popup-content">
-      <h2>ESCAPED VILLAINS</h2>
-      <div id="escapedVillainsTable" class="pile-table"></div>
-      <button class="pile-button" onclick="closeEscapedVillainsPopup()">CLOSE</button>
+<div id="victory-pile-window" class="deck-windows">
+    <div id="victory-pile-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="victory-pile-window-close" class="deck-windows-closebutton" onclick="closeVictoryPilePopup()">✕</div>
+    <div class="deck-windows-title">VICTORY PILE</div>
+    <div id="victory-pile-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="victory-pile-window-close-button" class="deck-windows-close-button" onclick="closeVictoryPilePopup()">CLOSE</div>
     </div>
-  </div>
+</div>
 
-  <div id="ko-pile-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeKOPilePopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-    <div class="popup-content">
-      <h2>KO PILE</h2>
-      <div id="KOPileTable" class="pile-table"></div>
-      <button class="pile-button" onclick="closeKOPilePopup()">CLOSE</button>
+<div id="wound-stack-window" class="deck-windows">
+    <div id="wound-stack-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="wound-stack-window-close" class="deck-windows-closebutton" onclick="closeWoundDeckPopup()">✕</div>
+    <div class="deck-windows-title">WOUND STACK</div>
+    <div id="wound-stack-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="wound-stack-window-close-button" class="deck-windows-close-button" onclick="closeWoundDeckPopup()">CLOSE</div>
     </div>
-  </div>
+</div>
 
-  <div id="discard-pile-popup" class="popup" style="display: none;">
-      <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeDiscardPilePopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-    <div class="popup-content">
-      <h2>DISCARD PILE</h2>
-      <div id="DiscardPileTable" class="pile-table"></div>
-      <button class="pile-button" onclick="closeDiscardPilePopup()">CLOSE</button>
+<div id="bystander-deck-window" class="deck-windows">
+    <div id="bystander-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="bystander-deck-window-close" class="deck-windows-closebutton" onclick="closeBystanderDeckPopup()">✕</div>
+    <div class="deck-windows-title">BYSTANDER DECK</div>
+    <div id="bystander-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="bystander-deck-window-close-button" class="deck-windows-close-button" onclick="closeBystanderDeckPopup()">CLOSE</div>
     </div>
-  </div>
-
-  <div class="popup" id="playerDeck-popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closePlayerDeckPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-  <div class="popup-content">
-<h2>PLAYER DECK</h2>
-      <div id="PlayerDeckTable" class="pile-table"></div>
-      <button class="player-deck-button" onclick="closePlayerDeckPopup()">CLOSE</button>
-  </div>
 </div>
 
-  <div class="popup" id="heroDeck-popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeHeroDeckPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-  <div class="popup-content">
-<h2>HERO DECK</h2>
-      <div id="HeroDeckTable" class="pile-table"></div>
-      <button class="hero-deck-button" onclick="closeHeroDeckPopup()">CLOSE</button>
-  </div>
+<div id="villain-deck-window" class="deck-windows">
+    <div id="villain-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="villain-deck-window-close" class="deck-windows-closebutton" onclick="closeVillainDeckPopup()">✕</div>
+    <div class="deck-windows-title">VILLAIN DECK</div>
+    <div id="villain-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="villain-deck-window-close-button" class="deck-windows-close-button" onclick="closeVillainDeckPopup()">CLOSE</div>
+    </div>
 </div>
 
-  <div class="popup" id="villainDeck-popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeVillainDeckPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-  <div class="popup-content">
-<h2>VILLAIN DECK</h2>
-      <div id="VillainDeckTable" class="pile-table"></div>
-      <button class="villain-deck-button" onclick="closeVillainDeckPopup()">CLOSE</button>
-  </div>
+<div id="hero-deck-window" class="deck-windows">
+    <div id="hero-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="hero-deck-window-close" class="deck-windows-closebutton" onclick="closeHeroDeckPopup()">✕</div>
+    <div class="deck-windows-title">HERO DECK</div>
+    <div id="hero-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="hero-deck-window-close-button" class="deck-windows-close-button" onclick="closeHeroDeckPopup()">CLOSE</div>
+    </div>
 </div>
 
-  <div class="popup" id="woundDeck-popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeWoundDeckPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-  <div class="popup-content">
-<h2>WOUND DECK</h2>
-      <div id="WoundDeckTable" class="pile-table"></div>
-      <button class="wound-deck-button" onclick="closeWoundDeckPopup()">CLOSE</button>
-  </div>
+<div id="shield-deck-window" class="deck-windows">
+    <div id="shield-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="shield-deck-window-close" class="deck-windows-closebutton" onclick="closeShieldDeckPopup()">✕</div>
+    <div class="deck-windows-title">SHIELD DECK</div>
+    <div id="shield-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="shield-deck-window-close-button" class="deck-windows-close-button" onclick="closeShieldDeckPopup()">CLOSE</div>
+    </div>
 </div>
 
-  <div class="popup" id="sidekickDeck-popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeSidekickDeckPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-  <div class="popup-content">
-<h2>SIDEKICK STACK</h2>
-      <div id="SidekickDeckTable" class="pile-table"></div>
-      <button class="sidekick-deck-button" onclick="closeSidekickDeckPopup()">CLOSE</button>
-  </div>
+<div id="sidekick-stack-window" class="deck-windows">
+    <div id="sidekick-stack-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="sidekick-stack-window-close" class="deck-windows-closebutton" onclick="closeSidekickDeckPopup()">✕</div>
+    <div class="deck-windows-title">SIDEKICK STACK</div>
+    <div id="sidekick-stack-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="sidekick-stack-window-close-button" class="deck-windows-close-button" onclick="closeSidekickDeckPopup()">CLOSE</div>
+    </div>
 </div>
 
-  <div class="popup" id="shieldDeck-popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeShieldDeckPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-  <div class="popup-content">
-<h2>S.H.I.E.L.D. DECK</h2>
-      <div id="ShieldDeckTable" class="pile-table"></div>
-      <button class="shield-deck-button" onclick="closeShieldDeckPopup()">CLOSE</button>
-  </div>
+<div id="discard-pile-window" class="deck-windows">
+    <div id="discard-pile-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="discard-pile-window-close" class="deck-windows-closebutton" onclick="closeDiscardPilePopup()">✕</div>
+    <div class="deck-windows-title">DISCARD PILE</div>
+    <div id="discard-pile-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="discard-pile-window-close-button" class="deck-windows-close-button" onclick="closeDiscardPilePopup()">CLOSE</div>
+    </div>
 </div>
 
-  <div class="popup" id="bystanderDeck-popup" style="display: none;">
-    <div class="minimize-triangle-btn" aria-label="Minimize">
-  <span class="inner-triangle"></span>
-</div>
-<div class="close-triangle-btn" aria-label="Close" onclick="closeBystanderDeckPopup()">
-  <span class="close-x"><b>✕</b></span>
-</div>
-  <div class="popup-content">
-<h2>BYSTANDER DECK</h2>
-      <div id="BystanderDeckTable" class="pile-table"></div>
-      <button class="bystander-deck-button" onclick="closeBystanderDeckPopup()">CLOSE</button>
-  </div>
+<div id="player-deck-window" class="deck-windows">
+    <div id="player-deck-window-minimize" class="deck-windows-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div id="player-deck-window-close" class="deck-windows-closebutton" onclick="closePlayerDeckPopup()">✕</div>
+    <div class="deck-windows-title">PLAYER DECK</div>
+    <div id="player-deck-window-cards" class="deck-windows-cards"></div>
+    <div class="deck-windows-button-housing">
+        <div id="player-deck-window-close-button" class="deck-windows-close-button" onclick="closePlayerDeckPopup()">CLOSE</div>
+    </div>
 </div>
 
 <!-- SETTINGS POPUP (HTML) -->
-<div id="settings-popup" class="popup" style="display:none;">
-  <div class="close-triangle-btn" aria-label="Close" onclick="saveSettings()">
-    <span class="close-x"><b>✕</b></span>
-  </div>
-  <h2>SETTINGS</h2>
+<div id="settings-popup" style="display:none;">
+  <div class="settings-popup-closebutton" onclick="saveSettings()">✕</div>
+  <div class="settings-popup-title">SETTINGS</div>
   <h3>Theme</h3>
   <div class="theme-grid">
     <button class="theme-button" data-theme="theme-core">
@@ -1321,7 +1281,7 @@
     <button class="theme-button" data-theme="theme-fantastic-four">
       <div class="theme-name">Fantastic Four</div>
     </button>
-    <button class="theme-button" data-theme="theme-paint-the-town-red">
+        <button class="theme-button" data-theme="theme-paint-the-town-red">
       <div class="theme-name">Paint the Town Red</div>
     </button>
   </div>
@@ -1333,6 +1293,7 @@
       <option value="Core" style="font-family:'Percolator'; font-size: 1em;">Core</option>
       <option value="DarkCity" style="font-family:'DarkCity'; font-size: .8em;">Dark City</option>
       <option value="FantasticFour" style="font-family:'FantasticFour'; font-size: 1em;">Fantastic Four</option>
+      <option value="PaintTheTownRed" style="font-family:'PaintTheTownRed'; font-size: 1em;">PAINT THE TOWN RED</option>
     </select>
   </div>
   </div>
@@ -1514,6 +1475,18 @@
     </div>
 </div>
 
+<div class="draw-choice-popup">
+    <div class="draw-choice-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
+    <div class="draw-choice-popup-title">DRAW</div>
+    <div class="draw-choice-popup-instructions"><span class="console-highlights">Scarlet Spider - Sting of the Spider</span> allows you to draw the card just placed on your deck. Would you like to draw <span id="draw-choice-card-name" class="console-highlights"></span>?</div>
+    <div class="draw-choice-popup-preview"></div>
+        <div class="draw-choice-popup-buttonhousing">
+        <button id="draw-choice-popup-confirm">YES</button>
+        <button id="draw-choice-popup-otherchoice" style="display: none;">OTHER CHOICE</button>
+        <button id="draw-choice-popup-nothanks">NO THANKS!</button>
+    </div>
+</div>
+
  <div class="investigate-popup" style="display: none;">
 <div class="investigate-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
 <div class="investigate-popup-title">INVESTIGATE</div>
@@ -1550,17 +1523,22 @@ cardDatabaseScript.onload = () => {
       cardAbilitiesDarkCityScript.src = 'cardAbilitiesDarkCity.js';
       cardAbilitiesDarkCityScript.onload = () => {
         const expansionFantasticFourScript = document.createElement('script');
-        expansionFantasticFourScript.src = 'expansionFantasticFour.js'; // Fixed variable name
+        expansionFantasticFourScript.src = 'expansionFantasticFour.js';
         expansionFantasticFourScript.onload = () => {
-          const updatesContentScript = document.createElement('script');
-          updatesContentScript.src = 'updatesContent.js';
-          updatesContentScript.onload = () => {
-            const mainScript = document.createElement('script');
-            mainScript.src = 'script.js';
-            mainScript.onload = setupUpdatesTab;
-            document.body.appendChild(mainScript);
+          const expansionPaintTheTownRedScript = document.createElement('script');
+          expansionPaintTheTownRedScript.src = 'expansionPaintTheTownRed.js';
+          expansionPaintTheTownRedScript.onload = () => {
+            const updatesContentScript = document.createElement('script');
+            updatesContentScript.src = 'updatesContent.js';
+            updatesContentScript.onload = () => {
+              const mainScript = document.createElement('script');
+              mainScript.src = 'script.js';
+              mainScript.onload = setupUpdatesTab;
+              document.body.appendChild(mainScript);
+            };
+            document.body.appendChild(updatesContentScript);
           };
-          document.body.appendChild(updatesContentScript);
+          document.body.appendChild(expansionPaintTheTownRedScript);
         };
         document.body.appendChild(expansionFantasticFourScript);
       };

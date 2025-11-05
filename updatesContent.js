@@ -1,6 +1,8 @@
 // updatesContent.js
-//30.09.2025 20.55
+//05.11.2025 10.45
 const updatesHTML = `
+<h3>✨ <i>Version 4.0.0</i> - Paint the Town Red <img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="popup-card-icons"></h3>
+<hr>
 <h3>✨ <i>Version 3.0.1</i> - Fantastic Fixes<img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="popup-card-icons"></h3>
 <p>Latest patch to fix early Fantastic Four issue and add some new game features.</p>
 <p>Thanks for the feedback around this expansion so far!</p>

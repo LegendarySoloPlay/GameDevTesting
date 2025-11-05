@@ -1,5 +1,5 @@
 /* Styles */
-/* 27.10.2025 17.55 */  
+/* 05.11.2025 10.45 */  
   
   body {
     font-family: Arial, sans-serif;
@@ -73,6 +73,13 @@
 @font-face {
     font-family: 'FantasticFour';
     src: url('Visual Assets/Fonts/condor-medium-italic.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'PaintTheTownRed';
+    src: url('Visual Assets/Fonts/THEAMAZINGSPIDERMAN.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
 }
@@ -456,6 +463,19 @@ height: calc(100vh - 100px); /* Adjust based on title/banner height */
     opacity: 1;
     animation: pulseGlow 2s infinite ease-in-out;
 }
+
+.cell.hq.attackable {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 2px solid #d7182a;
+    border-radius: inherit;
+    box-shadow: 0 0 15px rgb(215 24 42 / 70%);
+    animation: pulseGlowAttack 2s infinite ease-in-out;
+}   
 
 @keyframes pulseGlow {
     0% {
@@ -956,7 +976,6 @@ font-weight: bold;
 }
 
 .attack-recruit {
-    display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
@@ -968,6 +987,7 @@ letter-spacing: var(--letter-spacing);
     filter: drop-shadow(0vh 0vh 0.3vh black);
 margin-top: 1vh;
 cursor: default;
+white-space: nowrap;
 }
 
 #reserved-attack-points, #reserved-recruit-points {
@@ -1850,6 +1870,7 @@ font-family:var(--heading-font);
 font-size: var(--heading-size);
 text-transform: var(--text-transform);
 letter-spacing: var(--letter-spacing);
+color: var(--popupText);
 }
 
 #city-representation {
@@ -2114,7 +2135,7 @@ letter-spacing: var(--letter-spacing);
 #intro-popup-header {
 position: relative;
     background: var(--accent);
-    color: #3d3d3d;
+    color: #282828;
     padding: 2vh;
     text-align: center;
     text-transform: uppercase;
@@ -2163,6 +2184,7 @@ flex: 1;
     border-radius: 1.5vh 1.5vh 0vh 0vh;
     text-transform: uppercase;
     font-size: clamp(0.8em, 2.5vh, 1.5em);
+    color: #282828;
 }
 
 #left-tab.tab-button.active {
@@ -2881,6 +2903,7 @@ text-transform: var(--text-transform);
 letter-spacing: var(--letter-spacing);
 filter: drop-shadow(0vh 0vh 0.3vh black);
 color: white;
+text-shadow: 1.5px 1px #282828;
 }
 
 #title-banner-text {
@@ -3242,14 +3265,94 @@ font-size: calc(0.7vh + 0.7vw);
     margin-top: 10px;
 }
 
+#defeat-popup, 
+#draw-popup, 
+#win-popup {
+    opacity: 1;
+    position: fixed;
+    width: 50%;
+    background-color: var(--panel-backgrounds);
+    left: 25%;
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 2000;
+}
+
+.win-popup-minimizebutton,
+.draw-popup-minimizebutton,
+.defeat-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.win-popup-minimizebutton:hover,
+.draw-popup-minimizebutton:hover,
+.defeat-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.end-game-title {
+    margin-bottom: 5px;
+    height: 10vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1.5vw + 1.5rem);
+    text-transform: uppercase;
+}
+
+.end-game-context {
+    margin-bottom: 10px;
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
 #defeat-popup h3, 
 #hero-deck-empty-popup h3, 
 #draw-popup h3, 
 #win-popup h3 {
-    font-size: calc(0.7vh + 0.7vw);
+    font-size: calc(0.9vh + 0.9vw);
     text-transform: uppercase;
     margin-top: 0px;
     margin-bottom: 0px;
+    font-family: 'Roboto Condensed';
+    text-align: center;
 }
 
 #defeat-popup p, 
@@ -3269,9 +3372,7 @@ font-size: calc(0.7vh + 0.7vw);
 height: 25vh;
     overflow-y: scroll;
 padding:0;
-
 }
-
 
 #fight-effect-card-ko-popup .card-list li {
     background-color: var(--hoverAccent);
@@ -3365,6 +3466,8 @@ text-transform: uppercase;
 #draw-popup button {
 width:50%;
 text-transform: uppercase;
+margin-left: auto;
+    margin-right: auto;
 }
 
 #hero-deck-empty-popup button {
@@ -3375,6 +3478,8 @@ text-transform: uppercase;
 #defeat-popup button {
 width:50%;
 text-transform: uppercase;
+margin-left: auto;
+    margin-right: auto;
 }
 
 #finish-turn-popup button {
@@ -3385,11 +3490,116 @@ text-transform: uppercase;
 #win-popup button {
 width:50%;
 text-transform: uppercase;
+margin-left: auto;
+    margin-right: auto;
 }
 
-#final-blow-popup button {
-width:50%;
-text-transform: uppercase;
+#final-blow-popup {
+    position: absolute;
+    width: 48.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(88px, 19.6%, 300px);
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+}
+
+.final-blow-popup-minimizebutton{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.final-blow-popup-minimizebutton:hover{
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.final-blow-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+.final-blow-popup-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.final-blow-popup-preview {
+    width: auto;
+    height: 69%;
+    aspect-ratio: 738 / 1039;
+    background-color: var(--accent);
+    border: 0.5vh solid var(--accent);
+    border-radius: 1.5vh;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    background-size: 100% 100%;
+}
+
+#final-blow-popup-confirm {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+    text-transform: uppercase;
+}
+
+#final-blow-popup-confirm:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
 }
 
 .popup p {
@@ -3651,18 +3861,21 @@ top:100%;
 }
 
 .plutonium-count {
-    position: absolute;
-    bottom: 13%;
-    left: 12%;
-    z-index: 996;
-    font-family: var(--heading-font);
-    font-size: calc(0.8vh + 0.8vw);
     color: #282828;
-    font-weight: bold;
-    text-shadow: 0 0 7px rgb(255 255 255);
-    background-color: #a6eaa6;
-    width: 0.7vw;
-    border-radius: 0.7vw;
+    font-size: calc(0.8vh + 0.8vw);
+    position: absolute;
+    bottom: 1.8vh;
+    left: .19vw;
+    text-shadow: 0vh 0 0.2vh #727272;
+    pointer-events: none;
+    border-radius: 1vh;
+    background: #a6eaa6;
+    border: 2px solid white;
+    width: 1.2vw;
+    height: 1.2vw;
+    box-shadow: 2px 2px #000000;
+    font-family: var(--heading-font);
+    z-index: 996;
 }
 
 .donate-button {
@@ -4180,9 +4393,9 @@ position: absolute;
 
 /* Close X symbol */
 .close-x {
-  position: absolute;
-  top: 4%;
-  right: 12%; /* Changed from left to right */
+  position: relative;
+  top: 0;
+  right: 0; /* Changed from left to right */
   font-size: clamp(12px, 1.3vw, 20px);
   color: var(--buttonText);
   font-weight: bold;
@@ -4372,12 +4585,20 @@ letter-spacing: var(--letter-spacing);
 }
 
 .XCutionerOverlayNumber{
-    color: white;
-    font-size: calc(0.6vh + 0.6vw);
+    color: var(--buttonText);
+    font-size: calc(0.8vh + 0.8vw);
     position: absolute;
-    top: 2vh;
-    left: .9vw;
-    text-shadow: 0vh 0 0.2vh #e47d45;
+    top: 1.8vh;
+    right: .16vw;
+    text-shadow: 0vh 0 0.2vh #727272;
+    pointer-events: none;
+    border-radius: 1vh;
+    background: var(--accent);
+    border: 2px solid white;
+    width: 1.2vw;
+    height: 1.2vw;
+    box-shadow: 2px 2px #000000;
+    font-family: var(--heading-font);
 }
 
 #hq-1-explosion, #hq-2-explosion, #hq-3-explosion, #hq-4-explosion, #hq-5-explosion {
@@ -4431,14 +4652,23 @@ letter-spacing: var(--letter-spacing);
     z-index: 1;
     margin-left: auto;
     margin-right: auto;
-    color: #ffffff;
-font-family:var(--heading-font);
-font-size: var(--heading-size);
-text-transform: var(--text-transform);
-letter-spacing: var(--letter-spacing);
+    color: var(--buttonText);
+    font-family: var(--heading-font);
+    text-transform: var(--text-transform);
+    letter-spacing: var(--letter-spacing);
     margin-bottom: auto;
     filter: drop-shadow(0vh 0vh 1.1vh black);
     cursor: default;
+    background-color: var(--accent);
+    width: 1.2vw;
+    height: 1.2vw;
+    border-radius: 0.5vh;
+    border: 2px solid white;
+    font-size: calc(0.8vh + 0.8vw);
+    text-shadow: 0vh 0 0.2vh #727272;
+    pointer-events: none;
+    border-radius: 1vh;
+    box-shadow: 2px 2px #000000;
 }
 
 .villain-baby-overlay {
@@ -4509,12 +4739,20 @@ letter-spacing: var(--letter-spacing);
 }
 
 .bystanderOverlayNumber{
-    color: white;
-    font-size: calc(0.6vh + 0.6vw);
+    color: var(--buttonText);
+    font-size: calc(0.8vh + 0.8vw);
     position: absolute;
-    top: 2vh;
-    right: .6vw;
-    text-shadow: 0vh 0 0.2vh #e47d45;
+    top: 1.8vh;
+    right: .16vw;
+    text-shadow: 0vh 0 0.2vh #727272;
+    pointer-events: none;
+    border-radius: 1vh;
+    background: var(--accent);
+    border: 2px solid white;
+    width: 1.2vw;
+    height: 1.2vw;
+    box-shadow: 2px 2px #000000;
+    font-family: var(--heading-font);
 }
 
 .villain-bystander {
@@ -4545,7 +4783,7 @@ letter-spacing: var(--letter-spacing);
 .pulsing-glow-text {
   color: black;
   text-align: center;
-  text-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent);
+  text-shadow: 0 0 5px #be1717, 0 0 10px #be1717;
   animation: pulse-glow 2s infinite ease-in-out;
   font-size: 1.2em; /* Starting size */
   display: block; /* For center alignment */
@@ -4797,6 +5035,11 @@ margin-left: 10%;
     background: linear-gradient(to bottom, #06a2d2, #0070A3);
     color: #f4f1f1;
   }
+
+   .theme-button[data-theme="theme-paint-the-town-red"] {
+    background: linear-gradient(to bottom, #be1717, #282828);
+    color: #f4f1f1;
+  }
   
   .theme-button.selected {
     box-shadow: 0 0 0 3px var(--hoverAccent), 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -4874,11 +5117,36 @@ margin-left: 10%;
     --city-background-color: #c6daedcc;
   }
 
+    body.theme-paint-the-town-red {
+    --accent: #be1717;       
+    --disabledAccent: #601a1a;   
+    --hoverAccent: #da2d41;
+    --selectedButton: #f4d419;
+    --endTurnHoldButton: #4b3f3f;    
+    --accentGlow: #d60000;
+    --popupText: #f4f1f1;
+    --buttonText: #f4f1f1;
+    --contrastText: #f4f1f1;
+    --console-text-weight: 400;     
+    --lightText: #1A1A1A;     
+    --popup-image: url('Visual Assets/Frames/popup_PaintTheTownRed.webp');
+    --console-log-frame: url('Visual Assets/Frames/consoleLogFrame_PaintTheTownRed.webp');
+    --keyword-frame: url('Visual Assets/Frames/keywordFrame_PaintTheTownRed.webp');
+    --carbon-fibre: url('Visual Assets/Backgrounds/carbon_fibre_dark.png');
+    --gameboard-background: url('Visual Assets/Backgrounds/gameboardBackground_PtTR.jpg');
+    --settings-cog: url('Visual Assets/Icons/settingsCog_theme-paint-the-town-red.svg');
+    --panel-backgrounds: #282828;
+    --gameboard-overlay: #09010147;
+    --gameboard-cell-background: #1600007a;
+    --city-background-color: #230d0dcc;
+  }
+
    .font-selector-container {
     margin: 10px 0;
     text-align: center;
     position: relative;
     display: inline-block;
+    left: 29%;
   }
   
   .font-selector {
@@ -4937,6 +5205,7 @@ margin-left: 10%;
 
   .font-and-volume {
 display:flex;
+margin-top: 2vh;
   }
 
 .font-control {
@@ -4951,14 +5220,67 @@ display:flex;
     margin-left: 2.5%;
 }
 
+#settings-popup {
+    display:none;
+    opacity: 1;
+    position: fixed;
+    width: 76.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(11px, 1.2%, 17px);
+    height: 83%;
+    top: clamp(37px, 7.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+}
+
+.settings-popup-closebutton {
+    font-size: 4vh;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    text-align: center;
+    align-content: center;
+    font-weight: bold;
+    font-family: Arial;
+}
+
+.settings-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
 #settings-popup h3 {
-        font-size: clamp(9pt, 2vh, 1em);
-        margin-bottom: 1vh;
-        margin-top: 3vh;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--popupText);
 }
 
 #settings-popup label {
     font-size: clamp(9pt, 2vh, 1em);
+    color: var(--popupText);
 }
 
 #music-volume, #sfx-volume {
@@ -4990,6 +5312,12 @@ display:flex;
   --fantasticfour-letter-spacing: 0rem;
   --fantasticfour-text-transform: capitalize;
   --fantasticfour-title-banner-size: 4.5vh;
+
+  --paintthetownred-heading-size: calc(0.6vh + 0.6vw);
+  --paintthetownred-smaller-heading-size: calc(0.5vh + 0.5vw);
+  --paintthetownred-letter-spacing: 0.05rem;
+  --paintthetownred-text-transform: uppercase;
+  --paintthetownred-title-banner-size: 4.5vh;
 
   /* Default sizes (will be overridden by JavaScript) */
   --heading-size: var(--core-heading-size);
@@ -5097,7 +5425,7 @@ display:flex;
     position: absolute;
     right: 2vh;
     bottom: 2vh;
-    color: var(--buttonText);
+    color: #282828;
     border: none;
     border-radius: 1vh;
     cursor: pointer;
@@ -5127,10 +5455,10 @@ display:flex;
         
         .splash-content {
             position: relative;
-            background-image: url('Visual Assets/Splash Screen/FantasticFourLogo.webp');
+            background-image: url('Visual Assets/Icons/Spider Friends.svg');
             background-size: 100% 100%;
             background-color: white;
-            border: 10px solid #2080a4;
+            border: 10px solid #be1717;
             box-shadow: 0 0 20px rgba(168, 208, 255, 0.5);
             display: flex;
             flex-direction: column;
@@ -5151,9 +5479,9 @@ display:flex;
             border-radius: 15px;
             padding: 30px;
             background-image: none;
-            background-color: white;
+            background-color: #921313;
             transition: background-image 2s ease-out, border-radius 2.5s ease-out;
-            box-shadow: inset 0 0 60px 20px rgb(0 158 215);
+            box-shadow: inset 0 0 60px 20px #270303;
         }
         
         .splash-content.circular {
@@ -5187,18 +5515,18 @@ display:flex;
         }
 
         .splash-title-expansion {
-    font-size: 4rem;
+    font-size: 3rem;
     font-family: 'Percolator';
     margin-bottom: 0;
-    background-image: linear-gradient(180deg, #69aedd, #e7f1f9, #69aedd);
+    background-image: linear-gradient(180deg, #282828, #be1717, #282828);
     font-weight: 300;
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     text-align: center;
-    -webkit-text-stroke: 1px #467ea3;
+    -webkit-text-stroke: 0.7px #601a1a;
     margin-top: -2%;
-    filter: drop-shadow(0px 0px 4px #467ea3);
+    filter: drop-shadow(0px 0px 4px white);
         }
 
         @media (max-width: 500px) {  /* Adjust breakpoint as needed */
@@ -5219,24 +5547,117 @@ display:flex;
         .splash-description {
             font-size: 1rem;
             font-family: "Roboto Condensed", sans-serif;
-            color: #333;
+            color: #f4f1f1;
             text-align: center;
             margin-bottom: 20px;
+            text-shadow: 1px 1px #282828;
         }
         
         #start-expansion {
             width: 50%;
             margin-left: auto;
             margin-right: auto;
-            background-color: #06a2d2;
+            background-color: #f4d419;
             transition: background-color 0.3s;
+            color: #282828;
         }
         
         #start-expansion:hover {
-            background-color: #f5a43e;
+            background-color: #be1717;
             color: #f4f1f1;
-            animation: burn 1.5s linear infinite alternate;
         }
+
+#start-expansion:hover + .drip-1{
+  height: 25px;
+}
+
+#start-expansion:hover ~ .drip-2{
+  height: 16px;
+}
+
+#start-expansion:hover ~ .drip-3{
+  height: 26px;
+}
+
+#start-expansion:hover ~ .drip-4{
+  height: 18px;
+}
+
+#start-expansion:hover ~ .drip-5{
+  height: 20px;
+}
+
+#start-expansion:hover ~ .drip-6{
+  height: 28px;
+}
+
+.drip-1{
+  position:absolute;
+  width:19px;
+  height:0px;
+  border-radius:0 0 21px 21px;
+  background:#be1717;
+  margin: 0px 158px;
+  transition: height 0.9s ease;
+  left: 10%;
+}
+
+
+.drip-2{
+  position:absolute;
+  width:19px;
+  height:0px;
+  border-radius:0 0 21px 21px;
+  background:#be1717;
+  margin: 0px 140px;
+  transition: height 1.5s ease;
+  left: 16%;
+}
+
+.drip-3{
+  position:absolute;
+  width:19px;
+  height:0px;
+  border-radius:0 0 21px 21px;
+  background:#be1717;
+  margin: 0px 60px;
+  transition: height .7s ease;
+  left: 40%;
+}
+
+.drip-4{
+  position:absolute;
+  width:19px;
+  height:0px;
+  border-radius:0 0 21px 21px;
+  background:#be1717;
+  margin: 0px 158px;
+  transition: height 0.9s ease;
+  left: 28%;
+}
+
+
+.drip-5{
+  position:absolute;
+  width:19px;
+  height:0px;
+  border-radius:0 0 21px 21px;
+  background:#be1717;
+  margin: 0px 140px;
+  transition: height 1.5s ease;
+  left: 42%;
+}
+
+.drip-6{
+  position:absolute;
+  width:19px;
+  height:0px;
+  border-radius:0 0 21px 21px;
+  background:#be1717;
+  margin: 0px 60px;
+  transition: height .7s ease;
+  left: 59%;
+}
 
         @keyframes burn {
             from { 
@@ -6629,6 +7050,8 @@ hr {
     height: 100%; /* Take full height of parent */
     width: 100%;
     white-space: nowrap;
+    color: var(--popupText);
+    font-family: 'Roboto Condensed';
 }
 
 .p-section div {
@@ -7173,4 +7596,263 @@ hr {
     width: 50%;
     margin-left: auto;
     margin-right: auto;
+}
+
+.draw-choice-popup {
+    position: absolute;
+    width: 48.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(88px, 19.6%, 300px);
+    height: 74%;
+    top: clamp(45px, 8.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 1005;
+    display: none;
+}
+
+.draw-choice-popup-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.draw-choice-popup-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.draw-choice-popup-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+.draw-choice-popup-instructions {
+    padding: 2vh;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: 'Roboto Condensed';
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: clamp(9pt, 2.5vh, 1.5em);
+    text-align: center;
+    color: var(--popupText);
+}
+
+.draw-choice-popup-preview {
+    width: auto;
+    height: 69%;
+    aspect-ratio: 738 / 1039;
+    background-color: var(--accent);
+    border: 0.5vh solid var(--accent);
+    border-radius: 1.5vh;
+    box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
+    background-size: 100% 100%;
+}
+
+.draw-choice-popup-buttonhousing {
+    margin-top: 1vh;
+    height: 20%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+}
+
+#draw-choice-popup-confirm, #draw-choice-popup-otherchoice, #draw-choice-popup-nothanks {
+    padding: 1vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(2vh + 2vw);
+    max-height: 5vh;
+    text-transform: uppercase;
+}
+
+#draw-choice-popup-confirm:hover, #draw-choice-popup-otherchoice:hover, #draw-choice-popup-nothanks:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.deck-windows {
+    position: absolute;
+    width: 76.3%;
+    background-color: var(--panel-backgrounds);
+    left: clamp(11px, 1.2%, 17px);
+    height: 83%;
+    top: clamp(37px, 7.4%, 9%);
+    border: 3px solid var(--accent);
+    border-radius: 1.5vh;
+    outline: 5px solid var(--accent);
+    outline-offset: 3px;
+    padding-top: 7vh;
+    box-sizing: border-box;
+    padding-bottom: 7vh;
+    box-shadow: 0 0 2vh black;
+    z-index: 999;
+    display: none;
+}
+
+.deck-windows-minimizebutton {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    transform: rotate(-90deg);
+    text-align: center;
+}
+
+.deck-windows-minimizebutton:hover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
+}
+
+.deck-windows-closebutton {
+    font-size: 4vh;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--accent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--buttonText);
+    cursor: pointer;
+    text-align: center;
+    align-content: center;
+    font-weight: bold;
+    font-family: Arial;
+}
+
+.deck-windows-closebutton:hover {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 7vh;
+    height: 7vh;
+    background-color: var(--hoverAccent);
+    border-bottom-left-radius: 1.5vh;
+    color: var(--contrastText);
+}
+
+.deck-windows-title {
+    height: 7vh;
+    width: calc(100% - 14vh);
+    text-align: center;
+    align-content: center;
+    position: absolute;
+    left: 7vh;
+    top: 0;
+    color: var(--accent);
+    font-family: 'Roboto Condensed';
+    font-weight: bold;
+    font-size: calc(1vw + 1rem);
+    text-transform: uppercase;
+}
+
+.deck-windows-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7vh;
+    margin-top: 2.5vh;
+    margin-bottom: 2.5vh;
+    overflow-y: auto;
+    height: 92%;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.deck-windows-button-housing {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 8vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1vw;
+}
+
+.deck-windows-close-button {
+    padding: 0vh 2vw;
+    background-color: var(--accent);
+    color: var(--buttonText);
+    border: none;
+    border-radius: 1vh;
+    cursor: pointer;
+    width: 28%;
+    margin-left: 0;
+    font-size: clamp(0.6em, 1.7vh, 1.5em);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 500;
+    font-style: normal;
+    height: calc(3vh + 3vw);
+    max-height: 6vh;
+    text-transform: uppercase;
+}
+
+.deck-windows-close-button:hover {
+    background-color: var(--hoverAccent);
+    color: var(--contrastText);
 }

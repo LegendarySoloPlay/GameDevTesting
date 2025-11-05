@@ -1,5 +1,5 @@
 // Core Mechanics
-//27.10.2025 17.55
+//05.11.2025 10.45
 
 console.log('Script loaded');
 console.log(window.henchmen);
@@ -544,6 +544,7 @@ let totalRecruitPoints = 0;
 let killbotAttack = 3;
 let healingPossible = true;
 let finalBlowEnabled = false;
+let finalBlowDelivered = false;
 let escapedVillainsCount = 0;
 let lastTurn = false;
 let finalTwist = false;
@@ -584,6 +585,7 @@ let silentMeditationRecruit = false;
 let backflipRecruit = false;
 let sewerRooftopDefeats = false;
 let thingCrimeStopperRescue = false;
+let bystandersRescuedThisTurn = 0;
 let galactusForceOfEternityDraw = false;
 let negativeZoneAttackAndRecruit = false;
 let invincibleForceField = 0;
@@ -612,6 +614,10 @@ let deadpoolRare = false;
 let gameIsOver = false;
 let mastermindDefeated = false;
 let alwaysLeadsText = '';
+let moonKnightGoldenAnkhOfKhonshuBystanders = false;
+let moonKnightLunarCommunionKO = false;
+let stingOfTheSpider = false;
+let carrionHeroFeast = false;
 
 window.victoryPile = [];
 
@@ -698,7 +704,6 @@ updateSelectedSetFiltersHeroes();
 filterHeroes();
 }
 
-
 function filterSchemes() {
   // Get the selected filters from the scheme section only
   const selectedFilters = Array.from(document.querySelectorAll('#schemelist input[type="checkbox"]:checked'))
@@ -706,10 +711,14 @@ function filterSchemes() {
 
   // Get all scheme radio buttons
   const schemeRadioButtons = document.querySelectorAll('#scheme-selection input[type="radio"]');
+  
+  // Get all hr elements
+  const hrElements = document.querySelectorAll('#scheme-selection hr');
 
-  // If no filters are selected, show all schemes
+  // If no filters are selected, show all schemes and hr elements
   if (selectedFilters.length === 0) {
     schemeRadioButtons.forEach(button => button.parentElement.style.display = 'flex');
+    hrElements.forEach(hr => hr.style.display = 'block');
     return; // Exit if no filters are selected
   }
 
@@ -722,6 +731,16 @@ function filterSchemes() {
       button.parentElement.style.display = 'none'; // Hide schemes that don't match
     }
   });
+
+  // Show/hide hr elements based on the selected filters
+  hrElements.forEach(hr => {
+    const hrSet = hr.getAttribute('data-set');
+    if (selectedFilters.includes(hrSet)) {
+      hr.style.display = 'block'; // Show hr that match the filters
+    } else {
+      hr.style.display = 'none'; // Hide hr that don't match
+    }
+  });
 }
 
 
@@ -731,10 +750,12 @@ function filterMasterminds() {
     .map(cb => cb.getAttribute('data-set'));
 
   const mastermindRadioButtons = document.querySelectorAll('#mastermind-selection input[type="radio"]');
+  const hrElements = document.querySelectorAll('#mastermind-selection hr');
 
-  // If no filters are selected, show all masterminds
+  // If no filters are selected, show all masterminds and hr elements
   if (selectedMastermindFilters.length === 0) {
     mastermindRadioButtons.forEach(button => button.parentElement.style.display = 'flex');
+    hrElements.forEach(hr => hr.style.display = 'block');
     return;
   }
 
@@ -746,6 +767,15 @@ function filterMasterminds() {
       button.parentElement.style.display = 'none';
     }
   });
+
+  hrElements.forEach(hr => {
+    const hrSet = hr.getAttribute('data-set');
+    if (selectedMastermindFilters.includes(hrSet)) {
+      hr.style.display = 'block';
+    } else {
+      hr.style.display = 'none';
+    }
+  });
 }
 
 function filterVillain() {
@@ -754,10 +784,12 @@ function filterVillain() {
     .map(cb => cb.getAttribute('data-set'));
 
   const villainCheckboxes = document.querySelectorAll('#villain-selection input[type="checkbox"]');
+  const hrElements = document.querySelectorAll('#villain-selection hr');
 
-  // If no filters are selected, show all villains
+  // If no filters are selected, show all villains and hr elements
   if (selectedVillainFilters.length === 0) {
     villainCheckboxes.forEach(checkbox => checkbox.parentElement.style.display = 'flex');
+    hrElements.forEach(hr => hr.style.display = 'block');
     return;
   }
 
@@ -769,6 +801,15 @@ function filterVillain() {
       checkbox.parentElement.style.display = 'none';
     }
   });
+
+  hrElements.forEach(hr => {
+    const hrSet = hr.getAttribute('data-set');
+    if (selectedVillainFilters.includes(hrSet)) {
+      hr.style.display = 'block';
+    } else {
+      hr.style.display = 'none';
+    }
+  });
 }
 
 function filterHenchmen() {
@@ -777,10 +818,12 @@ function filterHenchmen() {
     .map(cb => cb.getAttribute('data-set'));
 
   const henchmenCheckboxes = document.querySelectorAll('#henchmen-selection input[type="checkbox"]');
+  const hrElements = document.querySelectorAll('#henchmen-selection hr');
 
-  // If no filters are selected, show all henchmen
+  // If no filters are selected, show all henchmen and hr elements
   if (selectedHenchmenFilters.length === 0) {
     henchmenCheckboxes.forEach(checkbox => checkbox.parentElement.style.display = 'flex');
+    hrElements.forEach(hr => hr.style.display = 'block');
     return;
   }
 
@@ -790,6 +833,15 @@ function filterHenchmen() {
       checkbox.parentElement.style.display = 'flex';
     } else {
       checkbox.parentElement.style.display = 'none';
+    }
+  });
+
+  hrElements.forEach(hr => {
+    const hrSet = hr.getAttribute('data-set');
+    if (selectedHenchmenFilters.includes(hrSet)) {
+      hr.style.display = 'block';
+    } else {
+      hr.style.display = 'none';
     }
   });
 }
@@ -805,10 +857,12 @@ function filterHeroes() {
 
   // Get all hero checkboxes
   const heroCheckboxes = document.querySelectorAll('#hero-selection input[type="checkbox"]');
+  const hrElements = document.querySelectorAll('#hero-selection hr');
 
-  // If no filters are selected, show all heroes
+  // If no filters are selected, show all heroes and hr elements
   if (selectedSetFilters.length === 0 && selectedTeamFilters.length === 0) {
     heroCheckboxes.forEach(checkbox => checkbox.parentElement.style.display = 'flex');
+    hrElements.forEach(hr => hr.style.display = 'block');
     return;
   }
 
@@ -826,8 +880,19 @@ function filterHeroes() {
       checkbox.parentElement.style.display = 'none';
     }
   });
-}
 
+  // For hero hr elements, only filter by set (since teams don't typically have hr dividers)
+  hrElements.forEach(hr => {
+    const hrSet = hr.getAttribute('data-set');
+    const matchesSet = selectedSetFilters.length === 0 || selectedSetFilters.includes(hrSet);
+    
+    if (matchesSet) {
+      hr.style.display = 'block';
+    } else {
+      hr.style.display = 'none';
+    }
+  });
+}
 
 
 function updateSchemeImage(selectedSchemeName) {
@@ -2763,8 +2828,11 @@ function adjustWoundDeckForScheme(scheme) {
     }
 }
 
-function generateHeroDeck(selectedHeroes) {
+function generateHeroDeck(selectedHeroes, selectedHenchmen) {
     let deck = [];
+    
+    const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
+    const selectedSchemeForHeroDeck = schemes.find(scheme => scheme.name === selectedSchemeName);
     
     // Original hero deck generation
     selectedHeroes.forEach(heroName => {
@@ -2787,30 +2855,59 @@ function generateHeroDeck(selectedHeroes) {
                         count = 0;
                 }
                 for (let i = 0; i < count; i++) {
-                    deck.push({ ...card });
+                    const cardCopy = { ...card };
+                    
+                    // Add Wall-Crawl keyword for Spider DNA scheme
+                    if (selectedSchemeForHeroDeck.name === 'Splice Humans with Spider DNA' && 
+                        cardCopy.type === 'Hero' && 
+                        (!cardCopy.keywords || !cardCopy.keywords.includes('Wall-Crawl'))) {
+                        
+                        if (!cardCopy.keywords) {
+                            cardCopy.keywords = [];
+                        }
+                        cardCopy.keywords.push('Wall-Crawl');
+                    }
+                    
+                    deck.push(cardCopy);
                 }
             });
         }
     });
 
-const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
-const selectedSchemeForHeroDeck = schemes.find(scheme => scheme.name === selectedSchemeName);
-
-// Add bystanders for specific scheme
-if (selectedSchemeForHeroDeck.name === "Save Humanity") {
-    const bystandersToAdd = Math.min(12, bystanderDeck.length); // Don't exceed available bystanders
-    for (let i = 0; i < bystandersToAdd; i++) {
-        const bystander = bystanderDeck.shift(); // Remove from bystander deck
-        if (bystander) {
-            bystander.cost = 2;
-            bystander.saveHumanityBystander = true;
-           
-            deck.push(bystander);
+    // Add bystanders for specific scheme
+    if (selectedSchemeForHeroDeck.name === "Save Humanity") {
+        const bystandersToAdd = Math.min(12, bystanderDeck.length); // Don't exceed available bystanders
+        for (let i = 0; i < bystandersToAdd; i++) {
+            const bystander = bystanderDeck.shift(); // Remove from bystander deck
+            if (bystander) {
+                bystander.cost = 2;
+                bystander.saveHumanityBystander = true;
+               
+                deck.push(bystander);
+            }
         }
     }
-}
 
-return shuffle(deck);
+    // Add 6 henchmen to hero deck for Midtown Bank Robbery scheme
+    if (selectedSchemeForHeroDeck.name === "Invade the Daily Bugle News HQ") {
+        // Get the selected henchmen from your game state
+        // You'll need to make sure selectedHenchmen is accessible in this function
+        
+        if (selectedHenchmen && selectedHenchmen.length > 0) {
+            // Pick a random henchman from the selected ones
+            const randomHenchmanName = selectedHenchmen[Math.floor(Math.random() * selectedHenchmen.length)];
+            const henchmenToAdd = window.henchmen.find(h => h.name === randomHenchmanName);
+            
+            if (henchmenToAdd) {
+                // Add 6 copies to the hero deck
+                for (let i = 0; i < 6; i++) {
+                    deck.push({ ...henchmenToAdd, subtype: 'Henchman' });
+                }
+            }
+        }
+    }
+
+    return shuffle(deck);
 }
 
 function generateVillainDeck(selectedVillains, selectedHenchmen, scheme, heroDeck) {
@@ -2925,8 +3022,7 @@ if (scheme.name === 'Secret Invasion of the Skrull Shapeshifters' && heroDeck) {
             type: 'Villain', // Changed to Villain
             rarity: hero.rarity,
             team: hero.team,
-            class1: hero.class1,
-            class2: hero.class2,
+            classes: hero.classes,
             color: hero.color,
             cost: hero.cost,
             attack: 0,
@@ -2943,6 +3039,7 @@ if (scheme.name === 'Secret Invasion of the Skrull Shapeshifters' && heroDeck) {
             conditionType: hero.conditionType,
             condition: hero.condition,
             invulnerability: hero.invulnerability,
+            keywords: hero.keywords,
             image: hero.image,
             
             // Add Skrull-specific properties
@@ -3061,6 +3158,7 @@ if (jeanGreyHero) {
                     ...card,
 			name: transformedName,
                     type: 'Villain',
+                    attack: 0,
                     goblinQueen: true,
                     victoryPoints: 4,
 			unconditionalAbility: 'None',
@@ -3145,7 +3243,7 @@ if (scheme.name === "X-Cutioner's Song") {
 }
 
     for (let i = 0; i < 5; i++) {
-        deck.push({ name: 'Master Strike', type: 'Master Strike', image: "Visual Assets/Other/MasterStrike.webp" });
+        deck.push({ name: 'Master Strike', type: 'Master Strike', image: `${mastermind.masterStrikeImage}` });
     }
 
 for (let i = 0; i < scheme.twistCount; i++) {
@@ -3255,7 +3353,7 @@ if (villains.length === 1) {
 }
 
     // Generate the hero deck first
-    heroDeck = generateHeroDeck(heroes);
+    heroDeck = generateHeroDeck(heroes, henchmen);
     console.log('Hero Deck:', heroDeck);
 
     if (!heroDeck || heroDeck.length === 0) {
@@ -3444,6 +3542,10 @@ async function processRegularVillainCard(villainCard) {
     await new Promise(resolve => { showPopup('Villain Arrival', villainCard, resolve); });
     addHRToTopWithInnerHTML();
   }
+
+          if (villainCard.name === "Vulture") {
+        await vultureAmbush();
+        }
 
   // Ambush
   if (villainCard.ambushEffect && villainCard.ambushEffect !== "None") {
@@ -4003,7 +4105,7 @@ addHRToTopWithInnerHTML();
 
 
 
-  function defaultWoundDraw() {
+  async function defaultWoundDraw() {
   if (woundDeck.length > 0) {
 	playSFX('wound');
     const gainedWound = woundDeck.pop();
@@ -4017,6 +4119,9 @@ playerHand.push(gainedWound);
         playerDeck.push(gainedWound);
 	gainedWound.revealed = true;
         onscreenConsole.log("Wound gained and put on top of your deck.");
+        if (stingOfTheSpider) {
+                    await scarletSpiderStingOfTheSpiderDrawChoice(gainedWound);
+                }
     } else {
         playerDiscardPile.push(gainedWound);
         onscreenConsole.log("Wound gained.");
@@ -4063,8 +4168,7 @@ function handleVillainEscape(escapedVillain) {
         escapedVillainsCount++; // Increment the count of escaped villains
 
         onscreenConsole.log(`<span class="console-highlights">${escapedVillain.name}</span> has escaped.`);
-        updateGameBoard();
-
+        
         // Call the function to handle KO action and discard action, and return its promise
         return handleVillainEscapeActions(escapedVillain).then(() => {
             // Removed the defeat popup logic
@@ -4078,54 +4182,36 @@ function handleVillainEscape(escapedVillain) {
 
 
 function handleVillainEscapeActions(escapedVillain) {
-    return new Promise((resolve, reject) => {
-        const eligibleHeroes = hq.filter(hero => hero && hero.cost <= 6);
-        
-        // 1. First handle hero KO
-        const handleKO = () => {
-            if (eligibleHeroes.length === 0) {
-                return Promise.resolve();
-            }
-            return new Promise(koResolve => {
-                const cleanup = () => {
-                    document.removeEventListener('heroKOComplete', cleanup);
-                    koResolve();
-                };
-                document.addEventListener('heroKOComplete', cleanup);
-                
-                showHeroKOPopup().then(() => {
-                    document.dispatchEvent(new Event('heroKOComplete'));
-                });
-            });
-        };
+  const eligibleHeroes = hq.filter(hero => hero && hero.cost <= 6);
 
-        // 2. Then handle discard
-        const handleDiscard = () => {
-            if (escapedVillain.bystander?.length > 0) {
-                return showDiscardCardPopup(escapedVillain);
-            }
-            return Promise.resolve();
-        };
+  const handleKO = () => {
+    if (eligibleHeroes.length === 0) return Promise.resolve();
+    return showHeroKOPopup(escapedVillain);
+  };
 
-        // 3. Then handle escape effect
-        const handleEffect = () => {
-            if (!escapedVillain.escapeEffect || escapedVillain.escapeEffect === "None") {
-                return Promise.resolve();
-            }
-            const effectFn = window[escapedVillain.escapeEffect];
-            return typeof effectFn === 'function' 
-                ? effectFn(escapedVillain) 
-                : Promise.resolve();
-        };
+  const handleDiscard = () => {
+    if (escapedVillain.bystander?.length > 0) {
+      return showDiscardCardPopup(escapedVillain);
+    }
+    return Promise.resolve();
+  };
 
-        // Execute in sequence
-        handleKO()
-            .then(handleDiscard)
-            .then(handleEffect)
-            .then(resolve)
-            .catch(reject);
-    });
+  const handleEffect = () => {
+    if (!escapedVillain.escapeEffect || escapedVillain.escapeEffect === "None") {
+      return Promise.resolve();
+    }
+    const effectFn = window[escapedVillain.escapeEffect];
+    return typeof effectFn === "function" ? effectFn(escapedVillain) : Promise.resolve();
+  };
+
+return handleKO()
+  .then(handleDiscard)
+  .then(handleEffect)
+  .then(() => {
+    updateGameBoard();
+  });
 }
+
 
 async function processVillainCard() {
     if (villainDeck.length === 0 && !impossibleToDraw) {
@@ -4741,6 +4827,36 @@ function setupMinimizeSystem() {
             const popup = e.target.closest('.order-choice-popup');
             if (popup) minimizePopup(popup);
         }
+
+        // Handle minimize buttons for win popup
+        if (e.target.closest('.win-popup-minimizebutton')) {
+            const popup = e.target.closest('.win-popup-class');
+            if (popup) minimizePopup(popup);
+        }
+
+        // Handle minimize buttons for draw popup
+        if (e.target.closest('.draw-popup-minimizebutton')) {
+            const popup = e.target.closest('.draw-popup-class');
+            if (popup) minimizePopup(popup);
+        }
+
+                // Handle minimize buttons for defeat popup
+        if (e.target.closest('.defeat-popup-minimizebutton')) {
+            const popup = e.target.closest('.defeat-popup-class');
+            if (popup) minimizePopup(popup);
+        }
+
+                        // Handle minimize buttons for final blow popup
+        if (e.target.closest('.final-blow-popup-minimizebutton')) {
+            const popup = e.target.closest('.final-blow-popup-class');
+            if (popup) minimizePopup(popup);
+        }
+
+                                // Handle minimize buttons for played cards popup
+        if (e.target.closest('#played-cards-window-minimize')) {
+            const popup = e.target.closest('#played-cards-window');
+            if (popup) minimizePopup(popup);
+        }
            
         // Handle maximize buttons
         if (e.target.closest('.reopen-popup-btn')) {
@@ -4817,7 +4933,7 @@ function maximizeAllPopups() {
             state.popup.style.display = 'block';
             
             // Track popup types for overlay management
-            if (state.popup.id === 'played-cards-popup') {
+            if (state.popup.id === 'played-cards-window') {
                 hasPlayedCardsPopup = true;
             } else if (!state.isNewPopup && !state.isInfoOrChoicePopup) {
                 hasRegularPopup = true;
@@ -4910,17 +5026,42 @@ function removeEventHandlers() {
 
 // Extract event handler restoration to separate function
 function restoreEventHandlers() {
-    for (let i = 0; i < hq.length; i++) {
-        const hqCell = document.querySelector(`#hq-${i + 1}`);
-        if (hqCell && hq[i]) {
-            hqCell.clickHandler = () => {
-                if (!isRecruiting) {
-                    showHeroRecruitButton(i + 1, hq[i]);
-                }
-            };
-            hqCell.addEventListener('click', hqCell.clickHandler);
-        }
-    }
+for (let i = 0; i < hq.length; i++) {
+  const hqCell = document.querySelector(`#hq-${i + 1}`);
+  const card = hq[i];
+
+  if (!hqCell) continue;
+
+  // Remove any old handler so we don't double-bind on updates
+  if (hqCell.clickHandler) {
+    hqCell.removeEventListener('click', hqCell.clickHandler);
+    hqCell.clickHandler = null;
+  }
+
+  if (!card) continue;
+
+  let handler = null;
+
+  if (card.type === 'Hero' || card.type === 'Bystander') {
+    handler = () => {
+      if (!isRecruiting) {
+        showHeroRecruitButton(i + 1, card);
+      }
+    };
+  } else if (card.type === 'Villain') {
+    handler = () => {
+      if (!isRecruiting) {
+        showHQAttackButton(i, card);
+      }
+    };
+  }
+
+  if (handler) {
+    hqCell.clickHandler = handler;
+    hqCell.addEventListener('click', handler);
+  }
+}
+
 
     for (let i = 0; i < city.length; i++) {
         const cityCell = document.querySelector(`#city-${i + 1}`);
@@ -5038,193 +5179,222 @@ document.getElementById('currentVictoryPointsTally').innerHTML = `${currentVicto
 }
 
 function updateHighlights() {
-for (let i = 0; i < hq.length; i++) {
+  // ===== HQ highlights =====
+  for (let i = 0; i < hq.length; i++) {
     const hqCell = document.querySelector(`#hq-${i + 1}`);
-    if (hq[i]) {
-        // Remove any existing highlight
-        hqCell.classList.remove('affordable');
-        
-        // Get the reserved recruit points for this HQ
-        let reservedRecruit = 0;
-        switch(i + 1) {
-            case 1: reservedRecruit = hq1ReserveRecruit; break;
-            case 2: reservedRecruit = hq2ReserveRecruit; break;
-            case 3: reservedRecruit = hq3ReserveRecruit; break;
-            case 4: reservedRecruit = hq4ReserveRecruit; break;
-            case 5: reservedRecruit = hq5ReserveRecruit; break;
+    if (!hqCell) continue;
+
+    // Clear per-slot classes
+    hqCell.classList.remove('affordable', 'attackable', 'needs-recruit');
+
+    const card = hq[i];
+    if (!card) continue;
+
+    if (card.type === "Hero") {
+      // ---- existing hero affordability ----
+      let reservedRecruit = 0;
+      switch(i + 1) {
+        case 1: reservedRecruit = hq1ReserveRecruit; break;
+        case 2: reservedRecruit = hq2ReserveRecruit; break;
+        case 3: reservedRecruit = hq3ReserveRecruit; break;
+        case 4: reservedRecruit = hq4ReserveRecruit; break;
+        case 5: reservedRecruit = hq5ReserveRecruit; break;
+      }
+      if (totalRecruitPoints + reservedRecruit >= card.cost) {
+        hqCell.classList.add('affordable');
+      }
+
+    } else if (card.type === "Villain") {
+      // ---- NEW: villain-in-HQ attackability (mirror city logic) ----
+      const hasFightCondition = card.fightCondition && card.fightCondition !== "None";
+      const conditionMet = !hasFightCondition || isVillainConditionMet(card);
+
+      if (conditionMet) {
+
+        const villainAttack = recalculateHQVillainAttack(card);
+        const canAttackWithAttackPoints =
+          totalAttackPoints >= villainAttack;
+
+        const hasBribeKeyword = Array.isArray(card.keywords) && card.keywords.includes("Bribe");
+        const canAttackWithRecruitPoints =
+          (recruitUsedToAttack || hasBribeKeyword) &&
+          (totalAttackPoints + totalRecruitPoints) >= villainAttack;
+
+        if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
+          hqCell.classList.add('attackable');
+          if (canAttackWithRecruitPoints && !canAttackWithAttackPoints) {
+            hqCell.classList.add('needs-recruit');
+          }
         }
-        
-        // Add highlight if player can afford this hero (including reserved points)
-        if (totalRecruitPoints + reservedRecruit >= hq[i].cost) {
-            hqCell.classList.add('affordable');
-        }
+      }
     }
-}
+  }
 
-const sidekickCheckboxes = document.querySelectorAll('#sidekick-selection input[type=checkbox]');
-const isAnySidekickChecked = Array.from(sidekickCheckboxes).some(checkbox => checkbox.checked);
+  // ===== Sidekick / SHIELD affordability (unchanged) =====
+  const sidekickCheckboxes = document.querySelectorAll('#sidekick-selection input[type=checkbox]');
+  const isAnySidekickChecked = Array.from(sidekickCheckboxes).some(c => c.checked);
 
- if (totalRecruitPoints >= 2 && !sidekickRecruited && isAnySidekickChecked) {
+  if (totalRecruitPoints >= 2 && !sidekickRecruited && isAnySidekickChecked) {
     document.getElementById("sidekick-deck").classList.add('affordable');
-} else {
+  } else {
     document.getElementById("sidekick-deck").classList.remove('affordable');
-}
-
- if (sidekickRecruited) {
+  }
+  if (sidekickRecruited) {
     document.getElementById("sidekick-deck").classList.remove('affordable');
-}
-   
-    if (totalRecruitPoints >= 3) {
-        document.getElementById("shield-deck").classList.add('affordable');
-    } else {
-        document.getElementById("shield-deck").classList.remove('affordable');
-    }
+  }
 
-    const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked')?.value;
-    const selectedScheme = schemes.find(scheme => scheme.name === selectedSchemeName);
+  if (totalRecruitPoints >= 3) {
+    document.getElementById("shield-deck").classList.add('affordable');
+  } else {
+    document.getElementById("shield-deck").classList.remove('affordable');
+  }
 
-    // Highlight villains in city
-// Create an array of location names in the same order as the city array
-const cityLocations = ["Bridge", "Streets", "Rooftops", "Bank", "Sewers"];
-
-// Create an array of reserve attack values in the same order
-const cityReserveAttacks = [
+  // ===== City villains (as you had) =====
+  const cityReserveAttacks = [
     bridgeReserveAttack,
     streetsReserveAttack,
     rooftopsReserveAttack,
     bankReserveAttack,
     sewersReserveAttack,
-];
+  ];
 
-for (let i = 0; i < city.length; i++) {
+  for (let i = 0; i < city.length; i++) {
     const cityCell = document.querySelector(`#city-${i + 1}`);
-    cityCell.classList.remove('attackable');
-    cityCell.classList.remove('needs-recruit');
-    
-    if (city[i]) {
-        // First check if fight condition is met (if it exists)
-        const hasFightCondition = city[i].fightCondition && city[i].fightCondition !== "None";
-        const conditionMet = !hasFightCondition || isVillainConditionMet(city[i]);
-        
-        if (conditionMet) {
-            // Calculate effective attack value
-            const locationAttack = window[`city${i + 1}LocationAttack`] || 0;
-            const villainAttack = recalculateVillainAttack(city[i]) + locationAttack;
-          
-            // Get reserved attack points for this city slot
-            const reservedAttack = cityReserveAttacks[i] || 0;
-            
-            // Check if attackable with current points (including reserved points)
-            const canAttackWithAttackPoints = totalAttackPoints + reservedAttack >= villainAttack;
-            const hasBribeKeyword = city[i].keyword1 === "Bribe" || 
-                        city[i].keyword2 === "Bribe" || 
-                        city[i].keyword3 === "Bribe";
-            const canAttackWithRecruitPoints = (recruitUsedToAttack || hasBribeKeyword) && 
-                                  (totalAttackPoints + totalRecruitPoints + reservedAttack >= villainAttack);
-            
-            if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
-                cityCell.classList.add('attackable');
-               
-                // Add special class if recruit points would be needed
-                if (canAttackWithRecruitPoints && !canAttackWithAttackPoints) {
-                    cityCell.classList.add('needs-recruit');
-                }
-            }
-        }
-    }
-}
+    if (!cityCell) continue;
 
-if (demonGoblinDeck.length > 0) {
+    cityCell.classList.remove('attackable', 'needs-recruit');
+
+    if (city[i]) {
+      const hasFightCondition = city[i].fightCondition && city[i].fightCondition !== "None";
+      const conditionMet = !hasFightCondition || isVillainConditionMet(city[i]);
+
+      if (conditionMet) {
+        const locationAttack = window[`city${i + 1}LocationAttack`] || 0;
+        const villainAttack = recalculateVillainAttack(city[i]) + locationAttack;
+        const reservedAttack = cityReserveAttacks[i] || 0;
+
+        const canAttackWithAttackPoints = (totalAttackPoints + reservedAttack) >= villainAttack;
+        const hasBribeKeyword = Array.isArray(city[i].keywords) && city[i].keywords.includes("Bribe");
+        const canAttackWithRecruitPoints =
+          (recruitUsedToAttack || hasBribeKeyword) &&
+          (totalAttackPoints + totalRecruitPoints + reservedAttack) >= villainAttack;
+
+        if (canAttackWithAttackPoints || canAttackWithRecruitPoints) {
+          cityCell.classList.add('attackable');
+          if (canAttackWithRecruitPoints && !canAttackWithAttackPoints) {
+            cityCell.classList.add('needs-recruit');
+          }
+        }
+      }
+    }
+  }
+
+  // ===== Demon Goblin deck (unchanged) =====
+  if (demonGoblinDeck.length > 0) {
     const demonGoblinAttackCost = 2;
     const demonDeck = document.getElementById('demon-goblin-deck');
-    
     if (demonDeck) {
-        // Calculate available attack power
-        const availableAttack = recruitUsedToAttack 
-            ? totalAttackPoints + totalRecruitPoints 
-            : totalAttackPoints;
-        
-        // Check if attackable
-        const isAttackable = availableAttack >= demonGoblinAttackCost;
-        
-        // Toggle the 'attackable' class
-        if (isAttackable) {
-            demonDeck.classList.add('attackable');
-        } else {
-            demonDeck.classList.remove('attackable');
-        }
+      const availableAttack = recruitUsedToAttack
+        ? totalAttackPoints + totalRecruitPoints
+        : totalAttackPoints;
+      const isAttackable = availableAttack >= demonGoblinAttackCost;
+      demonDeck.classList.toggle('attackable', isAttackable);
     }
-}
+  }
+
+  // ===== Mastermind (unchanged except optional chaining safety) =====
+  // --- Recompute attackability highlight for the Mastermind ---
 
 let mastermind = getSelectedMastermind();
 let mastermindAttack = recalculateMastermindAttack(mastermind);
 
-// Check if Mastermind has Bribe keyword
-const hasMastermindBribe = mastermind.keyword1 === "Bribe" || 
-                           mastermind.keyword2 === "Bribe" || 
-                           mastermind.keyword3 === "Bribe";
+// Keywords / mixing rules
+const hasMastermindBribe = Array.isArray(mastermind.keywords) && mastermind.keywords.includes("Bribe");
+const canUseRecruitForAttack = (recruitUsedToAttack && !negativeZoneAttackAndRecruit) || hasMastermindBribe;
 
-const canUseRecruitForAttack = recruitUsedToAttack || hasMastermindBribe;
-
-// Count defeated mastermind cards (tactics + final blow if applicable)
-const defeatedMasterminds = victoryPile.filter(card => card.type === "Mastermind");
-const maxDefeatsAllowed = finalBlowEnabled ? 5 : 4;
-
-// Determine if mastermind can still be attacked
-const canStillBeAttacked = defeatedMasterminds.length < maxDefeatsAllowed;
+// Current state
 const hasTacticsRemaining = mastermind.tactics.length > 0;
+const finalBlowNeeded = isFinalBlowRequired(mastermind);
+const mastermindTrulyDefeated = isMastermindDefeated(mastermind);
 
-// Calculate total points available (any combination)
-const totalAvailablePoints = totalAttackPoints + totalRecruitPoints + mastermindReserveAttack;
+// Pools (mirror your main can-attack logic)
+// Use base pools for the Forcefield math, and include reserve only in "no forcefield" comparisons
+const baseTotal = totalAttackPoints + totalRecruitPoints;
 
-// Check if player can pay forcefield AND attack mastermind
+// Build effective “playerAttackPoints” as per your main click logic
+let playerAttackPoints = negativeZoneAttackAndRecruit ? totalRecruitPoints : totalAttackPoints;
+
+// If recruit can be used for attack (via “Use Recruit to Attack” or Bribe) while NOT in Negative Zone,
+// add recruit to the attackable pool like your main handler does.
+if (recruitUsedToAttack === true && !negativeZoneAttackAndRecruit) {
+  playerAttackPoints += totalRecruitPoints;
+}
+
+// Bribe allows mixing in both modes
+if (hasMastermindBribe && !negativeZoneAttackAndRecruit) {
+  playerAttackPoints += totalRecruitPoints;
+}
+if (hasMastermindBribe && negativeZoneAttackAndRecruit) {
+  playerAttackPoints += totalAttackPoints;
+}
+
+// Determine if we can pay costs this click
 let canAttack = false;
+let requiredPoints = mastermindAttack;
 
 if (invincibleForceField > 0) {
-    // Must pay forcefield first from total points, then have enough appropriate points for mastermind
-    const pointsAfterForcefield = totalAvailablePoints - invincibleForceField;
-    
-    if (pointsAfterForcefield >= 0) {
-        // Now check if we have enough of the right type of points for the mastermind attack
-        if (canUseRecruitForAttack) {
-            // Can use any combination of points for mastermind attack
-            canAttack = pointsAfterForcefield >= mastermindAttack;
-        } else {
-            // Can only use attack points for mastermind attack
-            // Calculate how many attack points are left after paying forcefield
-            // (Forcefield can be paid with any points, but we prioritize using recruit points first)
-            const recruitUsedForForcefield = Math.min(invincibleForceField, totalRecruitPoints);
-            const attackUsedForForcefield = invincibleForceField - recruitUsedForForcefield;
-            const attackPointsLeft = totalAttackPoints - attackUsedForForcefield;
-            
-            canAttack = attackPointsLeft >= mastermindAttack;
-        }
+  // Forcefield must be paid first from base pools (attack or recruit), then check we have enough
+  const pointsAfterForcefield = baseTotal - invincibleForceField;
+
+  if (pointsAfterForcefield >= 0) {
+    if (hasMastermindBribe || recruitUsedToAttack) {
+      // Any combination for the MM attack after forcefield
+      canAttack = pointsAfterForcefield >= mastermindAttack;
     } else {
-        canAttack = false;
+      // MM attack must be paid with the appropriate pool after forcefield
+      // Spend recruit on forcefield first where possible, then attack
+      const recruitUsedForForcefield = Math.min(invincibleForceField, totalRecruitPoints);
+      const attackUsedForForcefield = invincibleForceField - recruitUsedForForcefield;
+      const attackPointsLeft = totalAttackPoints - attackUsedForForcefield;
+      canAttack = attackPointsLeft >= mastermindAttack;
     }
+    requiredPoints = mastermindAttack + invincibleForceField;
+  } else {
+    canAttack = false;
+  }
 } else {
-    // No forcefield - normal rules
-    if (canUseRecruitForAttack) {
-        canAttack = totalAvailablePoints >= mastermindAttack;
-    } else {
-        canAttack = totalAttackPoints + mastermindReserveAttack >= mastermindAttack;
-    }
+  // No forcefield – normal rules
+  if (hasMastermindBribe || recruitUsedToAttack) {
+    // Any combination; include reserve in the check (matches your click logic)
+    canAttack = (baseTotal + mastermindReserveAttack) >= mastermindAttack;
+  } else {
+    // Only the appropriate pool + reserve (reserve is attack-only)
+    canAttack = (playerAttackPoints + mastermindReserveAttack) >= mastermindAttack;
+  }
 }
 
-// Mastermind is attackable if:
-// 1. Player can attack AND
-// 2. Either: a) Has tactics remaining OR b) Final Blow is enabled and at exactly 4 defeats
-const canAttackMastermind = canAttack && 
-                          (hasTacticsRemaining || 
-                           (finalBlowEnabled && defeatedMasterminds.length === 4));
+// Scheme condition: Weave a Web of Lies
+const bystandersInVP = victoryPile.filter(card => card.type === "Bystander");
+const schemeRadio = document.querySelector('#scheme-section input[type=radio]:checked');
+const schemeName = schemeRadio ? schemeRadio.value : null;
+const scheme = schemeName ? schemes.find(s => s.name === schemeName) : null;
+const weaveCondOk = (scheme?.name !== "Weave a Web of Lies") || (bystandersInVP.length >= schemeTwistCount);
 
-// Update UI
-if (canAttackMastermind && canStillBeAttacked) {
-    document.getElementById("mastermind").classList.add('attackable');
-} else {
-    document.getElementById("mastermind").classList.remove('attackable');
+// Final gate: can attack if we can pay AND scheme allows AND there is either a tactic to fight or a Final Blow pending
+const canAttackMastermind =
+  !mastermindTrulyDefeated &&
+  canAttack &&
+  weaveCondOk &&
+  (hasTacticsRemaining || finalBlowNeeded);
+
+// Toggle highlight
+const mmEl = document.getElementById("mastermind");
+if (mmEl) {
+  mmEl.classList.toggle('attackable', canAttackMastermind);
 }
+
 }
+
 
 function updateHighlightsNegativeZone() {
       for (let i = 0; i < hq.length; i++) {
@@ -5302,19 +5472,17 @@ for (let i = 0; i < city.length; i++) {
         
         if (conditionMet) {
             // Calculate effective attack value
-            const villainAttack = recalculateVillainAttack(city[i]);
+            let villainAttack = recalculateVillainAttack(city[i]);
 
             const locationAttack = window[`city${i + 1}LocationAttack`] || 0;
 
             villainAttack += locationAttack;
             
             // Check if attackable with current points
-            const canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
-            const hasBribeKeyword = city[i].keyword1 === "Bribe" || 
-                        city[i].keyword2 === "Bribe" || 
-                        city[i].keyword3 === "Bribe";
-            const canAttackWithCombo = (hasBribeKeyword || recruitUsedToAttack) && 
-                                  (totalAttackPoints + totalRecruitPoints >= villainAttack);
+const canAttackWithRecruitPoints = totalRecruitPoints >= villainAttack;
+const hasBribeKeyword = city[i].keywords && city[i].keywords.includes("Bribe");
+const canAttackWithCombo = (hasBribeKeyword || recruitUsedToAttack) && 
+                          (totalAttackPoints + totalRecruitPoints >= villainAttack);
          
             if (canAttackWithRecruitPoints || canAttackWithCombo) {
                 cityCell.classList.add('attackable');
@@ -5325,39 +5493,90 @@ for (let i = 0; i < city.length; i++) {
     }
 }
 
+// ---------- Mastermind highlight (Negative Zone: RECRUIT is the attack currency) ----------
 let mastermind = getSelectedMastermind();
 let mastermindAttack = recalculateMastermindAttack(mastermind);
 
-// Check if Mastermind has Bribe keyword
-const hasMastermindBribe = mastermind.keyword1 === "Bribe" || 
-                           mastermind.keyword2 === "Bribe" || 
-                           mastermind.keyword3 === "Bribe";
+// Keywords / mixing rules
+const hasMastermindBribe = Array.isArray(mastermind.keywords) && mastermind.keywords.includes("Bribe");
+// In Negative Zone, base attack currency is RECRUIT.
+// If either Bribe OR "Use Recruit to Attack" is active, allow mixing ATTACK to top up RECRUIT.
+const canMixPools = hasMastermindBribe || recruitUsedToAttack;
 
-const canAttackWithCombo = (hasMastermindBribe || recruitUsedToAttack) && 
-                                 (totalAttackPoints + totalRecruitPoints >= mastermindAttack) &&
-                                 (totalRecruitPoints < mastermindAttack);
+// Pools (keep this simple in NZ: don't involve reserve here so highlight matches city logic)
+const baseRecruit = totalRecruitPoints;
+const baseAttack  = totalAttackPoints;
+const combined    = baseRecruit + baseAttack;
 
-// Count defeated mastermind cards (tactics + final blow if applicable)
-const defeatedMasterminds = victoryPile.filter(card => card.type === "Mastermind");
-const maxDefeatsAllowed = finalBlowEnabled ? 5 : 4;
+// Forcefield handling: pay forcefield first from combined pools, then check affordability
+let canPayAndAttack = false;
+let needsRecruit = false;
 
-// Determine if mastermind can still be attacked
-const canStillBeAttacked = defeatedMasterminds.length < maxDefeatsAllowed;
-const hasEnoughPoints = totalRecruitPoints >= mastermindAttack || canAttackWithCombo;
-const hasTacticsRemaining = mastermind.tactics.length > 0;
+if (invincibleForceField > 0) {
+  const afterFF = combined - invincibleForceField;
+  if (afterFF >= 0) {
+    if (canMixPools) {
+      // Any mix may pay the remaining mastermindAttack
+      canPayAndAttack = afterFF >= mastermindAttack;
+      // Mark needs-recruit when recruit alone (post-FF) is insufficient
+      // Compute recruit remaining after paying FF using recruit first
+      const recruitUsedForFF = Math.min(invincibleForceField, baseRecruit);
+      const recruitLeftAfterFF = baseRecruit - recruitUsedForFF;
+      needsRecruit = canPayAndAttack && (recruitLeftAfterFF < mastermindAttack);
+    } else {
+      // Must pay mastermindAttack purely from RECRUIT after FF
+      const recruitUsedForFF = Math.min(invincibleForceField, baseRecruit);
+      const recruitLeftAfterFF = baseRecruit - recruitUsedForFF;
+      canPayAndAttack = recruitLeftAfterFF >= mastermindAttack;
+      needsRecruit = false; // recruit is mandatory anyway in NZ without mixing
+    }
+  } else {
+    canPayAndAttack = false;
+  }
+} else {
+  // No forcefield
+  if (canMixPools) {
+    canPayAndAttack = combined >= mastermindAttack;
+    // Needs recruit if ATTACK alone can't cover the cost (i.e., we truly need recruit to reach it)
+    needsRecruit = canPayAndAttack && (baseAttack < mastermindAttack);
+  } else {
+    canPayAndAttack = baseRecruit >= mastermindAttack;
+    needsRecruit = false; // recruit is the base currency here
+  }
+}
 
-const canAttackMastermind = hasEnoughPoints && 
-                          (hasTacticsRemaining || 
-                           (finalBlowEnabled && defeatedMasterminds.length === 4));
+// Scheme condition: Weave a Web of Lies
+const bystandersInVP = victoryPile.filter(card => card.type === "Bystander");
+const selectedSchemeNameNZ = document.querySelector('#scheme-section input[type=radio]:checked')?.value;
+const selectedSchemeNZ = selectedSchemeNameNZ ? schemes.find(s => s.name === selectedSchemeNameNZ) : null;
+const weaveOkNZ = (selectedSchemeNZ?.name !== "Weave a Web of Lies") ||
+                  (bystandersInVP.length >= schemeTwistCount);
+
+// Live mastermind state (new helpers)
+const hasTacticsRemainingNZ = mastermind.tactics.length > 0;
+const finalBlowNeededNZ     = isFinalBlowRequired(mastermind);
+const mastermindDefeatedNZ  = isMastermindDefeated(mastermind);
+
+// Final gate: can pay, scheme ok, and either tactics remain or a Final Blow is pending
+const canAttackMastermindNZ =
+  !mastermindDefeatedNZ &&
+  canPayAndAttack &&
+  weaveOkNZ &&
+  (hasTacticsRemainingNZ || finalBlowNeededNZ);
 
 // Update UI
-if (canAttackMastermind && canStillBeAttacked) {
-    document.getElementById("mastermind").classList.add('attackable');
-    if (totalRecruitPoints < mastermindAttack) {
-        document.getElementById("mastermind").classList.add('needs-recruit');
+const mmElNZ = document.getElementById("mastermind");
+if (mmElNZ) {
+  if (canAttackMastermindNZ) {
+    mmElNZ.classList.add('attackable');
+    if (needsRecruit) {
+      mmElNZ.classList.add('needs-recruit');
+    } else {
+      mmElNZ.classList.remove('needs-recruit');
     }
-} else {
-    document.getElementById("mastermind").classList.remove('attackable', 'needs-recruit');
+  } else {
+    mmElNZ.classList.remove('attackable', 'needs-recruit');
+  }
 }
 }
 
@@ -5436,55 +5655,78 @@ updateDeckImage(document.getElementById('sidekick-deck-card-back'), sidekickDeck
 }
 
 function updateGameBoard() {
-    for (let i = 0; i < hq.length; i++) {
+for (let i = 0; i < hq.length; i++) {
     const hqCell = document.querySelector(`#hq-${i + 1}`);
     const recruitButtonContainer = document.querySelector(`#hq${i + 1}-recruit-button-container`);
     const recruitButton = document.querySelector(`#hq${i + 1}-deck-recruit-button`);
     const recruitCostSpan = document.querySelector(`#hq${i + 1}-recruit-cost`);
 
-    // Clear only the hero image, not the entire cell content
-    const existingHeroImage = hqCell.querySelector('.card-image');
-    if (existingHeroImage) {
-        hqCell.removeChild(existingHeroImage);
+    if (!hqCell) continue;
+
+    // Clear previous content
+    const existingCardContainer = hqCell.querySelector('.card-container');
+    if (existingCardContainer) {
+        hqCell.removeChild(existingCardContainer);
     }
 
-    // Remove any existing click event listeners first to avoid duplicates
-    hqCell.removeEventListener('click', hqCell.clickHandler);
+    // Remove any existing click listener
+    if (hqCell.clickHandler) {
+        hqCell.removeEventListener('click', hqCell.clickHandler);
+        hqCell.clickHandler = null;
+    }
 
-    if (hq[i]) {
-        // Create an image element for the hero
-        const heroImage = document.createElement('img');
-        heroImage.src = hq[i].image;  // Use the image property from the hero object
-        heroImage.alt = hq[i].name;   // Set alt text as the hero's name
-        heroImage.classList.add('card-image'); // Add a class for styling if needed
-         heroImage.dataset.heroId = hq[i].id; // Add hero ID as data attribute
-    heroImage.dataset.hqIndex = i; // Add HQ index as data attribute
+    const card = hq[i];
 
-        // Append the image to the HQ cell
-        hqCell.appendChild(heroImage);
+    if (card) {
+        // Create card container
+        const cardContainer = document.createElement('div');
+        cardContainer.classList.add('card-container');
+        cardContainer.setAttribute('data-hq-index', i);
+        hqCell.appendChild(cardContainer);
 
-            hqCell.dataset.heroId = hq[i].id;
-    hqCell.dataset.hqIndex = i;
+        // Create image
+        const cardImage = document.createElement('img');
+        cardImage.src = card.image;
+        cardImage.alt = card.name;
+        cardImage.classList.add('card-image');
+        cardImage.dataset.heroId = card.id;
+        cardImage.dataset.hqIndex = i;
+        cardContainer.appendChild(cardImage);
 
-        // Create a named function for the click handler
-        hqCell.clickHandler = () => {
-            if (!isRecruiting) {
-                showHeroRecruitButton(i + 1, hq[i]);
-            }
-        };
+        // Set dataset for HQ
+        hqCell.dataset.heroId = card.id;
+        hqCell.dataset.hqIndex = i;
 
-        // Add the event listener
-        hqCell.addEventListener('click', hqCell.clickHandler);
+        // --- Add overlays or click logic based on card type ---
+        if (card.type === "Villain") {
+            applyCardOverlays(cardContainer, card, i, 'hq');
 
-        // Update the recruit cost dynamically
+            hqCell.clickHandler = () => {
+                if (!isRecruiting) {
+                    showHQAttackButton(i, card);
+                }
+            };
+            hqCell.addEventListener('click', hqCell.clickHandler);
+
+        } else if (card.type === "Hero" || card.type === "Bystander") {
+            hqCell.clickHandler = () => {
+                if (!isRecruiting) {
+                    showHeroRecruitButton(i + 1, card);
+                }
+            };
+            hqCell.addEventListener('click', hqCell.clickHandler);
+        }
+
+        // Update recruit cost icon
         if (recruitCostSpan) {
             recruitCostSpan.innerHTML = `<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">`;
         }
+
     } else {
-        // No action if the cell is empty
+        // Handle empty HQ slot
         hqCell.clickHandler = null;
         if (recruitButtonContainer) {
-            recruitButtonContainer.style.display = 'none'; // Hide the button if no hero is present
+            recruitButtonContainer.style.display = 'none';
         }
     }
 }
@@ -5714,7 +5956,7 @@ if (destroyedSpaces[i]) {
     // Create an image element
     const cardImage = document.createElement('img');
 
-        cardImage.src = "Visual Assets/Other/MasterStrike.webp";
+        cardImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
         cardImage.alt = "Destroyed City Space";
         cardImage.classList.add('destroyed-space');
         cardContainer.appendChild(cardImage);
@@ -5801,9 +6043,7 @@ updateVillainAttackValues(city[i], i);
     }
 
 if (
-  (city[i].keyword1 === "Cosmic Threat" ||
-   city[i].keyword2 === "Cosmic Threat" ||
-   city[i].keyword3 === "Cosmic Threat") &&
+  (city[i].keywords && city[i].keywords.includes("Cosmic Threat")) &&
   !city[i].cosmicThreatResolved
 ) {
   // Safety: if a previous render left a button in this card, remove it first
@@ -5813,15 +6053,16 @@ if (
   const keywordButtonText = document.createElement('span');
 
   // helper (lowercases the wanted class too)
-  const hasClass = (card, wanted) =>
-    ['class1','class2','class3'].some(k =>
-      String(card?.[k] ?? '').trim().toLowerCase() === String(wanted).trim().toLowerCase()
-    );
-
-  const allRevealableCosmicThreatCards = [
-    ...playerHand,
-    ...cardsPlayedThisTurn.filter(card => !card.isCopied && !card.sidekickToDestroy)
-  ];
+  const hasClass = (card, wanted) => {
+    if (!card?.classes) return false;
+    
+    const wantedClass = String(wanted).trim().toLowerCase();
+    
+    return card.classes.some(classType => {
+        const actualClass = String(classType ?? '').trim().toLowerCase();
+        return actualClass === wantedClass;
+    });
+  };
 
   keywordButton.className = 'keyword-overlay';
   keywordButtonText.className = 'city-keyword-button-text';
@@ -5829,51 +6070,38 @@ if (
   // === Per-villain setups ===
   if ((city[i].name === "Firelord" || city[i].name === "The Shaper of Worlds") && !city[i].cosmicThreatResolved) {
     keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Range.svg' alt='Range Icon' class='cosmic-threat-card-icons'>`;
-    const countRange = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'range')).length * 3;
-
-    keywordButton.addEventListener('click', (e) => {
-      // 1) set flag BEFORE any redraw to prevent rebuild
+    keywordButton.addEventListener('click', async (e) => {
       city[i].cosmicThreatResolved = true;
-      // 2) remove the actual clicked element instantly
       e.currentTarget.remove();
-      // 3) apply effect (this may call updateGameBoard)
-      cosmicThreat(city[i], i, countRange, 'Range');
+      await handleCosmicThreatCardSelection(city[i], i, 'Range');
     });
   } else if (city[i].name === "Morg" || city[i].name === "Kubik") {
     keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Instinct.svg' alt='Instinct Icon' class='cosmic-threat-card-icons'>`;
-    const countInstinct = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'instinct')).length * 3;
-
-    keywordButton.addEventListener('click', (e) => {
+    keywordButton.addEventListener('click', async (e) => {
       city[i].cosmicThreatResolved = true;
       e.currentTarget.remove();
-      cosmicThreat(city[i], i, countInstinct, 'Instinct');
+      await handleCosmicThreatCardSelection(city[i], i, 'Instinct');
     });
   } else if (city[i].name === "Stardust" || city[i].name === "Kosmos") {
     keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Covert.svg' alt='Covert Icon' class='cosmic-threat-card-icons'>`;
-    const countCovert = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'covert')).length * 3;
-
-    keywordButton.addEventListener('click', (e) => {
+    keywordButton.addEventListener('click', async (e) => {
       city[i].cosmicThreatResolved = true;
       e.currentTarget.remove();
-      cosmicThreat(city[i], i, countCovert, 'Covert');
+      await handleCosmicThreatCardSelection(city[i], i, 'Covert');
     });
   } else if (city[i].name === "Terrax the Tamer") {
     keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Strength.svg' alt='Strength Icon' class='cosmic-threat-card-icons'>`;
-    const countStrength = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'strength')).length * 3;
-
-    keywordButton.addEventListener('click', (e) => {
+    keywordButton.addEventListener('click', async (e) => {
       city[i].cosmicThreatResolved = true;
       e.currentTarget.remove();
-      cosmicThreat(city[i], i, countStrength, 'Strength');
+      await handleCosmicThreatCardSelection(city[i], i, 'Strength');
     });
   } else if (city[i].name === "The Mapmakers") {
     keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Tech.svg' alt='Tech Icon' class='cosmic-threat-card-icons'>`;
-    const countTech = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'tech')).length * 3;
-
-    keywordButton.addEventListener('click', (e) => {
+    keywordButton.addEventListener('click', async (e) => {
       city[i].cosmicThreatResolved = true;
       e.currentTarget.remove();
-      cosmicThreat(city[i], i, countTech, 'Tech');
+      await handleCosmicThreatCardSelection(city[i], i, 'Tech');
     });
   } else if (
     city[i].name === "Arishem, The Judge" ||
@@ -5883,7 +6111,6 @@ if (
     city[i].name === "Tiamut, The Dreaming Celestial"
   ) {
     // Dual-choice villains – delegate to your chooser
-    // (Set the flag and remove instantly; the chooser will call cosmicThreat)
     const dualMap = {
       "Arishem, The Judge": ["Range", "Strength"],
       "Exitar, The Exterminator": ["Tech", "Range"],
@@ -5896,8 +6123,8 @@ if (
       `Cosmic Threat: <img src='Visual Assets/Icons/${a}.svg' alt='${a} Icon' class='cosmic-threat-card-icons'> or <img src='Visual Assets/Icons/${b}.svg' alt='${b} Icon' class='cosmic-threat-card-icons'>`;
 
     keywordButton.addEventListener('click', async (e) => {
-      city[i].cosmicThreatResolved = true; // guard first
-      e.currentTarget.remove();            // instant disappearance
+      city[i].cosmicThreatResolved = true;
+      e.currentTarget.remove();
       await handleCosmicThreatChoice(city[i], i);
     });
   } else {
@@ -5956,88 +6183,75 @@ if (isTargetMastermind && !mastermindCosmicThreatResolved && mastermindContainer
   keywordButton.className = 'mastermind-keyword-overlay';        // same styling as city
   keywordButtonText.className = 'city-keyword-button-text';
 
-  // shared pools/helpers
-  const allRevealable = [
-    ...playerHand,
-    ...cardsPlayedThisTurn.filter(card => !card.isCopied && !card.sidekickToDestroy)
-  ];
-  const hasClass = (card, wanted) =>
-    ['class1','class2','class3'].some(k =>
-      String(card?.[k] ?? '').trim().toLowerCase() === String(wanted).trim().toLowerCase()
-    );
+  if (mastermind.name === 'Galactus') {
+    keywordButtonText.innerHTML = `
+      <div>Cosmic Threat:</div>
+      <div>
+        <img src='Visual Assets/Icons/Strength.svg' alt='Strength Icon' class='cosmic-threat-card-icons'>
+        <img src='Visual Assets/Icons/Instinct.svg' alt='Instinct Icon' class='cosmic-threat-card-icons'>
+        <img src='Visual Assets/Icons/Covert.svg'   alt='Covert Icon'   class='cosmic-threat-card-icons'>
+        <img src='Visual Assets/Icons/Tech.svg'     alt='Tech Icon'     class='cosmic-threat-card-icons'>
+        <img src='Visual Assets/Icons/Range.svg'    alt='Range Icon'    class='cosmic-threat-card-icons'>
+      </div>
+    `;
 
-if (mastermind.name === 'Galactus') {
-  keywordButtonText.innerHTML = `
-    <div>Cosmic Threat:</div>
-    <div>
-      <img src='Visual Assets/Icons/Strength.svg' alt='Strength Icon' class='cosmic-threat-card-icons'>
-      <img src='Visual Assets/Icons/Instinct.svg' alt='Instinct Icon' class='cosmic-threat-card-icons'>
-      <img src='Visual Assets/Icons/Covert.svg'   alt='Covert Icon'   class='cosmic-threat-card-icons'>
-      <img src='Visual Assets/Icons/Tech.svg'     alt='Tech Icon'     class='cosmic-threat-card-icons'>
-      <img src='Visual Assets/Icons/Range.svg'    alt='Range Icon'    class='cosmic-threat-card-icons'>
-    </div>
-  `;
+    keywordButton.addEventListener('click', async (e) => {
+      // Visually remove to avoid duplicate overlays, but do NOT mark resolved yet
+      e.currentTarget.remove();
 
-  keywordButton.addEventListener('click', async (e) => {
-    // Visually remove to avoid duplicate overlays, but do NOT mark resolved yet
-    e.currentTarget.remove();
+      const chosenClass = await showGalactusClassChoicePopup(); // returns 'Strength' | ... | null
+      if (!chosenClass) {
+        // Cancelled: ensure the flag stays false and re-render so button returns
+        mastermindCosmicThreatResolved = false;
+        updateGameBoard();
+        return;
+      }
 
-    const chosenClass = await showGalactusClassChoicePopup(); // returns 'Strength' | ... | null
-    if (!chosenClass) {
-      // Cancelled: ensure the flag stays false and re-render so button returns
-      mastermindCosmicThreatResolved = false;
+      // Use helper function to get quantity selection
+      const { attackReduction, chosenClass: finalClass } = await handleGalactusCosmicThreatCardSelection(chosenClass);
+      
+      if (finalClass) {
+        applyMastermindCosmicThreat(mastermind, attackReduction, finalClass);
+        // Only now mark it resolved
+        mastermindCosmicThreatResolved = true;
+      } else {
+        // Cancelled: re-render button
+        mastermindCosmicThreatResolved = false;
+      }
+      
       updateGameBoard();
-      return;
-    }
+    });
 
-    // Recompute revealables live
-    const livePool = [
-      ...playerHand,
-      ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy)
-    ];
-    const hasClass = (card, wanted) =>
-      ['class1','class2','class3'].some(k =>
-        String(card?.[k] ?? '').trim().toLowerCase() === String(wanted).trim().toLowerCase()
-      );
+  } else {
+    const threshold = mastermind.name === 'The Beyonder' ? 5 : 6;
+    keywordButtonText.innerHTML = `
+      <div>Cosmic Threat:</div>
+      <div>${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards</div>
+    `;
 
-    const attackReduction = livePool.filter(c => hasClass(c, chosenClass)).length * 3;
+    keywordButton.addEventListener('click', async () => {
+      // Remove visual button immediately
+      const btn = mastermindContainer.querySelector(`#${MM_BTN_ID}`);
+      if (btn) btn.remove();
 
-    applyMastermindCosmicThreat(mastermind, attackReduction, chosenClass);
-    // Only now mark it resolved
-    mastermindCosmicThreatResolved = true;
-    updateGameBoard();
-  });
-
-} else {
-  const threshold = mastermind.name === 'The Beyonder' ? 5 : 6;
-  keywordButtonText.innerHTML = `
-    <div>Cosmic Threat:</div>
-    <div>${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards</div>
-  `;
-
-  keywordButton.addEventListener('click', () => {
-    // Recompute revealables live
-    const livePool = [
-      ...playerHand,
-      ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy)
-    ];
-    const attackReduction = livePool
-      .filter(c => typeof c?.cost === 'number' && c.cost >= threshold).length * 3;
-
-    // Remove visual button, apply reduction, then flag as resolved
-    const btn = mastermindContainer.querySelector(`#${MM_BTN_ID}`);
-    if (btn) btn.remove();
-
-    applyMastermindCosmicThreat(
-      mastermind,
-      attackReduction,
-      `${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards`
-    );
-
-    mastermindCosmicThreatResolved = true;
-    updateGameBoard();
-  });
-}
+      // Use helper function to get quantity selection
+      const { attackReduction } = await handleBeyonderCosmicThreatCardSelection(threshold);
+      
+      if (attackReduction > 0) {
+        applyMastermindCosmicThreat(
+          mastermind,
+          attackReduction,
+          `${threshold}+ <img src='Visual Assets/Icons/Cost.svg' alt='Cost Icon' class='cosmic-threat-card-icons'> Cards`
+        );
+        mastermindCosmicThreatResolved = true;
+      } else {
+        // Cancelled: re-render button
+        mastermindCosmicThreatResolved = false;
+      }
+      
+      updateGameBoard();
+    });
+  }
 
   keywordButton.appendChild(keywordButtonText);
   mastermindContainer.appendChild(keywordButton);
@@ -6236,7 +6450,6 @@ newCityCell.classList.add('city-cell');
 updateEvilWinsTracker();
 
 if (lastTurn && !lastTurnMessageShown) {
-    console.log('The Villains have completed their scheme but it is too late! You\'ve already defeated the Mastermind!');
     lastTurnMessageShown = true; // Prevent future logs
 } else {
     // Check Scheme end game conditions
@@ -6424,6 +6637,45 @@ if (lastTurn && !lastTurnMessageShown) {
                 }
                 break;
 
+case "theCloneSagaEscapes": {
+  const villains = escapedVillainsDeck.filter(v => v && v.type === "Villain");
+  const hasDuplicateName = villains.some((v, i, arr) =>
+    arr.findIndex(x => x && x.name === v.name) !== i
+  );
+
+  if (hasDuplicateName || villainDeck.length === 0) {
+    finalTwist = true;
+    document.getElementById('defeat-context').innerHTML =
+      `Two Villains with the same name have escaped or the Villain Deck has run out. ${mastermind.name}'s clones have taken the place of the originals, erasing any hint of who was even real in the first place.`;
+    showDefeatPopup();
+  }
+  break;
+}
+
+                case "5VillainHQ":
+                if (hq.filter(item => item.type === "Villain").length === 5) {
+                    finalTwist = true;
+                    document.getElementById('defeat-context').innerHTML = `5 Villains now occupy the HQ. ${mastermind.name} controls the Daily Bugle, twisting every headline to serve their agenda. The city will believe whatever they say.`;
+                    showDefeatPopup();
+                }
+                break;
+
+                case "6EscapedSinister6":
+                if (escapedVillainsDeck.filter(item => item.team === "Sinister Six").length >= 6 || villainDeck.length === 0) {
+                    finalTwist = true;
+                    document.getElementById('defeat-context').innerHTML = `6 Sinister Six Villains have escaped or the Villain Deck has run out. ${mastermind.name}'s mutations spread unchecked, and the world is overrun by spider-powered hybrids. Humanity's era has come to an end.`;
+                    showDefeatPopup();
+                }
+                break;
+
+                case "weaveAWebOfLies7Twists":
+                if (twistCount >= 7) {
+                    finalTwist = true;
+                    document.getElementById('defeat-context').innerHTML = `The web of lies is complete. ${mastermind.name} controls the narrative, and the world will never know the truth again.`;
+                    showDefeatPopup();
+                }
+                break;
+
 
             default:
                 console.log(`Scheme End Game "${selectedSchemeEndGame}" is not yet defined.`);
@@ -6506,6 +6758,342 @@ if (negativeZoneAttackAndRecruit) {
 
 }
 
+// Helper function to apply overlays to any card container
+function applyCardOverlays(cardContainer, card, index, location = 'hq') {
+    // Add buff overlays
+    const currentTempBuff = window[`${location}${index + 1}TempBuff`];
+    if (currentTempBuff !== 0) {
+        const tempBuffOverlay = document.createElement('div');
+        tempBuffOverlay.className = 'temp-buff-overlay';
+        tempBuffOverlay.innerHTML = `<p>${currentTempBuff} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
+        cardContainer.appendChild(tempBuffOverlay);
+    }
+
+    const currentPermBuff = window[`${location}${index + 1}PermBuff`];
+    if (currentPermBuff !== 0) {
+        const permBuffOverlay = document.createElement('div');
+        permBuffOverlay.className = 'perm-buff-overlay';
+        permBuffOverlay.innerHTML = ``;
+        cardContainer.appendChild(permBuffOverlay);
+    }
+
+    // Add Dark Portal overlay if this space has a Dark Portal
+    if (darkPortalSpaces[index] && location === 'city') {
+        const darkPortalOverlay = document.createElement('div');
+        darkPortalOverlay.className = 'dark-portal-overlay';
+        darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+        cardContainer.appendChild(darkPortalOverlay);
+    }
+
+    // Update attack values for villains
+    if (card.type === "Villain") {
+        updateVillainAttackValues(card, index);
+
+        const attackFromMastermind = card.attackFromMastermind || 0;
+        const attackFromScheme = card.attackFromScheme || 0;
+        const attackFromOwnEffects = card.attackFromOwnEffects || 0;
+        const attackFromHeroEffects = card.attackFromHeroEffects || 0;
+        const villainShattered = card.shattered || 0;
+        const totalAttackModifiers = attackFromMastermind + attackFromScheme + attackFromOwnEffects + attackFromHeroEffects + (currentTempBuff || 0) - villainShattered;
+
+        if (totalAttackModifiers !== 0) {
+            const villainOverlayAttack = document.createElement('div');
+            villainOverlayAttack.className = 'attack-overlay';
+            villainOverlayAttack.innerHTML = card.attack + totalAttackModifiers;
+            cardContainer.appendChild(villainOverlayAttack);
+        }
+
+        // Cosmic Threat handling
+        if (
+            (card.keywords && card.keywords.includes("Cosmic Threat")) &&
+            !card.cosmicThreatResolved
+        ) {
+            // Safety: if a previous render left a button in this card, remove it first
+            cardContainer.querySelectorAll('.keyword-overlay').forEach(el => el.remove());
+
+            const keywordButton = document.createElement('div');
+            const keywordButtonText = document.createElement('span');
+
+           const hasClass = (card, wanted) => {
+    if (!card?.classes) return false;
+    
+    const wantedClass = String(wanted).trim().toLowerCase();
+    
+    return card.classes.some(classType => {
+        const actualClass = String(classType ?? '').trim().toLowerCase();
+        return actualClass === wantedClass;
+    });
+};
+
+            const allRevealableCosmicThreatCards = [
+                ...playerHand,
+                ...cardsPlayedThisTurn.filter(card => !card.isCopied && !card.sidekickToDestroy)
+            ];
+
+            keywordButton.className = 'keyword-overlay';
+            keywordButtonText.className = 'city-keyword-button-text';
+
+            // === Per-villain setups ===
+            if ((card.name === "Firelord" || card.name === "The Shaper of Worlds") && !card.cosmicThreatResolved) {
+                keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Range.svg' alt='Range Icon' class='cosmic-threat-card-icons'>`;
+                keywordButton.addEventListener('click', (e) => {
+                    const countRange = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'range')).length * 3;
+                    card.cosmicThreatResolved = true;
+                    e.currentTarget.remove();
+                    cosmicThreat(card, index, countRange, 'range');
+                });
+            } else if (card.name === "Morg" || card.name === "Kubik") {
+                keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Instinct.svg' alt='Instinct Icon' class='cosmic-threat-card-icons'>`;
+                keywordButton.addEventListener('click', (e) => {
+                    const countInstinct = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'instinct')).length * 3;
+                    card.cosmicThreatResolved = true;
+                    e.currentTarget.remove();
+                    cosmicThreat(card, index, countInstinct, 'instinct');
+                });
+            } else if (card.name === "Stardust" || card.name === "Kosmos") {
+                keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Covert.svg' alt='Covert Icon' class='cosmic-threat-card-icons'>`;
+                keywordButton.addEventListener('click', (e) => {
+                    const countCovert = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'covert')).length * 3;
+                    card.cosmicThreatResolved = true;
+                    e.currentTarget.remove();
+                    cosmicThreat(card, index, countCovert, 'covert');
+                });
+            } else if (card.name === "Terrax the Tamer") {
+                keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Strength.svg' alt='Strength Icon' class='cosmic-threat-card-icons'>`;
+                keywordButton.addEventListener('click', (e) => {
+                    const countStrength = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'strength')).length * 3;
+                    card.cosmicThreatResolved = true;
+                    e.currentTarget.remove();
+                    cosmicThreat(card, index, countStrength, 'strength');
+                });
+            } else if (card.name === "The Mapmakers") {
+                keywordButtonText.innerHTML = `Cosmic Threat: <img src='Visual Assets/Icons/Tech.svg' alt='Tech Icon' class='cosmic-threat-card-icons'>`;
+                keywordButton.addEventListener('click', (e) => {
+                    const countTech = allRevealableCosmicThreatCards.filter(c => hasClass(c, 'tech')).length * 3;
+                    card.cosmicThreatResolved = true;
+                    e.currentTarget.remove();
+                    cosmicThreat(card, index, countTech, 'tech');
+                });
+            } else if (
+                card.name === "Arishem, The Judge" ||
+                card.name === "Exitar, The Exterminator" ||
+                card.name === "Gammenon, The Gatherer" ||
+                card.name === "Nezarr, The Calculator" ||
+                card.name === "Tiamut, The Dreaming Celestial"
+            ) {
+                const dualMap = {
+                    "Arishem, The Judge": ["Range", "Strength"],
+                    "Exitar, The Exterminator": ["Tech", "Range"],
+                    "Gammenon, The Gatherer": ["Strength", "Instinct"],
+                    "Nezarr, The Calculator": ["Covert", "Tech"],
+                    "Tiamut, The Dreaming Celestial": ["Instinct", "Covert"],
+                };
+                const [a, b] = dualMap[card.name] || ["Range", "Strength"];
+                keywordButtonText.innerHTML =
+                    `Cosmic Threat: <img src='Visual Assets/Icons/${a}.svg' alt='${a} Icon' class='cosmic-threat-card-icons'> or <img src='Visual Assets/Icons/${b}.svg' alt='${b} Icon' class='cosmic-threat-card-icons'>`;
+
+                keywordButton.addEventListener('click', async (e) => {
+                    card.cosmicThreatResolved = true;
+                    e.currentTarget.remove();
+                    await handleCosmicThreatChoice(card, index);
+                });
+            } else {
+                keywordButtonText.textContent = 'Undefined';
+            }
+
+            keywordButton.appendChild(keywordButtonText);
+            cardContainer.appendChild(keywordButton);
+        }
+
+        // Killbot overlay
+        if (card.killbot === true) {
+            const killbotOverlay = document.createElement('div');
+            killbotOverlay.className = 'killbot-overlay';
+            killbotOverlay.innerHTML = 'KILLBOT';
+            cardContainer.appendChild(killbotOverlay);
+        }
+
+        // Baby Hope overlay
+        if (card.babyHope === true) {
+            const existingOverlay = cardContainer.querySelector('.villain-baby-overlay');
+            if (existingOverlay) existingOverlay.remove();
+
+            const babyOverlay = document.createElement('div');
+            babyOverlay.className = 'villain-baby-overlay';
+            babyOverlay.innerHTML = `<img src="Visual Assets/Other/BabyHope.webp" alt="Baby Hope" class="villain-baby">`;
+            cardContainer.appendChild(babyOverlay);
+        }
+
+        // Skrull overlay
+        if (card.overlayText) {
+            const villainOverlay = document.createElement('div');
+            villainOverlay.className = 'skrull-overlay';
+            villainOverlay.innerHTML = `${card.overlayText}`;
+            cardContainer.appendChild(villainOverlay);
+        }
+
+        // Captured overlay
+        if (card.capturedOverlayText) {
+            const capturedVillainOverlay = document.createElement('div');
+            capturedVillainOverlay.className = 'captured-overlay';
+            capturedVillainOverlay.innerHTML = `${card.capturedOverlayText}`;
+            cardContainer.appendChild(capturedVillainOverlay);
+        }
+
+        // Bystanders overlay
+        if (card.bystander && card.bystander.length > 0) {
+            const overlay = document.createElement('div');
+            overlay.className = 'bystanders-overlay';
+            
+            let overlayText = `<span class="bystanderOverlayNumber">${card.bystander.length}</span>`;
+            let overlayImage = `<img src="${card.bystander[0].image}" alt="Captured Hero" class="villain-bystander">`;
+
+            overlay.innerHTML = overlayText + overlayImage;
+            overlay.style.whiteSpace = 'pre-line';
+
+            const expandedContainer = document.createElement('div');
+            expandedContainer.className = 'expanded-bystanders';
+            expandedContainer.style.display = 'none';
+            
+            card.bystander.forEach(bystander => {
+                const bystanderElement = document.createElement('span');
+                bystanderElement.className = 'bystander-name';
+                bystanderElement.textContent = bystander.name;
+                bystanderElement.dataset.image = bystander.image;
+                
+                bystanderElement.addEventListener('mouseover', (e) => {
+                    e.stopPropagation();
+                    showZoomedImage(bystander.image);
+                    const card = cardLookup[normalizeImagePath(bystander.image)];
+                    if (card) updateRightPanel(card);
+                });
+                
+                bystanderElement.addEventListener('mouseout', (e) => {
+                    e.stopPropagation();
+                    if (!activeImage) hideZoomedImage();
+                });
+                
+                bystanderElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    activeImage = activeImage === bystander.image ? null : bystander.image;
+                    showZoomedImage(activeImage || '');
+                });
+                
+                expandedContainer.appendChild(bystanderElement);
+            });
+
+            overlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                expandedContainer.style.display = expandedContainer.style.display === 'none' ? 'block' : 'none';
+                
+                if (expandedContainer.style.display === 'block') {
+                    setTimeout(() => {
+                        document.addEventListener('click', (e) => {
+                            if (!expandedContainer.contains(e.target)) {
+                                expandedContainer.style.display = 'none';
+                            }
+                        }, { once: true });
+                    }, 50);
+                }
+            });
+
+            cardContainer.appendChild(overlay);
+            cardContainer.appendChild(expandedContainer);
+        }
+
+        // XCutioner overlay
+        if (card.XCutionerHeroes && card.XCutionerHeroes.length > 0) {
+            const XCutionerOverlay = document.createElement('div');
+            XCutionerOverlay.className = 'XCutioner-overlay';
+            
+            let XCutionerOverlayImage = `<img src="${card.XCutionerHeroes[0].image}" alt="Captured Hero" class="villain-baby">`
+            let XCutionerOverlayText = `<span class="XCutionerOverlayNumber">${card.XCutionerHeroes.length}</span>`;
+            
+            XCutionerOverlay.innerHTML = XCutionerOverlayImage + XCutionerOverlayText;
+            XCutionerOverlay.style.whiteSpace = 'pre-line';
+
+            const XCutionerExpandedContainer = document.createElement('div');
+            XCutionerExpandedContainer.className = 'expanded-XCutionerHeroes';
+            XCutionerExpandedContainer.style.display = 'none';
+            
+            card.XCutionerHeroes.forEach(hero => {
+                const XCutionerHeroElement = document.createElement('span');
+                XCutionerHeroElement.className = 'XCutioner-hero-name';
+                XCutionerHeroElement.textContent = hero.name;
+                XCutionerHeroElement.dataset.image = hero.image;
+                
+                XCutionerHeroElement.addEventListener('mouseover', (e) => {
+                    e.stopPropagation();
+                    showZoomedImage(hero.image);
+                    const card = cardLookup[normalizeImagePath(hero.image)];
+                    if (card) updateRightPanel(card);
+                });
+                
+                XCutionerHeroElement.addEventListener('mouseout', (e) => {
+                    e.stopPropagation();
+                    if (!activeImage) hideZoomedImage();
+                });
+                
+                XCutionerHeroElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    activeImage = activeImage === hero.image ? null : hero.image;
+                    showZoomedImage(activeImage || '');
+                });
+                
+                XCutionerExpandedContainer.appendChild(XCutionerHeroElement);
+            });
+
+            XCutionerOverlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                XCutionerExpandedContainer.style.display = XCutionerExpandedContainer.style.display === 'none' ? 'block' : 'none';
+                
+                if (XCutionerExpandedContainer.style.display === 'block') {
+                    setTimeout(() => {
+                        document.addEventListener('click', (e) => {
+                            if (!XCutionerExpandedContainer.contains(e.target)) {
+                                XCutionerExpandedContainer.style.display = 'none';
+                            }
+                        }, { once: true });
+                    }, 50);
+                }
+            });
+
+            cardContainer.appendChild(XCutionerOverlay);
+            cardContainer.appendChild(XCutionerExpandedContainer);
+        }
+
+        // Plutonium overlay
+        if (card.plutoniumCaptured) {
+            const plutoniumOverlay = document.createElement('div');
+            plutoniumOverlay.innerHTML = `<span class="plutonium-count">${card.plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
+            cardContainer.appendChild(plutoniumOverlay);
+        }
+
+        // Attack click handler for villains
+        if (card.type !== 'Bystander' && card.type !== 'Attached to Mastermind') {
+            const cardImage = cardContainer.querySelector('.card-image');
+            if (cardImage) {
+                cardImage.addEventListener('click', (e) => {
+                    if (!popupMinimized) {
+                        e.stopPropagation();
+                        showHQAttackButton(index, location);
+                    }
+                });
+            }
+
+            const attackOverlay = cardContainer.querySelector('.attack-overlay');
+            if (attackOverlay) {
+                attackOverlay.addEventListener('click', (e) => {
+                    if (!popupMinimized) {
+                        e.stopPropagation();
+                        showHQAttackButton(index, location);
+                    }
+                });
+            }
+        }
+    }
+}
+
 function updateVillainAttackValues(villain, i) {
 
     const mastermind = getSelectedMastermind();
@@ -6560,6 +7148,11 @@ if (scheme.name === `X-Cutioner's Song` && villain.XCutionerHeroes && villain.XC
     villain.attackFromScheme = villain.XCutionerHeroes.length * 2;
 }
 
+if (scheme.name === `Splice Humans with Spider DNA` && villain.team === "Sinister Six") {
+    villain.attackFromScheme = 3;
+}
+
+
 //Attack from Villain Effects - (Dracula and Skrulls handled within function)
 
 if (villain.name === `Blockbuster` && villain.bystander && villain.bystander.length > 0) {
@@ -6584,6 +7177,158 @@ if (villain.name === `Skrull Queen Veranke` && villain.heroAttack && villain.her
 
 if (villain.name === `Skrull Shapeshifters` && villain.heroAttack && villain.heroAttack > 0) {
     villain.attackFromOwnEffects = villain.heroAttack;
+}
+
+if (villain.name === 'Doppelganger') {
+  villain.attackFromOwnEffects = hq[i]?.cost || 0;
+}
+
+if (villain.name === "Kraven the Hunter") {
+   const heroCosts = hq
+    .filter(card => card && card.type === "Hero" && Number.isFinite(card.cost))
+    .map(card => card.cost);
+
+  const highestCost = heroCosts.length ? Math.max(...heroCosts) : 0;
+  villain.attackFromOwnEffects = highestCost;
+}
+
+if (villain.name === "Sandman") {
+const villainCount = city.filter(obj => obj && obj.type === "Villain").length;
+  villain.attackFromOwnEffects = villainCount * 2;
+}
+}
+
+function recalculateHQVillainAttack(villainCard) {
+    // Extreme defensive checks
+    if (!villainCard || 
+        typeof villainCard !== 'object' || 
+        villainCard === null || 
+        Array.isArray(villainCard)) {
+        console.warn('Invalid villainCard in recalculateVillainAttack:', villainCard);
+        return 0;
+    }
+
+    // Update attack values using the new helper function
+    updateHQVillainAttackValues(villainCard);
+
+    // Safely get base attack value with multiple fallbacks
+    const baseAttack = ('attack' in villainCard) ? villainCard.attack :
+                      ('originalAttack' in villainCard) ? villainCard.originalAttack :
+                      0;
+
+    // Calculate total attack modifiers from the new system
+    const attackFromMastermind = villainCard.attackFromMastermind || 0;
+    const attackFromScheme = villainCard.attackFromScheme || 0;
+    const attackFromOwnEffects = villainCard.attackFromOwnEffects || 0;
+    const attackFromHeroEffects = villainCard.attackFromHeroEffects || 0;
+    const totalAttackModifiers = attackFromMastermind + attackFromScheme + attackFromOwnEffects + attackFromHeroEffects;
+
+    let finalAttack = baseAttack + totalAttackModifiers;
+
+    return Math.max(0, finalAttack);
+}
+
+
+function updateHQVillainAttackValues(villain) {
+
+    const mastermind = getSelectedMastermind();
+    const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
+    const scheme = schemes.find(scheme => scheme.name === selectedSchemeName);
+
+    villain.attackFromMastermind = 0;
+    villain.attackFromScheme = 0;
+    villain.attackFromOwnEffects = 0;
+    villain.attackFromHeroEffects = 0;
+
+//Attack From Mastermind Effects
+
+if (mastermind.name === 'Apocalypse' && villain.alwaysLeads === true) {
+    villain.attackFromMastermind = 2;
+}
+
+//Attack From Scheme Effects
+
+if (scheme.name === 'Capture Baby Hope' && villain.babyHope === true) {
+    villain.attackFromScheme = 4;
+} else {
+    villain.attackFromScheme = 0;
+}
+
+if (scheme.name === 'Midtown Bank Robbery' && villain.bystander && villain.bystander.length > 0) {
+    villain.attackFromScheme = villain.bystander.length;
+}
+
+if (scheme.name === 'Portals to the Dark Dimension' && currentPermBuff !== 0) {
+    villain.attackFromScheme = currentPermBuff;
+}
+
+if (scheme.name === `Replace Earth's Leaders with Killbots` && villain.killbot === true) {
+    villain.attackFromScheme = killbotAttack;
+}
+
+if (scheme.name === `Secret Invasion of the Skrull Shapeshifters` && villain.skrulled === true) {
+    villain.attackFromScheme = villain.cost + 2;
+}
+
+if (scheme.name === `Steal the Weaponized Plutonium` && villain.plutoniumCaptured && villain.plutoniumCaptured.length > 0) {
+    villain.attackFromScheme = villain.plutoniumCaptured.length;
+}
+
+if (scheme.name === `Transform Citizens Into Demons` && villain.goblinQueen === true) {
+    villain.attackFromScheme = villain.cost + demonGoblinDeck.length;
+}
+
+if (scheme.name === `X-Cutioner's Song` && villain.XCutionerHeroes && villain.XCutionerHeroes.length > 0) {
+    villain.attackFromScheme = villain.XCutionerHeroes.length * 2;
+}
+
+if (scheme.name === `Splice Humans with Spider DNA` && villain.team === "Sinister Six") {
+    villain.attackFromScheme = 3;
+}
+
+
+//Attack from Villain Effects - (Dracula and Skrulls handled within function)
+
+if (villain.name === `Blockbuster` && villain.bystander && villain.bystander.length > 0) {
+    villain.attackFromOwnEffects = villain.bystander.length * 2;
+}
+
+if (villain.name === `Chimera` && villain.bystander && villain.bystander.length > 0) {
+    villain.attackFromOwnEffects = villain.bystander.length * 3;
+}
+
+if (villain.name === `Scalphunter` && villain.bystander && villain.bystander.length > 0) {
+    villain.attackFromOwnEffects = villain.bystander.length;
+}
+
+if (villain.name === `Dracula` && villain.heroAttack && villain.heroAttack > 0) {
+    villain.attackFromOwnEffects = villain.heroAttack;
+}
+
+if (villain.name === `Skrull Queen Veranke` && villain.heroAttack && villain.heroAttack > 0) {
+    villain.attackFromOwnEffects = villain.heroAttack;
+}
+
+if (villain.name === `Skrull Shapeshifters` && villain.heroAttack && villain.heroAttack > 0) {
+    villain.attackFromOwnEffects = villain.heroAttack;
+}
+
+if (villain.name === 'Doppelganger') {
+  villain.attackFromOwnEffects = 0;
+}
+
+if (villain.name === "Kraven the Hunter") {
+   const heroCosts = hq
+    .filter(card => card && card.type === "Hero" && Number.isFinite(card.cost))
+    .map(card => card.cost);
+
+  const highestCost = heroCosts.length ? Math.max(...heroCosts) : 0;
+  villain.attackFromOwnEffects = highestCost;
+}
+
+if (villain.name === "Sandman") {
+const villainCount = city.filter(obj => obj && obj.type === "Villain").length;
+  villain.attackFromOwnEffects = villainCount * 2;
 }
 }
 
@@ -6651,6 +7396,8 @@ function updateEvilWinsTracker() {
     const escapedBystanders = escapedVillainsDeck.filter(card => card.type === 'Bystander').length;
     const KOdHeroes = koPile.filter(card => card.type === 'Hero' && card.color !== 'Grey').length;
     const carriedOffHeroes = escapedVillainsDeck.filter(card => card.type === 'Hero' && card.color !== 'Grey').length;
+    const HQVillains = hq.filter(card => card.type === 'Villain').length;
+
 
     switch (selectedScheme.name) {
         case "Midtown Bank Robbery":
@@ -6741,10 +7488,25 @@ function updateEvilWinsTracker() {
       evilWinsText.innerHTML = `${twistCount}/7 Twists`;
       break;
 
+        case "The Clone Saga":
+      evilWinsText.innerHTML = `0 Same-Name Villain Escapes and ${villainDeck.length} ${villainDeck.length === 1 ? 'Villain Remains' : 'Villains Remain'}`;
+      break;
+
+       case "Invade the Daily Bugle News HQ":
+      evilWinsText.innerHTML = `${HQVillains}/5 Villains in the HQ`;
+      break;
+
+       case "Splice Humans with Spider DNA":
+      evilWinsText.innerHTML = `${escapedVillainsDeck.filter(card => card.team === 'Sinister Six').length}/6 Sinister Six Escapes and ${villainDeck.length} ${villainDeck.length === 1 ? 'Villain Remains' : 'Villains Remain'}`;
+      break;
+
+       case "Weave a Web of Lies":
+      evilWinsText.innerHTML = `${twistCount}/7 Twists`;
+      break;
+
         default:
       evilWinsText.innerHTML = `See Scheme`;
   }
-
 
 }
 
@@ -6972,7 +7734,7 @@ function confirmActions() {
     const cardsToPlay = selectedCards.map(index => playerHand[index]);
     cardsToPlay.reduce((promiseChain, card) => {
         return promiseChain.then(() => {
-            if (card.keyword1 === 'Teleport' || card.keyword2 === 'Teleport' || card.keyword3 === 'Teleport') {
+            if (card.keywords && card.keywords.includes('Teleport')) {
                 playOrTeleport(card);
                 addHRToTopWithInnerHTML(); // HR for Teleport
                 return;
@@ -7114,10 +7876,10 @@ requiredTypes.forEach(type => {typeCounts[type] = (typeCounts[type] || 0) + 1;
 });
 
 return Object.entries(typeCounts).every(([type, requiredCount]) => {
-const actualCount = previousCards.filter(playedCard => 
-playedCard.class1 === type || playedCard.class2 === type || playedCard.team === type
-).length;
-return actualCount >= requiredCount;
+    const actualCount = previousCards.filter(playedCard => 
+        (playedCard.classes && playedCard.classes.includes(type)) || playedCard.team === type
+    ).length;
+    return actualCount >= requiredCount;
 });
         case 'unconditional':
             return condition === "None";
@@ -7158,23 +7920,22 @@ function resolveVillainActions() {
 }
 
 function hideRevealedCards() {
-    const deckNames = [
-        'playerDeck', 'heroDeck', 'villainDeck', 'shieldDeck', 'woundDeck',
-        'victoryPile', 'playerDiscardPile', 'cardsPlayedThisTurn', 'playerHand',
-        'escapedVillainsDeck', 'koPile', 'capturedCardsDeck', 'hq', 'city',
-        'demonGoblinDeck', 'mastermindDeck', 'bystanderDeck', 'sidekickDeck'
-    ];
-    
-    deckNames.forEach(deckName => {
-        if (Array.isArray(this[deckName])) {
-            this[deckName].forEach(card => {
-                if (card && card.revealed === true) {
-                    card.revealed = false;
-                }
-            });
-        }
-    });
+  const decks = [
+    playerDeck, heroDeck, villainDeck, shieldDeck, woundDeck,
+    victoryPile, playerDiscardPile, cardsPlayedThisTurn, playerHand,
+    escapedVillainsDeck, koPile, capturedCardsDeck, hq, city,
+    demonGoblinDeck, mastermindDeck, bystanderDeck, sidekickDeck
+  ];
+
+  decks.forEach(deck => {
+    if (Array.isArray(deck)) {
+      deck.forEach(card => {
+        if (card && card.revealed) card.revealed = false;
+      });
+    }
+  });
 }
+
 
 async function endTurn() {
     document.getElementById('end-turn').innerHTML = `<span class="game-board-bottom-row">End Turn</span>`;
@@ -7320,7 +8081,9 @@ jeanGreyBystanderAttack = 0;
 sewerRooftopDefeats = false;
 sewerRooftopBonusRecruit = 0;
 thingCrimeStopperRescue = false;
+bystandersRescuedThisTurn = 0;
 mastermindCosmicThreatResolved = false;
+backflipRecruit = false;
 city1CosmicThreat = 0;
 city2CosmicThreat = 0;
 city3CosmicThreat = 0;
@@ -7341,6 +8104,10 @@ deadpoolRare = false;
 schemeTwistChainDepth = 0;  // Tracks nested Scheme Twists
 pendingHeroKO = false; 
 schemeTwistTuckComplete = false;
+moonKnightGoldenAnkhOfKhonshuBystanders = false;
+moonKnightLunarCommunionKO = false;
+stingOfTheSpider = false;
+carrionHeroFeast = false;
 
 playerHand.forEach(card => {
     if (card.temporaryTeleport === true) {
@@ -7459,11 +8226,14 @@ function isVillainConditionMet(villainCard) {
         )
     ];
 
-    switch (fightCondition) {
+switch (fightCondition) {
         case 'heroYouHave':
-            return cardsYouHave.some(heroCard =>
-                heroCard[conditionType] === condition
-            );
+            return cardsYouHave.some(heroCard => {
+                const valueToCheck = heroCard[conditionType];
+                return Array.isArray(valueToCheck) 
+                    ? valueToCheck.includes(condition)
+                    : valueToCheck === condition;
+            });
         
         case 'villainInVP':
             return victoryPile.some(villain =>
@@ -7496,7 +8266,7 @@ function isVillainConditionMet(villainCard) {
     }
 }
 
-function showAttackButton(cityIndex) {
+function showAttackButton(cityIndex, location = 'city') {
     const villainCard = city[cityIndex];
     if (!villainCard) {
         return;
@@ -7542,13 +8312,13 @@ let playerAttackPoints = 0;
         playerAttackPoints += totalRecruitPoints;
     }
 
-    if (villainCard.keyword1 === "Bribe" || villainCard.keyword2 === "Bribe" || villainCard.keyword3 === "Bribe") {
-        if (!negativeZoneAttackAndRecruit) {
-            playerAttackPoints += totalRecruitPoints;
-        } else {
-            playerAttackPoints += totalAttackPoints;
-        }
+if (villainCard.keywords && villainCard.keywords.includes("Bribe")) {
+    if (!negativeZoneAttackAndRecruit) {
+        playerAttackPoints += totalRecruitPoints;
+    } else {
+        playerAttackPoints += totalAttackPoints;
     }
+}
 
     if (playerAttackPoints + reservedAttack >= villainAttack) {
         // Create or update the attack button
@@ -7589,18 +8359,117 @@ let playerAttackPoints = 0;
 
         // Add a slight delay to avoid immediately hiding the button
         setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 0);
-    } else {
-        if (recruitUsedToAttack === "true" || villainCard.keyword1 === "Bribe" || villainCard.keyword2 === "Bribe" || villainCard.keyword3 === "Bribe") {
-            onscreenConsole.log(`You need ${villainAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and/or <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
+    document.addEventListener('click', handleClickOutside);
+}, 0);
+} else {
+    if (recruitUsedToAttack === "true" || (villainCard.keywords && villainCard.keywords.includes("Bribe"))) {
+        onscreenConsole.log(`You need ${villainAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and/or <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
     } else {
         if (!negativeZoneAttackAndRecruit) {
-        onscreenConsole.log(`You need ${villainAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
-    } else {
-        onscreenConsole.log(`Negative Zone! You need ${villainAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
+            onscreenConsole.log(`You need ${villainAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
+        } else {
+            onscreenConsole.log(`Negative Zone! You need ${villainAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
+        }
     }
 }
+}
+
+function showHQAttackButton(index) {
+    const villainCard = hq[index];
+    if (!villainCard) {
+        return;
+    }
+
+    const hqCell = document.querySelector(`#hq-${index + 1}`);
+    if (!hqCell) return;
+
+    // Calculate attack synchronously first
+    const selectedScheme = getSelectedScheme(); // Extract this to a function
+    let villainAttack = recalculateVillainAttack(villainCard);
+    
+     if (villainAttack < 0) {
+        villainAttack = 0;
+    }
+
+    // Check fight condition synchronously
+    if (villainCard.fightCondition && 
+        villainCard.fightCondition !== "None" && 
+        !isVillainConditionMet(villainCard)) {
+        onscreenConsole.log(`Fight condition not met for <span class="console-highlights">${villainCard.name}</span>.`);
+        return;
+    }
+
+let playerAttackPoints = 0;
+   if (!negativeZoneAttackAndRecruit) {
+    playerAttackPoints = totalAttackPoints;
+   } else {
+    playerAttackPoints = totalRecruitPoints;
+   }
+ 
+   if (!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) {
+        playerAttackPoints += totalRecruitPoints;
+    }
+
+if (villainCard.keywords && villainCard.keywords.includes("Bribe")) {
+    if (!negativeZoneAttackAndRecruit) {
+        playerAttackPoints += totalRecruitPoints;
+    } else {
+        playerAttackPoints += totalAttackPoints;
+    }
+}
+
+    if (playerAttackPoints >= villainAttack) {
+        // Create or update the attack button
+        let attackButton = hqCell.querySelector('.attack-button');
+        if (!attackButton) {
+            attackButton = document.createElement('div');
+            attackButton.classList.add('attack-button');
+            hqCell.appendChild(attackButton);
+        }
+
+        // Update the button text and style
+        attackButton.innerHTML = `<span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"</span>`;
+        attackButton.style.display = 'block';
+
+        // Handle button click with proper async/await and error handling
+        attackButton.onclick = async function(event) {
+            attackButton.style.display = 'none'; // Hide the button after attack
+            healingPossible = false;
+            event.stopPropagation();
+
+            try {
+                confirmHQAttack(index);
+            } catch (error) {
+                console.error("Attack failed:", error);
+                // Optional: Show error message to player
+                // onscreenConsole.log(`Attack failed: ${error.message}`);
+            } finally {
+                updateGameBoard();
+            }
+        };
+
+        // Handle clicks outside the button
+        const handleClickOutside = (event) => {
+            if (!attackButton.contains(event.target)) {
+                attackButton.style.display = 'none'; // Hide the button if clicked outside
+                document.removeEventListener('click', handleClickOutside);
+            }
+        };
+
+        // Add a slight delay to avoid immediately hiding the button
+        setTimeout(() => {
+    document.addEventListener('click', handleClickOutside);
+}, 0);
+} else {
+    if (recruitUsedToAttack === "true" || (villainCard.keywords && villainCard.keywords.includes("Bribe"))) {
+        onscreenConsole.log(`You need ${villainAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and/or <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
+    } else {
+        if (!negativeZoneAttackAndRecruit) {
+            onscreenConsole.log(`You need ${villainAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
+        } else {
+            onscreenConsole.log(`Negative Zone! You need ${villainAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${villainCard.name}</span>.`);
+        }
+    }
 }
 }
 
@@ -7759,9 +8628,9 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
   if (!isInstantDefeat) {
     try {
       if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
-          villainCard.keyword1 === "Bribe" || villainCard.keyword2 === "Bribe" || villainCard.keyword3 === "Bribe") {
+    (villainCard.keywords && villainCard.keywords.includes("Bribe"))) {
 
-        const result = await showCounterPopup(villainCopy, villainAttack);
+    const result = await showCounterPopup(villainCopy, villainAttack);
 
         let attackNeeded = result.attackUsed || 0;
         let recruitNeeded = result.recruitUsed || 0;
@@ -7835,6 +8704,96 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
   await animationPromise;
 }
 
+async function defeatHQVillain(index) {
+  playSFX('attack');
+
+  // Get fresh references
+  const villainCard = hq[index];
+  if (!villainCard) {
+    console.error('Villain disappeared during attack');
+    onscreenConsole.log(`Error: Villain could not be targeted.`);
+    return;
+  }
+
+  const hqCell = document.querySelector(`[data-hq-index="${index}"]`);
+  if (!hqCell) {
+    console.error('City cell not found for index:', index);
+    return;
+  }
+
+  const cardContainer = document.querySelector(`.card-container[data-hq-index="${index}"]`);
+  if (!cardContainer) {
+    console.error('Card container not found in hq cell:', index);
+    return;
+  }
+
+  const cardImage = cardContainer.querySelector('.card-image');
+  if (!cardImage) {
+    console.error('Card image not found');
+    return;
+  }
+
+  // Snapshot geometry BEFORE mutating game state; animation is cosmetic-only
+  const rect = cardContainer.getBoundingClientRect();
+  const animationPromise = animateDefeatFromRect(cardImage.src, rect);
+
+  // ---- GAME STATE CHANGES HAPPEN FIRST ----
+  currentVillainLocation = index;
+  const villainCopy = createVillainCopy(villainCard);
+  const villainAttack = recalculateHQVillainAttack(villainCard);
+
+  updateGameBoard();
+
+  const isInstantDefeat = false;
+
+  if (villainAttack > 0) {
+  // Handle point deduction (skip for instant defeat)
+  if (!isInstantDefeat) {
+    try {
+      if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack === true) ||
+    (villainCard.keywords && villainCard.keywords.includes("Bribe"))) {
+
+    const result = await showCounterPopup(villainCopy, villainAttack);
+
+        let attackNeeded = result.attackUsed || 0;
+        let recruitNeeded = result.recruitUsed || 0;
+
+        // Deduct remaining points from regular pools
+        totalAttackPoints -= attackNeeded;
+        totalRecruitPoints -= recruitNeeded;
+
+        onscreenConsole.log(`You chose to use ${result.attackUsed} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and ${result.recruitUsed} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> points to attack <span class="console-highlights">${villainCopy.name}</span>.`);
+      } else {
+        if (!negativeZoneAttackAndRecruit) {
+          totalAttackPoints -= villainAttack;
+        }
+      }
+    } catch (error) {
+      console.error('Error handling point deduction:', error);
+    }
+  }
+}
+
+  // Update the reserve display
+  updateReserveAttackAndRecruit();
+
+  // Collect and execute operations (bystander rescues and fight effects)
+  const operations = await collectDefeatOperations(villainCopy);
+
+  // Let player choose order if there are multiple operations
+  if (operations.length > 1) {
+    await executeOperationsInPlayerOrder(operations, villainCopy);
+  } else if (operations.length === 1) {
+    await operations[0].execute();
+  }
+
+  // Post-defeat (burrow, bonuses, HYDRA draws, etc.)
+  await handleHQPostDefeat(villainCard, villainCopy, villainAttack, index, isInstantDefeat);
+
+  // Wait for the cosmetic animation to finish (keeps UI silky)
+  await animationPromise;
+}
+
 // ---------------------------------
 // Helper: deep copy of villain data (unchanged)
 // ---------------------------------
@@ -7846,8 +8805,7 @@ function createVillainCopy(villainCard) {
     type: villainCard.type,
     rarity: villainCard.rarity,
     team: villainCard.team,
-    class1: villainCard.class1,
-    class2: villainCard.class2,
+    classes: villainCard.classes,
     color: villainCard.color,
     cost: villainCard.cost,
     attack: villainCard.attack,
@@ -7864,6 +8822,7 @@ function createVillainCopy(villainCard) {
     conditionType: villainCard.conditionType,
     condition: villainCard.condition,
     invulnerability: villainCard.invulnerability,
+    keywords: villainCard.keywords,
     image: villainCard.image,
     originalAttack: villainCard.originalAttack,
     bystander: [...(villainCard.bystander || [])],
@@ -7888,12 +8847,14 @@ async function collectDefeatOperations(villainCopy) {
         operations.push({
           name: `Rescue ${bystander.name}`,
           image: bystander.image,
-          execute: async () => {
+          execute: () => new Promise(async (resolve) => {
             onscreenConsole.log(`<span class="console-highlights">${bystander.name}</span> rescued.`);
             victoryPile.push(bystander);
             bystanderBonuses();
             await rescueBystanderAbility(bystander);
-          }
+            updateGameBoard(); // Force UI update after all operations
+            resolve(); // Ensure the promise resolves only after everything completes
+          })
         });
       }
     });
@@ -7906,7 +8867,7 @@ async function collectDefeatOperations(villainCopy) {
       operations.push({
         name: `Trigger ${villainCopy.name}'s Fight Effect`,
         image: villainCopy.image,
-        execute: async () => {
+        execute: () => new Promise(async (resolve) => {
           let negate = false;
           if (typeof promptNegateFightEffectWithMrFantastic === 'function') {
             negate = await promptNegateFightEffectWithMrFantastic();
@@ -7914,7 +8875,9 @@ async function collectDefeatOperations(villainCopy) {
           if (!negate) {
             await fightEffectFunction(villainCopy);
           }
-        }
+          updateGameBoard(); // Force UI update
+          resolve();
+        })
       });
     }
   }
@@ -7922,9 +8885,6 @@ async function collectDefeatOperations(villainCopy) {
   return operations;
 }
 
-// ---------------------------------
-// Let player choose operation order (unchanged)
-// ---------------------------------
 async function executeOperationsInPlayerOrder(operations, villainCopy) {
   const remainingOperations = [...operations];
 
@@ -7937,17 +8897,22 @@ async function executeOperationsInPlayerOrder(operations, villainCopy) {
     });
 
     if (!choice) {
+      // Execute all remaining in sequence
       for (const op of remainingOperations) {
-        await op.execute();
+        console.log('Auto-executing:', op.name);
+        await op.execute(); // Ensure each completes before next
+        updateGameBoard();
       }
       break;
     }
 
     const selectedIndex = remainingOperations.findIndex(op => op.name === choice.name);
     const [selectedOperation] = remainingOperations.splice(selectedIndex, 1);
-    await selectedOperation.execute();
+    console.log('Executing:', selectedOperation.name);
+    await selectedOperation.execute(); // Wait for this operation to fully complete
     updateGameBoard();
   }
+  console.log('All operations completed');
 }
 
 // ---------------------------------
@@ -7956,95 +8921,74 @@ async function executeOperationsInPlayerOrder(operations, villainCopy) {
 async function showOperationSelectionPopup(options) {
   return new Promise((resolve) => {
     try {
+      // Use your new popup structure but keep the original logic
       const popup = document.querySelector('.order-choice-popup');
       const modalOverlay = document.getElementById('modal-overlay');
-
-      if (!popup || !modalOverlay) {
-        console.error('Popup or modal overlay not found');
-        resolve(null);
-        return;
-      }
-
-      // 🔒 Scope all queries to THIS popup so we don’t collide with others
-      const selectionContainer = popup.querySelector('.order-choice-popup-selection-container');
+      
+      // Map new elements to match original structure
+      const selectionContainer = popup.querySelector('.order-choice-popup-selection-container'); // replaces cardsList
       const confirmButton = popup.querySelector('#order-choice-popup-confirm');
       const popupTitle = popup.querySelector('.card-choice-popup-title');
       const instructionsDiv = popup.querySelector('.card-choice-popup-instructions');
-      const previewDiv = popup.querySelector('.card-choice-popup-preview');
+      const previewDiv = popup.querySelector('.card-choice-popup-preview'); // replaces heroImage + oneChoiceHoverText
       const minimizeButton = popup.querySelector('.order-choice-popup-minimizebutton');
       const closeButton = popup.querySelector('.card-choice-popup-closebutton');
 
-      // Safety guards
-      if (!selectionContainer || !confirmButton || !popupTitle || !instructionsDiv || !previewDiv || !minimizeButton || !closeButton) {
-        console.error('One or more required popup elements are missing inside .order-choice-popup');
-        resolve(null);
-        return;
-      }
-
-      // Init content
-      popupTitle.textContent = options?.title || 'Choose Order';
-      instructionsDiv.innerHTML = options?.instructions || 'Select next action to resolve:';
+      // Initialize exactly like original
+      popupTitle.textContent = options.title || 'Choose Order';
+      instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
       selectionContainer.innerHTML = '';
-      previewDiv.innerHTML = '';
       confirmButton.style.display = 'inline-block';
       confirmButton.disabled = true;
-      confirmButton.textContent = options?.confirmText || 'CONFIRM';
+      confirmButton.textContent = options.confirmText || 'CONFIRM';
       modalOverlay.style.display = 'block';
       popup.style.display = 'block';
 
       let selectedOperation = null;
       let activeButton = null;
 
+      // Cleanup function from original
       const cleanup = () => {
         confirmButton.onclick = null;
-        minimizeButton.onclick = null;
-        closeButton.onclick = null;
-        modalOverlay.onclick = null;
-
         const buttons = selectionContainer.querySelectorAll('button.order-choice-button');
-        buttons.forEach((button) => {
-          button.onclick = null;
+        buttons.forEach(button => {
           button.onmouseover = null;
           button.onmouseout = null;
+          button.onclick = null;
         });
       };
 
       function updateConfirmButton() {
-        confirmButton.disabled = (selectedOperation === null);
+        confirmButton.disabled = selectedOperation === null;
       }
 
       function updateInstructions() {
         if (selectedOperation === null) {
-          instructionsDiv.innerHTML = options?.instructions || 'Select next action to resolve:';
+          instructionsDiv.innerHTML = options.instructions || 'Select next action to resolve:';
         } else {
           instructionsDiv.innerHTML = `Selected: <span class="console-highlights">${selectedOperation.name}</span> will be resolved next.`;
         }
       }
 
       function updatePreview(operation) {
-        if (operation && operation.image) {
-          // Use a simple img; layout/cropping handled by your CSS container
-          previewDiv.innerHTML = `<img src="${operation.image}" alt="${operation.name}" style="width:100%;height:100%;">`;
+        if (operation) {
+          previewDiv.innerHTML = operation.image ? `<img src="${operation.image}" alt="${operation.name}" style="width:100%;height:100%;">` : '';
         } else {
           previewDiv.innerHTML = '';
         }
       }
 
       function toggleOperationSelection(operation, button) {
-        const isSame = selectedOperation === operation;
-
-        // Clear previous selection
-        if (activeButton) activeButton.classList.remove('selected');
-
-        if (isSame) {
-          // Deselect
+        if (selectedOperation === operation) {
           selectedOperation = null;
-          activeButton = null;
+          button.classList.remove('selected');
           updatePreview(null);
         } else {
-          // Select new
+          if (selectedOperation) {
+            const prevButton = selectionContainer.querySelector('button.selected');
+            if (prevButton) prevButton.classList.remove('selected');
+          }
           selectedOperation = operation;
-          activeButton = button;
           button.classList.add('selected');
           updatePreview(operation);
         }
@@ -8053,65 +8997,64 @@ async function showOperationSelectionPopup(options) {
         updateInstructions();
       }
 
-      // Build buttons
-      (options?.items || []).forEach((item, index) => {
+      // Build buttons instead of list items
+      options.items.forEach((item, index) => {
         const button = document.createElement('button');
         button.className = 'order-choice-button';
         button.textContent = item.name;
-        button.setAttribute('data-operation-id', String(index));
+        button.setAttribute('data-operation-id', index);
 
         button.onmouseover = () => {
-          // Show preview on hover only if nothing is selected
-          if (selectedOperation === null) updatePreview(item);
+          if (!selectedOperation) {
+            updatePreview(item);
+          }
         };
 
         button.onmouseout = () => {
-          // Revert preview on mouseout only if nothing is selected
-          if (selectedOperation === null) updatePreview(null);
+          if (!selectedOperation) {
+            updatePreview(null);
+          }
         };
 
         button.onclick = () => toggleOperationSelection(item, button);
-
         selectionContainer.appendChild(button);
       });
 
-      // Confirm
+      // EXACT SAME confirm logic as original
       confirmButton.onclick = async () => {
-        if (!selectedOperation) return;
-        try {
-          cleanup();
-          closePopup();
-          resolve(selectedOperation);
-        } catch (err) {
-          cleanup();
-          closePopup();
-          throw err;
+        if (selectedOperation) {
+          try {
+            closePopup();
+            cleanup();
+            resolve(selectedOperation);
+          } catch (error) {
+            cleanup();
+            throw error;
+          }
         }
       };
 
-      // Minimise
+      // Close and minimize handlers
+      closeButton.onclick = () => {
+        closePopup();
+        cleanup();
+        resolve(null);
+      };
+
       minimizeButton.onclick = () => {
         minimizeButton.style.display = 'none';
         closeButton.style.display = 'block';
         popup.classList.add('minimized');
       };
 
-      // Close
-      closeButton.onclick = () => {
-        cleanup();
-        closePopup();
-        resolve(null);
-      };
-
-      // Clicking outside closes
       modalOverlay.onclick = () => {
-        cleanup();
         closePopup();
+        cleanup();
         resolve(null);
       };
 
+      // EXACT SAME closePopup function as original but adapted to new structure
       function closePopup() {
-        // Reset to default state (scoped!)
         popupTitle.textContent = 'POPUP TITLE';
         instructionsDiv.textContent = 'Instructions will go in here...';
         selectionContainer.innerHTML = '';
@@ -8121,13 +9064,10 @@ async function showOperationSelectionPopup(options) {
         popup.classList.remove('minimized');
         minimizeButton.style.display = 'block';
         closeButton.style.display = 'none';
-
         popup.style.display = 'none';
         modalOverlay.style.display = 'none';
-
-        selectedOperation = null;
-        activeButton = null;
       }
+
     } catch (error) {
       console.error('Error in operation selection popup:', error);
       resolve(null);
@@ -8186,11 +9126,7 @@ if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCapture
     villainCard.cost = 0;
   }
 
-  const burrowingVillain = (
-    villainCard.keyword1 === 'Burrow' ||
-    villainCard.keyword2 === 'Burrow' ||
-    villainCard.keyword3 === 'Burrow'
-  );
+const burrowingVillain = (villainCard.keywords && villainCard.keywords.includes('Burrow'));
 
   const inStreetsNow = cityIndex === 1;
   const streetsFree = ((city[1] === '' || city[1] === null) && destroyedSpaces[1] === false);
@@ -8201,8 +9137,14 @@ if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCapture
       victoryPile.push(villainCard);
       onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> is in the Streets and cannot burrow. They have been defeated!`);
     } else if (streetsFree) {
+        let negate = false;
+          if (typeof promptNegateFightEffectWithMrFantastic === 'function') {
+            negate = await promptNegateFightEffectWithMrFantastic();
+          }
+          if (!negate) {
       city[1] = villainCard;
       onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`);
+          }
     } else {
       victoryPile.push(villainCard);
       onscreenConsole.log(`The Streets are ${destroyedSpaces[1] === false ? 'occupied' : 'destroyed'} so <span class="console-highlights">${villainCard.name}</span> cannot burrow and has been defeated!`);
@@ -8214,7 +9156,7 @@ if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCapture
     }    
   }
 
-  if (villainCard.killbot === true) {
+if (villainCard.killbot === true) {
     bystanderBonuses();
   }
   addHRToTopWithInnerHTML();
@@ -8223,7 +9165,7 @@ if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCapture
 
   // Location bonuses
   try {
-    if (thingCrimeStopperRescue && cityIndex == 3) {
+    if (thingCrimeStopperRescue && cityIndex === 3) {
       onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> in the Bank. Rescuing a Bystander.`);
       await rescueBystander();
     }
@@ -8239,13 +9181,45 @@ if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCapture
       totalRecruitPoints += sewerRooftopBonusRecruit;
       cumulativeRecruitPoints += sewerRooftopBonusRecruit;
     }
+
+    if (moonKnightLunarCommunionKO && cityIndex === 2) {
+        onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops. <span class="console-highlights">Moon Knight - Lunar Communion</span> allows you to KO one of your cards or a card from your discard pile.`);
+       await moonKnightLunarCommunionKOChoice();
+    }
+    if (moonKnightGoldenAnkhOfKhonshuBystanders && cityIndex === 2) {
+        onscreenConsole.log(`You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops.`);
+       await moonKnightGoldenAnkhOfKhonshuBystanderCalculation(villainCard);
+    }
   } catch (error) {
     console.error('Error processing location bonuses:', error);
   }
 
+if (villainCard.name === "Carrion" && carrionHeroFeast) {
+    city[cityIndex] = villainCard;
+    onscreenConsole.log(`<span class="console-highlights">Carrion</span> feasted on a Hero that cost 1 <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> or more and has returned to the city! You'll have to fight them again!`);
+    carrionHeroFeast = false;
+}
+
+if (villainCard.name === "Chameleon") {
+    onscreenConsole.log(`Fight! <span class="console-highlights">Chameleon</span> lets you copy the effects of the Hero in the HQ space underneath, including its <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
+    onscreenConsole.log(`You copy the effects of <span class="console-highlights">${hq[cityIndex].name}</span>.`);
+    await chameleonFight(hq[cityIndex]);    
+}
+
+const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
+    const scheme = schemes.find(scheme => scheme.name === selectedSchemeName);
+
+if (scheme.name === "Weave a Web of Lies") {
+    await weaveAWebOfLiesBystanderRescue();
+}
+
   // Professor X Mind Control
 if (hasProfessorXMindControl) {
     await professorXMindControlGainVillain(villainCard);
+}
+
+if (villainCard.bystander) {
+    villainCard.bystander = [];
 }
 
   // Final cleanup
@@ -8267,9 +9241,139 @@ if (hasProfessorXMindControl) {
   updateGameBoard();
 }
 
+async function handleHQPostDefeat(villainCard, villainCopy, villainAttack, index, isInstantDefeat = false) {
+  // Handle Baby Hope first
+  if (villainCard.babyHope === true) {
+    delete villainCard.babyHope;
+    villainCard.attack = villainCard.originalAttack;
+    const BabyHopeCard = {
+      name: "Baby Hope",
+      type: "Baby",
+      victoryPoints: 6,
+      image: 'Visual Assets/Other/BabyHope.webp'
+    };
+    victoryPile.push(BabyHopeCard);
+    updateGameBoard();
+  }
+
+  // Plutonium back into deck (shuffle)
+if (Array.isArray(villainCard.plutoniumCaptured) && villainCard.plutoniumCaptured.length) {
+    onscreenConsole.log(`${villainCard.plutoniumCaptured.length} Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled into the Villain Deck.`);
+  for (const plutonium of villainCard.plutoniumCaptured) {
+    // Insert at a random position 0..villainDeck.length (0 = bottom, length = top)
+    const pos = Math.floor(Math.random() * (villainDeck.length + 1));
+    villainDeck.splice(pos, 0, plutonium);
+  }
+  villainCard.plutoniumCaptured.length = 0;
+}
+
+  // X-Cutioner Heroes
+  if (Array.isArray(villainCard.XCutionerHeroes) && villainCard.XCutionerHeroes.length > 0) {
+    for (const hero of villainCard.XCutionerHeroes) {
+      playerDiscardPile.push(hero);
+      onscreenConsole.log(`You have rescued <span class="console-highlights">${hero.name}</span>. They have been added to your Discard pile.`);
+    }
+    villainCard.XCutionerHeroes.length = 0;
+  }
+
+  // Extra bystanders
+  if (rescueExtraBystanders > 0) {
+    for (let i = 0; i < rescueExtraBystanders; i++) {
+      await rescueBystander();
+    }
+  }
+
+  if (villainCard.name === 'Dracula') {
+    villainCard.attack = 3;
+    villainCard.cost = 0;
+  }
+
+const burrowingVillain = (villainCard.keywords && villainCard.keywords.includes('Burrow'));
+
+  // Burrow logic
+  if (burrowingVillain) {
+      victoryPile.push(villainCard);
+      onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> is in the HQ and cannot burrow. They are defeated!`);
+    }
+
+    if (!villainCard.skrulled) {
+        victoryPile.push(villainCard);
+        onscreenConsole.log(`<span class="console-highlights">${villainCard.name}</span> has been defeated.`);
+    }    
+
+      const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
+  hq[index] = newCard;
+
+  if (newCard) {
+    onscreenConsole.log(`<span class="console-highlights">${newCard.name}</span> has entered the HQ.`);
+  }
+
+  addHRToTopWithInnerHTML();
+
+  healingPossible = false;
+
+  if (!hq[index] && heroDeck.length === 0) {
+    heroDeckHasRunOut = true;
+  }
+
+
+if (villainCard.killbot === true) {
+    bystanderBonuses();
+  }
+  addHRToTopWithInnerHTML();
+
+  // Note: DO NOT clear city[cityIndex] here — it's already cleared in defeatVillain()
+
+  // Location bonuses
+
+
+if (villainCard.name === "Carrion" && carrionHeroFeast) {
+    victoryPile.push(villainCard);
+    onscreenConsole.log(`<span class="console-highlights">Carrion</span> feasted on a Hero that cost 1 <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> or more but was in the HQ and cannot be returned to a city space!`);
+    carrionHeroFeast = false;
+}
+
+if (villainCard.name === "Chameleon") {
+    onscreenConsole.log(`<span class="console-highlights">Chameleon</span> is in the HQ and has no Heroes beneath him to copy!`); 
+}
+
+const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
+    const scheme = schemes.find(scheme => scheme.name === selectedSchemeName);
+
+if (scheme.name === "Weave a Web of Lies") {
+    await weaveAWebOfLiesBystanderRescue();
+}
+
+  // Professor X Mind Control
+if (hasProfessorXMindControl) {
+    await professorXMindControlGainVillain(villainCard);
+}
+
+  // Final cleanup
+  defeatBonuses();
+  removeHQCosmicThreatBuff(index);
+
+  // Endless Armies of HYDRA: draw TWO villain cards serially (no race conditions)
+  if (villainCard.name === "Endless Armies of HYDRA") {
+	  onscreenConsole.log(`Fight! <span class="console-highlights">Endless Armies of HYDRA</span> forces you to play the top two cards of the Villain Deck.`);
+    await drawVillainCardsSequential(2);
+  }
+
+  if (villainCard.wasSkrulled === true) {
+    victoryPile.pop(villainCard);
+  }
+
+  // One redraw at the end of post-defeat processing
+  updateGameBoard();
+}
+
 // Updated original functions to use the combined function
 async function confirmAttack(cityIndex) {
     await defeatVillain(cityIndex, false);
+}
+
+async function confirmHQAttack(index) {
+    await defeatHQVillain(index, false);
 }
 
 async function instantDefeatAttack(cityIndex) {
@@ -8324,6 +9428,31 @@ function removeCosmicThreatBuff(cityIndex) {
     updateGameBoard();
 }
 
+function removeHQCosmicThreatBuff(index) {
+    if (index === 0 && city1CosmicThreat > 0) {
+        city1TempBuff += city1CosmicThreat;
+        city1CosmicThreat = 0;
+    } 
+    else if (index === 1 && city2CosmicThreat > 0) {
+        city2TempBuff += city2CosmicThreat;
+        city2CosmicThreat = 0;
+    } 
+    else if (index === 2 && city3CosmicThreat > 0) {
+        city3TempBuff += city3CosmicThreat;
+        city3CosmicThreat = 0;
+    } 
+    else if (index === 3 && city4CosmicThreat > 0) {
+        city4TempBuff += city4CosmicThreat;
+        city4CosmicThreat = 0;
+    } 
+    else if (index === 4 && city5CosmicThreat > 0) {
+        city5TempBuff += city5CosmicThreat;
+        city5CosmicThreat = 0;
+    }
+
+    updateGameBoard();
+}
+
 function applyMastermindCosmicThreat(mastermindCard, attackReduction, label) {
   // Apply temp buff
   mastermindTempBuff -= attackReduction;
@@ -8358,8 +9487,8 @@ async function showGalactusClassChoicePopup() {
     ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy),
   ];
 
-  const cardHasClass = (card, cls) =>
-    !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
+const cardHasClass = (card, cls) =>
+    !!card && card.classes && card.classes.includes(cls);
 
   const countsByClass = {};
   for (const cls of CLASSES) {
@@ -8487,7 +9616,7 @@ function getSelectedScheme() {
     return schemes.find(s => s.name === schemeName);
 }
 
-function showHeroKOPopup() {
+async function showHeroKOPopup(villain) { 
     updateGameBoard();
     return new Promise((resolve) => {
         const popup = document.querySelector('.card-choice-city-hq-popup');
@@ -8683,12 +9812,12 @@ function showHeroKOPopup() {
         noThanksButton.style.display = 'none';
 
         // Confirm button handler
-        confirmButton.onclick = (e) => {
+        confirmButton.onclick = async (e) => {  // Add async here too
             e.stopPropagation();
             e.preventDefault();
             if (selectedHQIndex === null) return;
 
-            setTimeout(() => {
+            setTimeout(async () => {  // Add async here for the setTimeout callback
                 const hero = hq[selectedHQIndex];
                 koHeroInHQ(selectedHQIndex);
                 updateGameBoard();
@@ -9084,6 +10213,29 @@ function recalculateMastermindAttack(mastermind) {
     return mastermindAttack;
 }
 
+function isFinalBlowEnabled() {
+  return finalBlowEnabled === true; // your existing global
+}
+
+function isFinalBlowRequired(mastermind) {
+  // Final Blow is "pending" only when enabled, tactics are currently 0, and we haven't delivered it yet
+  return isFinalBlowEnabled() && mastermind.tactics.length === 0 && finalBlowDelivered === false;
+}
+
+function isMastermindDefeated(mastermind) {
+  // Mastermind is actually defeated when:
+  //  - no tactics remain AND either
+  //     (a) Final Blow is OFF, or
+  //     (b) Final Blow is ON and has been delivered
+  return mastermind.tactics.length === 0 && (!isFinalBlowEnabled() || finalBlowDelivered === true);
+}
+
+// If new tactics get added later (e.g., villain effects), make sure Final Blow can't be considered delivered
+function onMastermindTacticsChanged(mastermind) {
+  if (mastermind.tactics.length > 0) {
+    finalBlowDelivered = false;
+  }
+}
 
 // New functions for Mastermind attack mechanics
 
@@ -9104,9 +10256,7 @@ const handleMastermindClick = () => {
     }
 
     // Check for Bribe keyword on Mastermind or its tactics
-    const hasBribeKeyword = mastermind.keyword1 === "Bribe" || 
-                           mastermind.keyword2 === "Bribe" || 
-                           mastermind.keyword3 === "Bribe";
+    const hasBribeKeyword = mastermind.keywords && mastermind.keywords.includes("Bribe");
 
     if (hasBribeKeyword && !negativeZoneAttackAndRecruit) {
         playerAttackPoints += totalRecruitPoints;
@@ -9153,51 +10303,106 @@ const handleMastermindClick = () => {
         }
     }
 
-    // Handle different attack scenarios
-    if (mastermind.tactics.length === 0) {
-        const defeatedMasterminds = victoryPile.filter(card => card.type === "Mastermind");
-        
-        if (finalBlowEnabled === true && defeatedMasterminds.length < 5) {
-            if (canAttack) {
-                showMastermindAttackButton();
-                onscreenConsole.log(`<span class="console-highlights">${mastermind.name}</span> has no tactics remaining - deliver the Final Blow!`);
-                return;
-            } else {
-                if (!negativeZoneAttackAndRecruit) {
-                    if (invincibleForceField > 0) {
-                        onscreenConsole.log(`You need ${requiredPoints}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> (${mastermindAttack} + ${invincibleForceField} forcefield) to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`);
-                    } else {
-                        onscreenConsole.log(`You need ${mastermindAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`);
-                    }
-                } else {
-                    if (invincibleForceField > 0) {
-                        onscreenConsole.log(`Negative Zone! You need ${requiredPoints}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> (${mastermindAttack} + ${invincibleForceField} forcefield) to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`);
-                    } else {
-                        onscreenConsole.log(`Negative Zone! You need ${mastermindAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`);
-                    }
-                }
-            }
-        } else {
-            onscreenConsole.log(`<span class="console-highlights">${mastermind.name}</span> has been defeated! Finish your turn to win.`);
-        }
-    } else if (canAttack) {
-        showMastermindAttackButton();
-        return;
+    // Get scheme information
+    const bystandersInVP = victoryPile.filter(card => card.type === "Bystander");
+const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
+const scheme = schemes.find(scheme => scheme.name === selectedSchemeName);
+
+// Current state
+const hasTacticsRemaining = mastermind.tactics.length > 0;
+const finalBlowNeeded = isFinalBlowRequired(mastermind);
+const mastermindTrulyDefeated = isMastermindDefeated(mastermind);
+
+// Can we attack the MM *this* click?
+const weaveCondOk = (scheme.name !== "Weave a Web of Lies") || (bystandersInVP.length >= schemeTwistCount);
+const canAttackMastermind =
+  canAttack && weaveCondOk && (hasTacticsRemaining || finalBlowNeeded);
+
+if (mastermindTrulyDefeated) {
+  // Already defeated: just message and bail
+  onscreenConsole.log(
+    `<span class="console-highlights">${mastermind.name}</span> has been defeated! Finish your turn to win.`
+  );
+  return;
+}
+
+if (hasTacticsRemaining) {
+  if (canAttackMastermind) {
+    showMastermindAttackButton();
+    return;
+  } else {
+    // --- Can't attack yet ---
+    // Keep your existing message branches here (Negative Zone, Forcefield, Weave a Web of Lies, etc.)
+    if (scheme.name === "Weave a Web of Lies" && bystandersInVP.length < schemeTwistCount) {
+      onscreenConsole.log(
+        `Weave a Web of Lies: You need at least ${schemeTwistCount} Bystander${schemeTwistCount === 1 ? '' : 's'} in your Victory Pile to attack <span class="console-highlights">${mastermind.name}</span>.`
+      );
+    } else if (!negativeZoneAttackAndRecruit) {
+      if (invincibleForceField > 0) {
+        onscreenConsole.log(
+          `You need ${invincibleForceField} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> / <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to break through <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> force field${invincibleForceField === 1 ? '' : 's'} and ${mastermindAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to defeat them.`
+        );
+      } else {
+        onscreenConsole.log(
+          `You need ${mastermindAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to defeat <span class="console-highlights">${mastermind.name}</span>.`
+        );
+      }
     } else {
-        if (!negativeZoneAttackAndRecruit) {
-            if (invincibleForceField > 0) {
-                onscreenConsole.log(`You need ${invincibleForceField} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> / <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to break through <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> force field${invincibleForceField === 1 ? '' : 's'} and ${mastermindAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to defeat them.`);
-            } else {
-                onscreenConsole.log(`You need ${mastermindAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to defeat <span class="console-highlights">${mastermind.name}</span>.`);
-            }
-        } else {
-            if (invincibleForceField > 0) {
-                onscreenConsole.log(`You need ${invincibleForceField} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> / <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to break through <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> force field${invincibleForceField === 1 ? '' : 's'} and ${mastermindAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat them.`);
-            } else {
-                onscreenConsole.log(`Negative Zone! You need ${mastermindAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${mastermind.name}</span>.`);
-            }
-        }
+      if (invincibleForceField > 0) {
+        onscreenConsole.log(
+          `You need ${invincibleForceField} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> / <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to break through <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> force field${invincibleForceField === 1 ? '' : 's'} and ${mastermindAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat them.`
+        );
+      } else {
+        onscreenConsole.log(
+          `Negative Zone! You need ${mastermindAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to defeat <span class="console-highlights">${mastermind.name}</span>.`
+        );
+      }
     }
+  }
+} else {
+  // --- No tactics remain ---
+  if (isFinalBlowEnabled()) {
+    if (finalBlowNeeded && canAttackMastermind) {
+      showMastermindAttackButton();
+      onscreenConsole.log(
+        `<span class="console-highlights">${mastermind.name}</span> has no tactics remaining – deliver the Final Blow!`
+      );
+      return;
+    } else {
+      // Explain why they can't Final Blow yet (Weave/points/forcefield etc.)
+      if (scheme.name === "Weave a Web of Lies" && bystandersInVP.length < schemeTwistCount) {
+        onscreenConsole.log(
+          `Weave a Web of Lies: You need at least ${schemeTwistCount} Bystanders in your Victory Pile to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`
+        );
+      } else if (!negativeZoneAttackAndRecruit) {
+        if (invincibleForceField > 0) {
+          onscreenConsole.log(
+            `You need ${requiredPoints}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> (${mastermindAttack} + ${invincibleForceField} forcefield) to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`
+          );
+        } else {
+          onscreenConsole.log(
+            `You need ${mastermindAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`
+          );
+        }
+      } else {
+        if (invincibleForceField > 0) {
+          onscreenConsole.log(
+            `Negative Zone! You need ${requiredPoints}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> (${mastermindAttack} + ${invincibleForceField} forcefield) to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`
+          );
+        } else {
+          onscreenConsole.log(
+            `Negative Zone! You need ${mastermindAttack}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to deliver the Final Blow to <span class="console-highlights">${mastermind.name}</span>.`
+          );
+        }
+      }
+    }
+  } else {
+    // Final Blow OFF and tactics = 0 → defeated
+    onscreenConsole.log(
+      `<span class="console-highlights">${mastermind.name}</span> has been defeated! Finish your turn to win.`
+    );
+  }
+}
 }
 // Add the initial listener
 document.getElementById('mastermind').addEventListener('click', handleMastermindClick);
@@ -9254,6 +10459,7 @@ async function confirmMastermindAttack() {
     playSFX('attack');
     try {
         const mastermind = getSelectedMastermind();
+        const finalBlowNow = isFinalBlowRequired(mastermind);
         healingPossible = false;
         const mastermindAttack = recalculateMastermindAttack(mastermind);
 
@@ -9294,9 +10500,7 @@ if (invincibleForceField > 0) {
         // Create a copy of the mastermind data
         const mastermindCopy = createMastermindCopy(mastermind);
 
-            const hasBribeKeyword = mastermind.keyword1 === "Bribe" || 
-                          mastermind.keyword2 === "Bribe" || 
-                          mastermind.keyword3 === "Bribe";
+const hasBribeKeyword = mastermind.keywords && mastermind.keywords.includes("Bribe");
 
 if (mastermindAttack > 0) {
     // Handle point deduction
@@ -9338,6 +10542,24 @@ if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack) || hasBribeKeyword) {
 updateReserveAttackAndRecruit();
 removeMastermindCosmicThreatBuff();
 
+if (finalBlowNow) {
+  // This was the Final Blow hit: mark it, grant the "Final Blow" card, and we do NOT reveal a tactic
+  finalBlowDelivered = true;
+
+  const finalBlowCard = {
+    name: "Final Blow",
+    type: "Mastermind",
+    victoryPoints: mastermind.victoryPoints,
+    image: mastermind.image
+  };
+  victoryPile.push(finalBlowCard);
+  updateGameBoard();
+
+  onscreenConsole.log(`You delivered the Final Blow to <span class="console-highlights">${mastermind.name}</span>!`);
+  checkWinCondition(); // will succeed now that tactics=0 and finalBlowDelivered=true
+  return; // Skip tactic logic entirely
+}
+
         // Collect all possible operations
         const operations = await collectMastermindRescueOperations(mastermindCopy);
 
@@ -9359,9 +10581,7 @@ removeMastermindCosmicThreatBuff();
 // Helper function to check if recruit can be used for mastermind attack
 function canUseRecruitForMastermind() {
     const mastermind = getSelectedMastermind();
-    const hasBribeKeyword = mastermind.keyword1 === "Bribe" || 
-                           mastermind.keyword2 === "Bribe" || 
-                           mastermind.keyword3 === "Bribe";
+const hasBribeKeyword = mastermind.keywords && mastermind.keywords.includes("Bribe");
     
     return hasBribeKeyword || recruitUsedToAttack;
 }
@@ -9449,6 +10669,7 @@ async function collectMastermindRescueOperations(mastermindCopy) {
                     name: `Rescue ${bystander.name}`,
                     image: bystander.image,
                     execute: async () => {
+                        onscreenConsole.log(`<span class="console-highlights">${bystander.name}</span> rescued.`);
                         victoryPile.push(bystander);
                         bystanderBonuses();
                         await rescueBystanderAbility(bystander);
@@ -9494,24 +10715,16 @@ async function handleMastermindPostDefeat(mastermind, mastermindCopy, mastermind
     updateMastermindOverlay();
     updateGameBoard();
 
-    onscreenConsole.log(`You attacked <span class="console-highlights">${mastermind.name}</span>. Revealing tactic now!`);
+    onscreenConsole.log(`You attacked <span class="console-highlights">${mastermind.name}</span>!`);
 
-    // Check win condition
-    if (mastermind.tactics.length === 0) {
-        if (finalBlowEnabled) {
-            const finalBlowCard = { 
-                name: "Final Blow", 
-                type: "Mastermind", 
-                victoryPoints: mastermind.victoryPoints, 
-                image: mastermind.image
-            };
-            victoryPile.push(finalBlowCard);
-            updateGameBoard();
-        }
-        checkWinCondition();
-    } else {
-        revealMastermindTactic(mastermind);
-    }
+    if (mastermind.tactics.length > 0) {
+  revealMastermindTactic(mastermind);
+} else {
+  // If Final Blow is enabled, the UI/logic elsewhere will prompt it when clicking the mastermind
+  // If Final Blow is disabled, checkWinCondition() will handle victory
+  checkMastermindState(); // you already call this inside reveal/resolve path; safe to call here too
+}
+
 }
 
 
@@ -9556,12 +10769,13 @@ function showTacticPopup(tacticCard) {
         modalOverlay.style.display = 'block';
 
         const onConfirm = () => {
+                closeInfoChoicePopup();
             resolveTacticEffects(tacticCard).then(() => {
                 onscreenConsole.log(`<span class="console-highlights">${mastermind.name}</span> has ${mastermind.tactics.length} tactics remaining!`);
                 addHRToTopWithInnerHTML(); 
                 resolve(); // Resolve the promise after the tactic effects are resolved
             });
-            closeInfoChoicePopup();
+
         };
 
         // Simple onclick assignment - no need for cloneNode
@@ -9570,9 +10784,17 @@ function showTacticPopup(tacticCard) {
     });
 }
 
-function resolveTacticEffects(tacticCard) {
-    return new Promise((resolve) => {
+async function resolveTacticEffects(tacticCard) {
+    return new Promise(async (resolve) => {
         const fightEffectFunction = window[tacticCard.fightEffect]; // Access the function by name from the global scope
+
+        let negate = false;
+          if (typeof promptNegateFightEffectWithMrFantastic === 'function') {
+            negate = await promptNegateFightEffectWithMrFantastic();
+            checkMastermindState();
+            resolve();
+          }
+          if (!negate) {
 
         if (typeof fightEffectFunction === 'function') {
             console.log('Executing tactic card effect:', tacticCard.fightEffect);
@@ -9598,18 +10820,19 @@ function resolveTacticEffects(tacticCard) {
             checkMastermindState();
             resolve();
         }
+    }
     });
 }
 
 function checkMastermindState() {
-    // Check if there are no more tactics left
-    let mastermind = getSelectedMastermind();
-    if (mastermind.tactics.length === 0) {
-        if (finalBlowEnabled) {
-            finalBlowNeededPopup(); // Trigger the Final Blow Needed Popup if no tactics left and Final Blow is enabled
-        }
-    }
-    checkWinCondition();
+  const mastermind = getSelectedMastermind();
+
+  if (isFinalBlowRequired(mastermind)) {
+    // Only *prompt* for Final Blow; don't award anything here
+    finalBlowNeededPopup();
+  }
+
+  checkWinCondition();
 }
 
 // Add this JavaScript to your script.js
@@ -9662,6 +10885,7 @@ generateGameScore();
     modalOverlay.style.display = 'block';
     score.style.display = 'block';
     stats.style.display = 'block';
+    window.audioEngine.fadeOutMusic(1.5);
 playSFX('game-draw');
 
     const selectedSchemeName = document.querySelector('#scheme-section input[type=radio]:checked').value;
@@ -9747,6 +10971,22 @@ if (selectedScheme) {
         case "Pull Reality into the Negative Zone":
             drawText.innerHTML = `You've sealed some dimensional breaches but ${mastermind.name} only keeps creating more.`;
             break;
+
+        case "The Clone Saga":
+            drawText.innerHTML = `The cloning labs have been destroyed, but ${mastermind.name} escaped with enough tech to begin again.`;
+            break;
+
+        case "Invade the Daily Bugle News HQ":
+            winText.innerHTML = `The villains have been driven out of the newsroom, but ${mastermind.name} escaped with enough influence to sway the headlines from the shadows.`;
+            break;
+
+        case "Splice Humans with Spider DNA":
+            winText.innerHTML = `The genetic splicing has been halted, but ${mastermind.name} escaped with research that could fuel their next plot.`;
+            break;
+
+        case "Weave a Web of Lies":
+            winText.innerHTML = `You've forced ${mastermind.name} to retreat, but they continue to weave their web of lies from the shadows.`;
+            break;
         
         default:
             drawText.innerHTML = ``;
@@ -9798,20 +11038,16 @@ function returnHome() {
 
 function checkDefeat() {
     // Check if defeat should be delayed due to victory conditions
-    if (finalBlowEnabled && victoryPile.filter(obj => obj.type === "Mastermind").length === 5) {
-        return false;
-    }
-
-    if (!finalBlowEnabled && victoryPile.filter(obj => obj.type === "Mastermind").length === 4) {
-        return false;
-    }
+const mastermind = getSelectedMastermind();
+if (!isMastermindDefeated(mastermind)) {
+  return false;
+}
 
     if (delayEndGame || mastermindDefeated) {
         return false;
     }
 
     // Check mastermind-specific defeat conditions
-    const mastermind = getSelectedMastermind();
     const mastermindEndGame = mastermind ? mastermind.endGame : null;
     
     if (mastermindEndGame) {
@@ -9842,6 +11078,7 @@ function checkDefeat() {
                 
                 if (allSpacesDestroyed) {
                     onscreenConsole.log("The entire city has been destroyed!");
+                    document.getElementById('defeat-context').innerHTML = `<span class="console-highlights">Galactus</span> has destroyed the entire city!`;
                     return true;
                 }
                 break;
@@ -9875,6 +11112,7 @@ function showDefeatPopup() {
     modalOverlay.style.display = 'block';
     score.style.display = 'block';
     stats.style.display = 'block';
+    window.audioEngine.fadeOutMusic(1.5);
     playSFX('evil-wins');
 
     document.getElementById('player-deck-card-back').addEventListener('click', openPlayerDeckPopup);
@@ -9905,39 +11143,57 @@ modalOverlay.style.display = 'none';
 }
 
 function showFinishTurnPopup() {
-    const finishTurnPopup = document.getElementById('finish-turn-popup');
-const modalOverlay = document.getElementById('modal-overlay');
-    finishTurnPopup.style.display = 'block';
-modalOverlay.style.display = 'block';
+    const infochoicepopup = document.querySelector('.info-or-choice-popup');
+    const title = document.querySelector('.info-or-choice-popup-title');
+    const instructions = document.querySelector('.info-or-choice-popup-instructions');
+    const preview = document.querySelector('.info-or-choice-popup-preview');
+    const confirm = document.getElementById('info-or-choice-popup-confirm');
+    const otherChoice = document.getElementById('info-or-choice-popup-otherchoice');
+    const nothanks = document.getElementById('info-or-choice-popup-nothanks');
+    const modalOverlay = document.getElementById('modal-overlay');
 
+    // Set popup content
+    title.textContent = 'Well done!';
+    instructions.textContent = 'You have defeated the Mastermind. Finish your turn to maximize your Victory Points.';
+    
+    // Set mastermind image in preview
+    const mastermind = getSelectedMastermind();
+    if (mastermind && mastermind.image) {
+        preview.innerHTML = `<img src="${mastermind.image}" alt="Defeated Mastermind" style="max-width: 100%; height: auto;">`;
+    }
+
+    // Configure buttons - only show confirm button
+    confirm.textContent = 'Finish Turn';
+    confirm.style.display = 'block';
+    otherChoice.style.display = 'none';
+    nothanks.style.display = 'none';
+
+    // Set up event handlers
+    confirm.onclick = handleFinishTurnConfirm;
+
+    // Show popup and overlay
+    infochoicepopup.style.display = 'block';
+    modalOverlay.style.display = 'block';
     lastTurn = true;
 }
 
-document.getElementById('finish-turn-button').addEventListener('click', () => {
-    closeFinishTurnPopup();
-
-});
-
-function closeFinishTurnPopup() {
-    const finishTurnPopup = document.getElementById('finish-turn-popup');
-    const modalOverlay = document.getElementById('modal-overlay');
-    finishTurnPopup.style.display = 'none';
-    modalOverlay.style.display = 'none';
-
-updateGameBoard();
+function handleFinishTurnConfirm() {
+    closeInfoChoicePopup();
+    updateGameBoard();
 }
 
+// Update your existing event listener to use the new function
+document.getElementById('finish-turn-button').addEventListener('click', () => {
+    handleFinishTurnConfirm();
+});
+
 function checkWinCondition() {
-    const requiredTactics = finalBlowEnabled ? 5 : 4;
-    const mastermindTacticsCount = victoryPile.filter(card => card.type === 'Mastermind').length;
-    
-    console.log('Victory Pile:', victoryPile); // Log the contents of the victory pile
-    console.log('Mastermind Tactics Count:', mastermindTacticsCount); // Log the count of mastermind tactics
-    
-    if (mastermindTacticsCount >= requiredTactics) {
-        showFinishTurnPopup();
-		mastermindDefeated = true;
-    }
+  const mastermind = getSelectedMastermind();
+
+  if (isMastermindDefeated(mastermind)) {
+    showFinishTurnPopup();
+    mastermindDefeated = true; // your existing flag
+  }
 }
 
 async function showWinPopup() {
@@ -10058,6 +11314,22 @@ if (selectedScheme) {
         case "Pull Reality into the Negative Zone":
             winText.innerHTML = `You've stopped ${mastermind.name} from pulling reality into the Negative Zone. The dimensional breach is sealed and the world is safe. Excellent work!`;
             break;
+
+        case "The Clone Saga":
+            winText.innerHTML = `You've stopped ${mastermind.name} from infiltrating the city with dangerous clones. The imposters are gone, and the real heroes remain to defend the world. Excellent work!`;
+            break;
+
+        case "Invade the Daily Bugle News HQ":
+            winText.innerHTML = `You've stopped ${mastermind.name} from taking over the Daily Bugle. The press is free once more to report the truth. Excellent work!`;
+            break;
+
+        case "Splice Humans with Spider DNA":
+            winText.innerHTML = `You've stopped ${mastermind.name} from splicing humans with spider DNA. The Sinister Six are defeated, and humanity is safe from mutation. Excellent work!`;
+            break;
+
+        case "Weave a Web of Lies":
+            winText.innerHTML = `You've stopped ${mastermind.name} from weaving their web of lies. The truth is exposed, and the people see through their deception. Excellent work!`;
+            break;
         
         default:
             winText.innerHTML = `You have defeated the Mastermind and prevented their nefarious scheme! Excellent work!`;
@@ -10070,6 +11342,7 @@ winPopup.style.display = 'block';
 modalOverlay.style.display = 'block';
     score.style.display = 'block';
     stats.style.display = 'block';
+    window.audioEngine.fadeOutMusic(1.5);
 playSFX('good-wins');
 
 gameIsOver = true;
@@ -10141,7 +11414,7 @@ function countTechCards() {
     ];
 
     // Filter the Tech cards
-    const techCards = allCards.filter(card => card.class1 === 'Tech' || card.class2 === 'Tech');
+const techCards = allCards.filter(card => card.classes && card.classes.includes('Tech'));
 
     // Return the total number of Tech cards
     return techCards.length;
@@ -10152,6 +11425,17 @@ function countTechCards() {
 function finalBlowNeededPopup() {
     const finalBlowNeededPopup = document.getElementById('final-blow-popup');
 const modalOverlay = document.getElementById('modal-overlay');
+
+const mastermind = getSelectedMastermind();
+
+            const previewArea = document.querySelector('.final-blow-popup-preview');
+            if (previewArea && mastermind.image) {
+                previewArea.style.backgroundImage = `url('${mastermind.image}')`;
+                previewArea.style.backgroundSize = 'contain';
+                previewArea.style.backgroundRepeat = 'no-repeat';
+                previewArea.style.backgroundPosition = 'center';
+                previewArea.style.display = 'block';
+            }
    
  finalBlowNeededPopup.style.display = 'block';
 modalOverlay.style.display = 'block';
@@ -10429,24 +11713,15 @@ document.addEventListener('mouseout', (e) => {
     const target = findImageTarget(e.target);
     if (!activeImage && target) {
         hideZoomedImage();
-
         // Clear the right panel
-        const keyword1Display = document.getElementById("keyword1");
-        const keyword2Display = document.getElementById("keyword2");
-        const keyword3Display = document.getElementById("keyword3");
-        const errataDisplay = document.getElementById("errata");
-        keyword1Display.textContent = "";
-        keyword2Display.textContent = "";
-        keyword3Display.textContent = "";
-        errataDisplay.textContent = "";
-
-        // Clear keyword descriptions
-        updateKeywordDescriptions(null, "keyword1Description");
-        updateKeywordDescriptions(null, "keyword2Description");
-        updateKeywordDescriptions(null, "keyword3Description");
-        updateKeywordDescriptions(null, "errataDescription");
+        clearKeywordPanel();
     }
 });
+
+function clearKeywordPanel() {
+    const keywordContent = document.getElementById("keyword-content");
+    keywordContent.innerHTML = ''; // Clear all content
+}
 
 // Handle click (for mobile & desktop)
 document.addEventListener('click', (e) => {
@@ -10475,49 +11750,37 @@ function getCardImageFromName(cardName) {
 }
 
 function updateRightPanel(card) {
-    // Update keyword1 and its description
-    const keyword1Display = document.getElementById("keyword1");
-    if (card.keyword1 && card.keyword1 !== "None") {
-        keyword1Display.textContent = `${card.keyword1}: `; // Add colon after keyword1
-        updateKeywordDescriptions(card.keyword1, "keyword1Description"); // Update description
-    } else {
-        keyword1Display.textContent = ""; // Clear if keyword1 is missing or "None"
-        updateKeywordDescriptions(null, "keyword1Description"); // Clear description
+    clearKeywordPanel();
+    const keywordContent = document.getElementById("keyword-content");
+    
+    // Display keywords from the array
+    if (card.keywords && card.keywords.length > 0) {
+        card.keywords.forEach(keyword => {
+            if (keyword && keyword !== "None") {
+                const keywordElement = document.createElement('p');
+                keywordElement.innerHTML = `
+                    <span class="keywordTitles">${keyword}: </span>
+                    <span class="keywordDescriptions">${getKeywordDescription(keyword)}</span>
+                `;
+                keywordContent.appendChild(keywordElement);
+            }
+        });
     }
-
-    // Update keyword2 and its description
-    const keyword2Display = document.getElementById("keyword2");
-    if (card.keyword2 && card.keyword2 !== "None") {
-        keyword2Display.textContent = `${card.keyword2}: `; // Add colon after keyword2
-        updateKeywordDescriptions(card.keyword2, "keyword2Description"); // Update description
-    } else {
-        keyword2Display.textContent = ""; // Clear if keyword2 is missing or "None"
-        updateKeywordDescriptions(null, "keyword2Description"); // Clear description
-    }
-
-    // Update keyword3 and its description
-    const keyword3Display = document.getElementById("keyword3");
-    if (card.keyword3 && card.keyword3 !== "None") {
-        keyword3Display.textContent = `${card.keyword3}: `; // Add colon after keyword3
-        updateKeywordDescriptions(card.keyword3, "keyword3Description"); // Update description
-    } else {
-        keyword3Display.textContent = ""; // Clear if keyword3 is missing or "None"
-        updateKeywordDescriptions(null, "keyword3Description"); // Clear description
-    }
-
- // Update errata and its description
-    const errataDisplay = document.getElementById("errata");
+    
+    // Display errata (kept separate since it's not in keywords array)
     if (card.errata && card.errata !== "None") {
-        errataDisplay.textContent = `${card.errata}: `; // Add colon after keyword3
-        updateKeywordDescriptions(card.errata, "errataDescription"); // Update description
-    } else {
-        errataDisplay.textContent = ""; // Clear if errata is missing or "None"
-        updateKeywordDescriptions(null, "errataDescription"); // Clear description
+        const errataElement = document.createElement('p');
+        errataElement.innerHTML = `
+            <span class="keywordTitles">${card.errata}: </span>
+            <span class="keywordDescriptions">${getKeywordDescription(card.errata)}</span>
+        `;
+        keywordContent.appendChild(errataElement);
     }
-
-
 }
 
+function getKeywordDescription(keyword) {
+    return keywordDescriptions[keyword] || "";
+}
 
 function updateKeywordDescriptions(keyword, descriptionElementId) {
     const descriptionElement = document.getElementById(descriptionElementId);
@@ -10539,11 +11802,11 @@ function hideModalOverlay() {
 }
 
 function openPlayedCardsPopup() {
-	const playedCardsTable = document.getElementById('playedCardsTable');
+	const playedCardsTable = document.getElementById('played-cards-window-cards');
     playedCardsTable.innerHTML = '';
 
     // Close popup when clicking outside
-    const popup = document.getElementById('played-cards-popup');
+    const popup = document.getElementById('played-cards-window');
     popup.addEventListener('click', (e) => {
         if (e.target === popup) {
             closePlayedCardsPopup();
@@ -10616,19 +11879,17 @@ if (card.name === "Professor X - Telepathic Probe" &&
                     playerAttackPoints = totalRecruitPoints;
                 }
                 
-                if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack) || 
-                    topCard.keyword1 === "Bribe" || 
-                    topCard.keyword2 === "Bribe" || 
-                    topCard.keyword3 === "Bribe") {
-                    playerAttackPoints += totalRecruitPoints;
-                }
+if ((!negativeZoneAttackAndRecruit && recruitUsedToAttack) || 
+    (topCard.keywords && topCard.keywords.includes("Bribe"))) {
+    playerAttackPoints += totalRecruitPoints;
+}
 
                 // Toggle attack button visibility
 if (playerAttackPoints >= villainAttack) {
     attackButton.style.display = attackButton.style.display === 'none' ? 'block' : 'none';
 } else {
     // Check if the top card has Bribe in any keyword slot
-    const hasBribe = topCard.keyword1 === "Bribe" || topCard.keyword2 === "Bribe" || topCard.keyword3 === "Bribe";
+    const hasBribe = topCard.keywords && topCard.keywords.includes("Bribe");
     
     if (!negativeZoneAttackAndRecruit) {
         if (hasBribe) {
@@ -10659,7 +11920,7 @@ if (playerAttackPoints >= villainAttack) {
             cardContainer.appendChild(indicator);
         }
 
-        if (card.keyword1 === "Focus" || card.keyword2 === "Focus" || card.keyword3 === "Focus") {
+ if (card.keywords && card.keywords.includes("Focus")) {
     imgElement.classList.add('clickable-card', 'telepathic-probe-active');
     imgElement.style.cursor = 'pointer';
     imgElement.style.border = '3px solid rgb(198 169 104);';
@@ -10730,13 +11991,13 @@ if (playerAttackPoints >= villainAttack) {
 
 // Function to close the Played Cards popup
 function closePlayedCardsPopup() {
-    document.getElementById('played-cards-popup').style.display = 'none';
+    document.getElementById('played-cards-window').style.display = 'none';
     document.getElementById('played-cards-modal-overlay').style.display = 'none';
 }
 
 function openVictoryPilePopup() {
     // Clear the victoryPileTable content before adding new cards
-    const victoryPileTable = document.getElementById('victoryPileTable');
+    const victoryPileTable = document.getElementById('victory-pile-window-cards');
     victoryPileTable.innerHTML = ''; 
 
     // Populate the victoryPileTable with images
@@ -10749,19 +12010,13 @@ function openVictoryPilePopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('victory-pile-popup').style.display = 'block';
+    document.getElementById('victory-pile-window').style.display = 'block';
     showModalOverlay();
-}
-
-// Function to close the Victory Pile popup
-function closeVictoryPilePopup() {
-    document.getElementById('victory-pile-popup').style.display = 'none';
-    hideModalOverlay();
 }
 
 function openKOPilePopup() {
  
-    const KOPileTable = document.getElementById('KOPileTable');
+    const KOPileTable = document.getElementById('ko-pile-window-cards');
     KOPileTable.innerHTML = ''; 
 
     // Populate the KOPileTable with images
@@ -10774,18 +12029,13 @@ function openKOPilePopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('ko-pile-popup').style.display = 'block';
+    document.getElementById('ko-pile-window').style.display = 'block';
     showModalOverlay();
-}
-
-function closeKOPilePopup() {
-    document.getElementById('ko-pile-popup').style.display = 'none';
-    hideModalOverlay();
 }
 
 function openEscapedVillainsPopup() {
    
-    const escapedVillainsTable = document.getElementById('escapedVillainsTable');
+    const escapedVillainsTable = document.getElementById('escaped-villains-window-cards');
     escapedVillainsTable.innerHTML = ''; 
 
     
@@ -10798,18 +12048,13 @@ function openEscapedVillainsPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('escaped-villains-popup').style.display = 'block';
+    document.getElementById('escaped-villains-window').style.display = 'block';
     showModalOverlay();
-}
-
-function closeEscapedVillainsPopup() {
-    document.getElementById('escaped-villains-popup').style.display = 'none';
-    hideModalOverlay();
 }
 
 function openDiscardPilePopup() {
    
-    const DiscardPileTable = document.getElementById('DiscardPileTable');
+    const DiscardPileTable = document.getElementById('discard-pile-window-cards');
     DiscardPileTable.innerHTML = ''; 
 
    
@@ -10822,13 +12067,13 @@ function openDiscardPilePopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('discard-pile-popup').style.display = 'block';
+    document.getElementById('discard-pile-window').style.display = 'block';
     showModalOverlay();
 }
 
 function openPlayerDeckPopup() {
    
-    const PlayerDeckTable = document.getElementById('PlayerDeckTable');
+    const PlayerDeckTable = document.getElementById('player-deck-window-cards');
     PlayerDeckTable.innerHTML = ''; 
 
    
@@ -10841,13 +12086,13 @@ function openPlayerDeckPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('playerDeck-popup').style.display = 'block';
+    document.getElementById('player-deck-window').style.display = 'block';
     showModalOverlay();
 }
 
 function openHeroDeckPopup() {
    
-    const HeroDeckTable = document.getElementById('HeroDeckTable');
+    const HeroDeckTable = document.getElementById('hero-deck-window-cards');
     HeroDeckTable.innerHTML = ''; 
 
    
@@ -10860,13 +12105,13 @@ function openHeroDeckPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('heroDeck-popup').style.display = 'block';
+    document.getElementById('hero-deck-window').style.display = 'block';
     showModalOverlay();
 }
 
 function openVillainDeckPopup() {
    
-    const VillainDeckTable = document.getElementById('VillainDeckTable');
+    const VillainDeckTable = document.getElementById('villain-deck-window-cards');
     VillainDeckTable.innerHTML = ''; 
 
    
@@ -10879,13 +12124,13 @@ function openVillainDeckPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('villainDeck-popup').style.display = 'block';
+    document.getElementById('villain-deck-window').style.display = 'block';
     showModalOverlay();
 }
 
 function openWoundDeckPopup() {
    
-    const WoundDeckTable = document.getElementById('WoundDeckTable');
+    const WoundDeckTable = document.getElementById('wound-stack-window-cards');
     WoundDeckTable.innerHTML = ''; 
 
    
@@ -10898,13 +12143,13 @@ function openWoundDeckPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('woundDeck-popup').style.display = 'block';
+    document.getElementById('wound-stack-window').style.display = 'block';
     showModalOverlay();
 }
 
 function openSidekickDeckPopup() {
    
-    const SidekickDeckTable = document.getElementById('SidekickDeckTable');
+    const SidekickDeckTable = document.getElementById('sidekick-stack-window-cards');
     SidekickDeckTable.innerHTML = ''; 
 
    
@@ -10917,13 +12162,13 @@ function openSidekickDeckPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('sidekickDeck-popup').style.display = 'block';
+    document.getElementById('sidekick-stack-window').style.display = 'block';
     showModalOverlay();
 }
 
 function openShieldDeckPopup() {
    
-    const ShieldDeckTable = document.getElementById('ShieldDeckTable');
+    const ShieldDeckTable = document.getElementById('shield-deck-window-cards');
     ShieldDeckTable.innerHTML = ''; 
 
    
@@ -10936,13 +12181,13 @@ function openShieldDeckPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('shieldDeck-popup').style.display = 'block';
+    document.getElementById('shield-deck-window').style.display = 'block';
     showModalOverlay();
 }
 
 function openBystanderDeckPopup() {
    
-    const BystanderDeckTable = document.getElementById('BystanderDeckTable');
+    const BystanderDeckTable = document.getElementById('bystander-deck-window-cards');
     BystanderDeckTable.innerHTML = ''; 
 
    
@@ -10955,47 +12200,62 @@ function openBystanderDeckPopup() {
     });
 
     // Show the popup and modal overlay
-    document.getElementById('bystanderDeck-popup').style.display = 'block';
+    document.getElementById('bystander-deck-window').style.display = 'block';
     showModalOverlay();
 }
 
 function closeDiscardPilePopup() {
-    document.getElementById('discard-pile-popup').style.display = 'none';
+    document.getElementById('discard-pile-window').style.display = 'none';
     hideModalOverlay();
 }
 
 function closePlayerDeckPopup() {
-    document.getElementById('playerDeck-popup').style.display = 'none';
+    document.getElementById('player-deck-window').style.display = 'none';
     hideModalOverlay();
 }
 
 function closeHeroDeckPopup() {
-    document.getElementById('heroDeck-popup').style.display = 'none';
+    document.getElementById('hero-deck-window').style.display = 'none';
     hideModalOverlay();
 }
 
 function closeVillainDeckPopup() {
-    document.getElementById('villainDeck-popup').style.display = 'none';
+    document.getElementById('villain-deck-window').style.display = 'none';
     hideModalOverlay();
 }
 
 function closeWoundDeckPopup() {
-    document.getElementById('woundDeck-popup').style.display = 'none';
+    document.getElementById('wound-stack-window').style.display = 'none';
     hideModalOverlay();
 }
 
 function closeSidekickDeckPopup() {
-    document.getElementById('sidekickDeck-popup').style.display = 'none';
+    document.getElementById('sidekick-stack-window').style.display = 'none';
     hideModalOverlay();
 }
 
 function closeShieldDeckPopup() {
-    document.getElementById('shieldDeck-popup').style.display = 'none';
+    document.getElementById('shield-deck-window').style.display = 'none';
     hideModalOverlay();
 }
 
 function closeBystanderDeckPopup() {
-    document.getElementById('bystanderDeck-popup').style.display = 'none';
+    document.getElementById('bystander-deck-window').style.display = 'none';
+    hideModalOverlay();
+}
+
+function closeEscapedVillainsPopup() {
+    document.getElementById('escaped-villains-window').style.display = 'none';
+    hideModalOverlay();
+}
+
+function closeKOPilePopup() {
+    document.getElementById('ko-pile-window').style.display = 'none';
+    hideModalOverlay();
+}
+
+function closeVictoryPilePopup() {
+    document.getElementById('victory-pile-window').style.display = 'none';
     hideModalOverlay();
 }
 
@@ -11031,7 +12291,7 @@ function resetOpacity() {
     });
 }
 
-function recruitSidekick() {
+async function recruitSidekick() {
   const COST = 2;
 
   if (sidekickDeck.length === 0) {
@@ -11062,6 +12322,11 @@ function recruitSidekick() {
     onscreenConsole.log(
       `Sidekick recruited! <span class="console-highlights">${sidekick.name}</span> has been added to the top of your deck.`
     );
+        if (stingOfTheSpider) {
+        await scarletSpiderStingOfTheSpiderDrawChoice(sidekick);
+      }
+  } else if (sidekick.keywords.includes('Wall-Crawl')) {
+        destinationId = await wallCrawlRecruit(sidekick);
   } else {
     playerDiscardPile.push(sidekick);
     onscreenConsole.log(
@@ -11123,7 +12388,7 @@ function showSidekickRecruitButton() {
 
 document.getElementById('sidekick-deck-card-back').addEventListener('click', showSidekickRecruitButton);
 
-function recruitOfficer() {
+async function recruitOfficer() {
   const COST = 3;
 
   if (shieldDeck.length === 0) {
@@ -11146,6 +12411,11 @@ function recruitOfficer() {
     officer.revealed = true;
     backflipRecruit = false;
     onscreenConsole.log(`Hero recruited! <span class="console-highlights">${officer.name}</span> has been added to the top of your deck.`);
+    if (stingOfTheSpider) {
+        await scarletSpiderStingOfTheSpiderDrawChoice(officer);
+      }
+  } else if (officer.keywords.includes('Wall-Crawl')) {
+        destinationId = await wallCrawlRecruit(officer);
   } else {
     playerDiscardPile.push(officer);
     onscreenConsole.log(`Hero recruited! <span class="console-highlights">${officer.name}</span> has been added to your discard pile.`);
@@ -11520,6 +12790,11 @@ async function recruitHeroConfirmed(hero, hqIndex) {
     hero.revealed = true;
     onscreenConsole.log(`Hero recruited! <span class="console-highlights">${hero.name}</span> has been added to the top of your deck.`);
     backflipRecruit = false;
+        if (stingOfTheSpider) {
+        await scarletSpiderStingOfTheSpiderDrawChoice(hero);
+      }
+  } else if (hero.keywords.includes('Wall-Crawl')) {
+        destinationId = await wallCrawlRecruit(hero);
   } else {
     destinationId = 'discard-pile-cell';
     playerDiscardPile.push(hero);
@@ -11931,6 +13206,16 @@ document.getElementById('modal-overlay').style.display = 'block';
       if (!this._sfxPlaying) this._dequeueAndPlay();
     }
 
+    fadeOutMusic(fadeSeconds = 2.0) {
+  if (!this.loaded || !this.unlocked) return Promise.resolve();
+  
+  if (this.backend === "webaudio") {
+    return this._waFadeOutMusic(fadeSeconds);
+  } else {
+    return this._htmlFadeOutMusic(fadeSeconds);
+  }
+}
+
     stopMusic() {
       if (this.backend === "webaudio") {
         if (this.musicSource) {
@@ -12030,6 +13315,44 @@ document.getElementById('modal-overlay').style.display = 'block';
       this.musicSource = src;
     }
 
+    // ---------- WebAudio fade out ----------
+async _waFadeOutMusic(fadeSeconds) {
+  if (!this.musicSource || !this.ctx) return;
+  
+  const now = this.ctx.currentTime;
+  this.musicGain.gain.cancelScheduledValues(now);
+  this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
+  this.musicGain.gain.linearRampToValueAtTime(0, now + fadeSeconds);
+  
+  await wait(fadeSeconds * 1000);
+  
+  // Stop the source after fade completes
+  try { 
+    this.musicSource.stop(); 
+  } catch (e) { 
+    // Source might already be stopped - ignore
+  }
+  this.musicSource.disconnect();
+  this.musicSource = null;
+}
+
+// ---------- HTMLAudio fade out ----------
+async _htmlFadeOutMusic(fadeSeconds) {
+  const el = this.mediaMusicEl;
+  if (!el) return;
+  
+  const startVolume = el.volume;
+  const steps = Math.max(1, Math.floor(fadeSeconds * 30));
+  
+  for (let i = steps; i >= 0; i--) {
+    el.volume = (startVolume * i) / steps;
+    await wait(1000 / 30);
+  }
+  
+  el.pause();
+  el.currentTime = 0;
+}
+
     // ---------- HTMLAudio (file:// safe) ----------
     async _htmlLoad(key) {
       for (const ext of this.extCandidates) {
@@ -12101,6 +13424,8 @@ document.getElementById('modal-overlay').style.display = 'block';
       el.volume = target;
     }
   }
+
+  
 
   // Create and load on page load
   const engine = new AudioEngine();
@@ -12188,12 +13513,12 @@ function initFontSelector() {
     return;
   }
 
-  const ALL_FONT_CLASSES = ['font-Core', 'font-DarkCity', 'font-FantasticFour'];
+  const ALL_FONT_CLASSES = ['font-Core', 'font-DarkCity', 'font-FantasticFour', 'font-PaintTheTownRed'];
 
   // Normalise a selector value to an actual font key we know how to apply
   const normaliseFont = (val) => {
     if (!val || val === 'default') return 'Core';
-    return ['Core', 'DarkCity', 'FantasticFour'].includes(val) ? val : 'Core';
+    return ['Core', 'DarkCity', 'FantasticFour', 'PaintTheTownRed'].includes(val) ? val : 'Core';
   };
 
   const applyFont = (fontName) => {
@@ -12252,6 +13577,14 @@ function updateFontVariables(fontName) {
       '--letter-spacing': 'var(--fantasticfour-letter-spacing)',
       '--text-transform': 'var(--fantasticfour-text-transform)',
       '--title-banner-size': 'var(--fantasticfour-title-banner-size)',
+    },
+    PaintTheTownRed: {
+      '--heading-font': "'PaintTheTownRed', Arial, sans-serif",
+      '--heading-size': 'var(--paintthetownred-heading-size)',
+      '--smaller-heading-size': 'var(--paintthetownred-smaller-heading-size)',
+      '--letter-spacing': 'var(--paintthetownred-letter-spacing)',
+      '--text-transform': 'var(--paintthetownred-text-transform)',
+      '--title-banner-size': 'var(--paintthetownred-title-banner-size)',
     },
   };
 
@@ -12521,9 +13854,21 @@ function generateStatsScreen() {
             
             html += `<div class="card-line">`;
             
-            if (card.class1) html += createClassIconHTML(card.class1);
-            if (card.class2) html += createClassIconHTML(card.class2);
-            if (card.class3) html += createClassIconHTML(card.class3);
+            if (card.classes) {
+                // Add existing classes
+                card.classes.slice(0, 3).forEach(className => {
+                    html += createClassIconHTML(className);
+                });
+                // Add empty placeholders for remaining slots (up to 3 total)
+                for (let i = card.classes.length; i < 3; i++) {
+                    html += createClassIconHTML(''); // Empty placeholder
+                }
+            } else {
+                // No classes - add 3 empty placeholders
+                for (let i = 0; i < 3; i++) {
+                    html += createClassIconHTML(''); // Empty placeholder
+                }
+            }
             
             html += `<span class="card-name">${cardName}</span>`;
             html += `<span class="card-count">&nbsp;x${cards.length}</span>`;
@@ -12560,9 +13905,21 @@ function generateStatsScreen() {
             html += `<div class="card-line">`;
             
             // Class icons for SHIELD cards
-            if (card.class1) html += createClassIconHTML(card.class1);
-            if (card.class2) html += createClassIconHTML(card.class2);
-            if (card.class3) html += createClassIconHTML(card.class3);
+            if (card.classes) {
+                // Add existing classes
+                card.classes.slice(0, 3).forEach(className => {
+                    html += createClassIconHTML(className);
+                });
+                // Add empty placeholders for remaining slots (up to 3 total)
+                for (let i = card.classes.length; i < 3; i++) {
+                    html += createClassIconHTML(''); // Empty placeholder
+                }
+            } else {
+                // No classes - add 3 empty placeholders
+                for (let i = 0; i < 3; i++) {
+                    html += createClassIconHTML(''); // Empty placeholder
+                }
+            }
             
             html += `<span class="card-name">${cardName}</span>`;
             html += `<span class="card-count">&nbsp;x${cards.length}</span>`;
@@ -12597,9 +13954,21 @@ function generateStatsScreen() {
             html += `<div class="card-line">`;
             
             // Class icons for other cards
-            if (card.class1) html += createClassIconHTML(card.class1);
-            if (card.class2) html += createClassIconHTML(card.class2);
-            if (card.class3) html += createClassIconHTML(card.class3);
+            if (card.classes) {
+                // Add existing classes
+                card.classes.slice(0, 3).forEach(className => {
+                    html += createClassIconHTML(className);
+                });
+                // Add empty placeholders for remaining slots (up to 3 total)
+                for (let i = card.classes.length; i < 3; i++) {
+                    html += createClassIconHTML(''); // Empty placeholder
+                }
+            } else {
+                // No classes - add 3 empty placeholders
+                for (let i = 0; i < 3; i++) {
+                    html += createClassIconHTML(''); // Empty placeholder
+                }
+            }
             
             html += `<span class="card-name">${cardName}</span>`;
             html += `<span class="card-count">&nbsp;x${cards.length}</span>`;
@@ -12671,7 +14040,12 @@ function setEndGameHeroImage(heroName, customImagePath = '') {
             'invisible woman': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_InvisibleWoman_InvisibleBarrier.webp',
             'mr. fantastic': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_TwistingEquations.webp',
             'silver surfer': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_SilverSurfer_WarpSpeed.webp',
-            'thing': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_Thing_ItsClobberinTime.webp'
+            'thing': 'Visual Assets/Heroes/Fantastic Four/FantasticFour_Thing_ItsClobberinTime.webp',
+            'black cat': 'Visual Assets/Heroes/PtTR/PtTR_BlackCat_Pickpocket.webp',
+            'moon knight': 'Visual Assets/Heroes/PtTR/PtTR_MoonKnight_LunarCommunion.webp',
+            'scarlet spider': 'Visual Assets/Heroes/PtTR/PtTR_ScarletSpider_PerfectHunter.webp',
+            'spider-woman': 'Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_ArachnoPheromones.webp',
+            'symbiote spider-man': 'Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_ShadowedSpider.webp',
         };
         
         imagePath = heroImageMap[heroName.toLowerCase()] || 'Visual Assets/CardBack.webp';
@@ -12977,3 +14351,16 @@ if (previewContainer) previewContainer.style.removeProperty('display'); // remov
     const modalOverlay = document.getElementById('modal-overlay');
     if (modalOverlay) modalOverlay.style.display = 'none';
 }
+
+const horizontalContent1 = document.querySelector('.card-choice-popup-selectionrow1');
+const horizontalContent2 = document.querySelector('.card-choice-popup-selectionrow2');
+
+horizontalContent1.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  horizontalContent1.scrollLeft += e.deltaY;
+});
+
+horizontalContent2.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  horizontalContent2.scrollLeft += e.deltaY;
+});

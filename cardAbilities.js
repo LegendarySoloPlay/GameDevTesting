@@ -1,5 +1,5 @@
 // cardAbilities.js
-//27.10.2025 17.55
+//05.11.2025 10.45
 
 function koBonuses() {
 playSFX('ko');
@@ -21,6 +21,8 @@ function defeatBonuses() {
 
 function bystanderBonuses() {
 playSFX('rescue');
+bystandersRescuedThisTurn++;
+
     if (jeanGreyBystanderRecruit > 0) {
   totalRecruitPoints += jeanGreyBystanderRecruit;
   cumulativeRecruitPoints += jeanGreyBystanderRecruit;
@@ -784,7 +786,7 @@ function BlackWidowRescueBystanderByKO() {
 
     // Configure buttons
     confirmButton.disabled = true;
-    confirmButton.textContent = hasBystanders ? 'RESCUE BYSTANDER' : 'KO CARD';
+    confirmButton.textContent = 'CONFIRM';
     otherChoiceButton.style.display = 'none';
     noThanksButton.style.display = 'block';
     noThanksButton.textContent = 'NO THANKS!';
@@ -974,8 +976,10 @@ function IronManBonusAttack() {
 function IronManArcReactorBonusAttack() {
 const previousCards = cardsPlayedThisTurn.slice(0, -1);
 
- const techCount = previousCards.filter(item => item.class1 === "Tech").length;
-  let techText = "Heroes";  // Use let to allow reassignment
+const techCount = previousCards.filter(item => 
+    item.classes && item.classes.includes("Tech")
+).length;
+let techText = "Heroes";  // Use let to allow reassignment
 
   if (techCount === 1) {
     techText = "Hero";
@@ -1276,9 +1280,8 @@ function DeadpoolReDraw() {
       };
 
       confirmButton.onclick = async function () {
-        // Prevent double-activation
-        confirmButton.disabled = true;
-        denyButton.disabled = true;
+
+        closeInfoChoicePopup();
 
         // 1) Snapshot & clear hand up front
         const handSnapshot = [...playerHand];
@@ -1302,7 +1305,7 @@ function DeadpoolReDraw() {
         onscreenConsole.log('You discarded your remaining hand and drew four cards.');
         updateGameBoard();
 
-        closeInfoChoicePopup();
+
         resolve();
       };
     }, 10);
@@ -1421,7 +1424,7 @@ function DeadpoolChooseToGainWound() {
   });
 }
 
-function GambitTopCardDiscardOrPutBack() {
+async function GambitTopCardDiscardOrPutBack() {
     return new Promise((resolve) => {
         setTimeout(() => {
             // Check if the player deck is empty and needs reshuffling
@@ -1463,6 +1466,7 @@ function GambitTopCardDiscardOrPutBack() {
             }
 
             confirmButton.onclick = async function() {
+                closeInfoChoicePopup();
                 playerDeck.pop();
                 
                 const { returned } = await checkDiscardForInvulnerability(topCardPlayerDeck);
@@ -1473,15 +1477,18 @@ function GambitTopCardDiscardOrPutBack() {
                 console.log(`You discarded ${topCardPlayerDeck.name}.`);
                 onscreenConsole.log(`<span class="console-highlights">${topCardPlayerDeck.name}</span> has been discarded.`);
                 updateGameBoard();
-                closeInfoChoicePopup();
+
                 resolve();
             };
 
-            denyButton.onclick = function() {
+            denyButton.onclick = async function() {
                 console.log(`You put ${topCardPlayerDeck.name} back on top of your deck.`);
                 onscreenConsole.log(`<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`);
                 updateGameBoard();
                 closeInfoChoicePopup();
+                    if (stingOfTheSpider) {
+                    await scarletSpiderStingOfTheSpiderDrawChoice(topCardPlayerDeck);
+                }
                 resolve();
             };
         }, 10);
@@ -1536,11 +1543,15 @@ function topCardKOOrPutBack() {
                 cleanup();
             };
 
-            denyButton.onclick = function() {
+            denyButton.onclick = async function() {
                 onscreenConsole.log(`<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`);
                 topCardPlayerDeck.revealed = true;
                 updateGameBoard();
                 cleanup();
+                if (stingOfTheSpider) {
+                await scarletSpiderStingOfTheSpiderDrawChoice(selectedCard);
+                }
+
             };
         }, 10);
     });
@@ -2083,7 +2094,7 @@ function HulkKoWoundToGainAttack() {
 
 
 function SpiderManRevealTopThreeAndReorder() {
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     // Draw up to three cards
     let holdingArray = [];
     for (let i = 0; i < 3; i++) {
@@ -2125,6 +2136,9 @@ function SpiderManRevealTopThreeAndReorder() {
       onscreenConsole.log(`<span class="console-highlights">${card.name}</span> cost more than 2 and was returned to the deck.`);
 	card.revealed = true;
       updateGameBoard();
+      if (stingOfTheSpider) {
+        await scarletSpiderStingOfTheSpiderDrawChoice(card);
+      }
       resolve();
       return;
     }
@@ -2161,26 +2175,25 @@ async function handleCardReturnOrder(cards) {
     if (selectedIndex !== -1) {
       remainingCards.splice(selectedIndex, 1);
       returnedOrder.push(choice); // Add to end - first selected goes to bottom
+      
+      // Add card to deck immediately
+      playerDeck.push(choice);
+      choice.revealed = true;
+      
+      // Log the card return immediately
+      onscreenConsole.log(`Returned <span class="console-highlights">${choice.name}</span> to deck.`);
+      updateGameBoard(); // Update to show the card moved to deck
+      
+      // Trigger sting immediately after placing each card
+      if (stingOfTheSpider) {
+        await scarletSpiderStingOfTheSpiderDrawChoice(choice);
+      }
     }
   }
 
-  // Add all cards to deck in chosen order
-  returnedOrder.forEach(card => {
-    playerDeck.push(card);
-    card.revealed = true;
-  });
-
-  // Format console message - show in selection order (first to last)
-  const cardNames = returnedOrder.map(card => 
-    `<span class="console-highlights">${card.name}</span>`
-  );
-
-  if (cardNames.length > 1) {
-    const last = cardNames.pop();
-    onscreenConsole.log(`Returned to deck: ${cardNames.join(', ')} and ${last}`);
-  } else if (cardNames.length === 1) {
-    onscreenConsole.log(`Returned to deck: ${cardNames[0]}`);
-  }
+  // Remove the batch console message since we're logging individually now
+  closeCardChoicePopup();
+  updateGameBoard();
 }
 
 // New helper function to handle sequential selection with the new popup structure
@@ -2555,7 +2568,7 @@ function BlackWidowShowBystanderRescueOptions() {
             if (destroyedSpaces[i]) {
                 // For destroyed spaces, use Master Strike image with same styling
                 const destroyedImage = document.createElement('img');
-                destroyedImage.src = "Visual Assets/Other/MasterStrike.webp";
+                destroyedImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
                 destroyedImage.alt = "Destroyed City Space";
                 destroyedImage.className = 'city-hq-chosen-card-image';
                 destroyedImage.style.cursor = 'not-allowed';
@@ -3489,7 +3502,7 @@ function DeadpoolAssignBystanderToVillain() {
                 // For destroyed spaces, use Master Strike image with same styling
                 // Create a new image element for the destroyed space
                 const destroyedImage = document.createElement('img');
-                destroyedImage.src = "Visual Assets/Other/MasterStrike.webp";
+                destroyedImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
                 destroyedImage.alt = "Destroyed City Space";
                 destroyedImage.className = 'city-hq-chosen-card-image';
                 destroyedImage.style.cursor = 'not-allowed';
@@ -3670,7 +3683,7 @@ function DeadpoolAssignBystanderToVillain() {
 }
 
 
-function GambitDrawTwoPutOneBack() {
+async function GambitDrawTwoPutOneBack() {
     return new Promise((resolve) => {
         // Check if the player deck is empty and needs reshuffling
         if (playerDeck.length === 0) {
@@ -3869,7 +3882,7 @@ function GambitDrawTwoPutOneBack() {
         noThanksButton.style.display = 'none';
 
         // Confirm button handler
-        confirmButton.onclick = (e) => {
+        confirmButton.onclick = async (e) => {
             e.stopPropagation();
             e.preventDefault();
             if (!selectedCard) return;
@@ -3890,6 +3903,9 @@ function GambitDrawTwoPutOneBack() {
                 onscreenConsole.log(`<span class="console-highlights">${selectedCard.name}</span> has been returned to the top of your deck.`);
                 
                 closeCardChoicePopup();
+                if (stingOfTheSpider) {
+                    await scarletSpiderStingOfTheSpiderDrawChoice(selectedCard);
+                }
                 updateGameBoard();
                 resolve();
             }
@@ -4136,7 +4152,7 @@ function DoomDrawOrDiscard() {
             e.stopPropagation();
             e.preventDefault();
             if (selectedCard === null) return;
-
+            closeCardChoicePopup();
             setTimeout(async () => {
                 // Check for discard avoidance first
                 await discardAvoidance();
@@ -4161,7 +4177,7 @@ function DoomDrawOrDiscard() {
                         playerHand.push(...returned);
                     }
                     updateGameBoard();
-                    closeCardChoicePopup();
+                    
                     resolve(true);
                 }
             }, 100);
@@ -4321,7 +4337,7 @@ function showEligibleVillainsOptions(eligibleVillains) {
             if (destroyedSpaces[i]) {
                 // For destroyed spaces, use Master Strike image with same styling
                 const destroyedImage = document.createElement('img');
-                destroyedImage.src = "Visual Assets/Other/MasterStrike.webp";
+                destroyedImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
                 destroyedImage.alt = "Destroyed City Space";
                 destroyedImage.className = 'city-hq-chosen-card-image';
                 destroyedImage.style.cursor = 'not-allowed';
@@ -5339,9 +5355,7 @@ function RogueCopyPowers() {
                     type: rogueCard.type,
                     rarity: rogueCard.rarity,
                     team: rogueCard.team,
-                    class1: rogueCard.class1,
-                    class2: rogueCard.class2,
-                    class3: rogueCard.class3,
+                    classes: rogueCard.classes,
                     color: rogueCard.color,
                     cost: rogueCard.cost,
                     attack: rogueCard.attack,
@@ -5358,18 +5372,17 @@ function RogueCopyPowers() {
                     conditionType: rogueCard.conditionType,
                     condition: rogueCard.condition,
                     invulnerability: rogueCard.invulnerability,
+                    keywords: rogueCard.kewyords,
                     image: rogueCard.image
                 };
 
-                // Copy selected hero's attributes (keeping Covert class1)
+                // Copy selected hero's attributes (keeping Covert)
                 Object.assign(rogueCard, {
                     name: selectedHero.name || "None",
                     type: selectedHero.type || "None",
                     rarity: selectedHero.rarity || "None",
                     team: selectedHero.team || "None",
-                    class1: 'Covert', // Always keep Covert as primary class
-                    class2: selectedHero.class1 || "None",
-                    class3: selectedHero.class2 || "None",
+                    classes: selectHero.classes ? selectHero.classes.includes('Covert') ? [...selectHero.classes] : ['Covert', ...selectHero.classes] : ['Covert'],
                     color: selectedHero.color || "None",
                     cost: selectedHero.cost || 0,
                     attack: selectedHero.attack || 0,
@@ -5386,6 +5399,7 @@ function RogueCopyPowers() {
                     conditionType: selectedHero.conditionType || "None",
                     condition: selectedHero.condition || "None",
                     invulnerability: selectedHero.invulnerability || "None",
+                    keywords: selectedHero.keywords || [],
                     image: selectedHero.image || "None"
                 });
 
@@ -5475,7 +5489,7 @@ function StormMoveVillain() {
     function isCellDestroyed(cellElement) {
         // Check if this cell contains a destroyed space
         const destroyedImage = cellElement.querySelector('.destroyed-space');
-        return destroyedImage !== null && destroyedImage.src.includes('MasterStrike.webp');
+        return destroyedImage !== null && destroyedImage.src.includes('Galactus_MasterStrike.webp');
     }
 
     function selectCell(cellElement) {
@@ -5583,7 +5597,7 @@ function StormMoveVillain() {
 
                 // Create destroyed space image
                 const cardImage = document.createElement('img');
-                cardImage.src = "Visual Assets/Other/MasterStrike.webp";
+                cardImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
                 cardImage.alt = "Destroyed City Space";
                 cardImage.classList.add('destroyed-space');
                 cardContainer.appendChild(cardImage);
@@ -5967,8 +5981,8 @@ onscreenConsole.log(`<span class="console-highlights">Thor - God of Thunder's</s
 
 function add1Recruit() {
 
-            totalRecruitPoints += 1;
-            cumulativeRecruitPoints += 1;
+totalRecruitPoints += 1;
+cumulativeRecruitPoints += 1;
 onscreenConsole.log('+1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.');
 updateGameBoard();
 }
@@ -6409,8 +6423,7 @@ function FightKOHeroYouHave() {
         confirmButton.disabled = true;
         confirmButton.textContent = 'KO HERO';
         otherChoiceButton.style.display = 'none';
-        noThanksButton.style.display = 'block';
-        noThanksButton.textContent = 'NO THANKS!';
+        noThanksButton.style.display = 'none';
 
         // Confirm button handler
         confirmButton.onclick = (e) => {
@@ -6440,15 +6453,6 @@ function FightKOHeroYouHave() {
                 closeCardChoicePopup();
                 resolve();
             }, 100);
-        };
-
-        // No Thanks button handler
-        noThanksButton.onclick = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            onscreenConsole.log(`No hero was KO'd.`);
-            closeCardChoicePopup();
-            resolve();
         };
 
         // Show popup
@@ -6710,7 +6714,7 @@ function topTwoCardsKOChoice() {
             e.preventDefault();
             if (selectedCard === null) return;
 
-            setTimeout(() => {
+            setTimeout(async () => {
                 const cardToKO = selectedCard;
                 const cardToReturn = selectedCard === card1 ? card2 : card1;
                 
@@ -6723,6 +6727,9 @@ function topTwoCardsKOChoice() {
                 
                 updateGameBoard();
                 closeCardChoicePopup();
+                 if (stingOfTheSpider) {
+                    await scarletSpiderStingOfTheSpiderDrawChoice(cardToReturn);
+                }
                 resolve(true);
             }, 100);
         };
@@ -6747,9 +6754,9 @@ function doomStrike() {
                 return;
             }
 
-           const hasTech = playerHand.some(card => card.class1 === 'Tech') || 
+const hasTech = playerHand.some(card => card.classes && card.classes.includes('Tech')) || 
                 cardsPlayedThisTurn.some(card => 
-                    card.class1 === 'Tech' && 
+                    card.classes && card.classes.includes('Tech') && 
                     card.isCopied !== true && 
                     card.sidekickToDestroy !== true
                 );
@@ -6772,7 +6779,7 @@ function doomStrike() {
 }
 
 
-function handleNoTechRevealed(resolve) {
+async function handleNoTechRevealed(resolve) {
     updateGameBoard();
     return new Promise((resolve) => {
         const cardchoicepopup = document.querySelector('.card-choice-popup');
@@ -6988,37 +6995,60 @@ if (sortedHand.length > 20) {
         noThanksButton.style.display = 'none'; // No cancellation allowed for mandatory selection
 
         // Confirm button handler
-        confirmButton.onclick = (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (selectedCards.length !== 2) return;
+confirmButton.onclick = (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  if (selectedCards.length !== 2) return;
 
-            setTimeout(() => {
-                const [firstCard, secondCard] = selectedCards;
+  closeCardChoicePopup();
 
-                // Remove cards from hand using object references
-                const firstIndex = playerHand.indexOf(firstCard);
-                const secondIndex = playerHand.indexOf(secondCard);
-                
-                if (firstIndex !== -1) playerHand.splice(firstIndex, 1);
-                if (secondIndex !== -1) playerHand.splice(secondIndex, 1);
-                
-                // Add to deck (in reverse order)
-                playerDeck.push(secondCard, firstCard);
-                secondCard.revealed = true;
-                firstCard.revealed = true;
+  setTimeout(async () => {
+    // Order matters: selectedCards[0] is TOP of deck, selectedCards[1] is under it
+    const firstCard  = selectedCards[0]; // top of deck
+    const secondCard = selectedCards[1];
 
-                onscreenConsole.log(
-                    `Returned to deck: <span class="console-highlights">${secondCard.name}</span> ` +
-                    `then <span class="console-highlights">${firstCard.name}</span> on top.`
-                );
+    // --- Safely remove both from hand (splice higher index first) ---
+    const idx1 = playerHand.indexOf(firstCard);
+    const idx2 = playerHand.indexOf(secondCard);
 
-                updateGameBoard();
-                closeCardChoicePopup();
-                resolve();
-            }, 100);
-        };
+    if (idx1 === -1 || idx2 === -1) {
+      console.warn('One or both selected cards were not found in hand.', { idx1, idx2, firstCard, secondCard });
+    } else {
+      if (idx1 > idx2) {
+        playerHand.splice(idx1, 1);
+        playerHand.splice(idx2, 1);
+      } else {
+        playerHand.splice(idx2, 1);
+        playerHand.splice(idx1, 1);
+      }
+    }
 
+    // --- Put back on deck in the correct order WITHOUT duplicating ---
+    // We want secondCard below, firstCard on top.
+    // Push second first, then maybe trigger effect, then push first.
+    playerDeck.push(secondCard);
+    secondCard.revealed = true;
+
+    if (stingOfTheSpider) {
+      await scarletSpiderStingOfTheSpiderDrawChoice(secondCard);
+    }
+
+    playerDeck.push(firstCard);   // now first goes on top (last pushed)
+    firstCard.revealed = true;
+
+    if (stingOfTheSpider) {
+      await scarletSpiderStingOfTheSpiderDrawChoice(firstCard);
+    }
+
+    onscreenConsole.log(
+      `Returned to deck: <span class="console-highlights">${secondCard.name}</span> ` +
+      `then <span class="console-highlights">${firstCard.name}</span> on top.`
+    );
+
+    updateGameBoard();
+    resolve();  // this is the resolve from the outer Promise scope
+  }, 100);
+};
         // Show popup
         modalOverlay.style.display = 'block';
         cardchoicepopup.style.display = 'block';
@@ -7312,8 +7342,8 @@ function handleNoXMenRevealed(resolve) {
         confirmButton.onclick = async (e) => {
             e.stopPropagation();
             e.preventDefault();
+            closeCardChoicePopup();
             if (selectedCards.length !== cardsToDiscard) return;
-
             setTimeout(async () => {
                 const discardedCardNames = [];
                 
@@ -7338,8 +7368,7 @@ function handleNoXMenRevealed(resolve) {
                     onscreenConsole.log(`Discarded ${formattedNames} to satisfy Master Strike.`);
                 }
 
-                updateGameBoard();
-                closeCardChoicePopup();
+                updateGameBoard()
                 resolve();
             }, 100);
         };
@@ -7624,10 +7653,10 @@ function revealStrengthOrWound() {
         )
     ];
 
-    if (cardsYouHave.filter(item => item.class1 === 'Strength').length === 0) {
-        onscreenConsole.log(`You are unable to reveal a <img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero.`);
-        drawWound();
-    } else {
+if (cardsYouHave.filter(item => item.classes && item.classes.includes('Strength')).length === 0) {
+    onscreenConsole.log(`You are unable to reveal a <img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero.`);
+    drawWound();
+} else {
         return new Promise((resolve) => {
             setTimeout(() => {   
                 const { confirmButton, denyButton } = showHeroAbilityMayPopup(
@@ -7712,7 +7741,9 @@ async function LokiRevealStrengthOrWound() {
         )
     ];
 
-    const hasStrengthCards = cardsYouHave.filter(item => item.class1 === 'Strength').length > 0;
+const hasStrengthCards = cardsYouHave.filter(item => 
+    item.classes && item.classes.includes('Strength')
+).length > 0;
 
     if (!hasStrengthCards) {
         onscreenConsole.log('You are unable to reveal a <img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero.')
@@ -7802,7 +7833,9 @@ async function revealTechOrWound() {
         )
     ];
 
-    const hasTechCards = cardsYouHave.filter(item => item.class1 === 'Tech').length > 0;
+const hasTechCards = cardsYouHave.filter(item => 
+    item.classes && item.classes.includes('Tech')
+).length > 0;
 
     if (!hasTechCards) {
         onscreenConsole.log('You are unable to reveal a Tech hero.')
@@ -7866,10 +7899,10 @@ async function EscapeRevealTechOrWound() {
         )
     ];
 
-    if (cardsYouHave.filter(item => item.class1 === 'Tech').length === 0) {
-        onscreenConsole.log('You are unable to reveal a Tech hero.')
-        drawWound();
-    } else {
+if (cardsYouHave.filter(item => item.classes && item.classes.includes('Tech')).length === 0) {
+    onscreenConsole.log('You are unable to reveal a Tech hero.')
+    drawWound();
+} else {
         return new Promise((resolve) => {
             setTimeout(() => {  
                 const { confirmButton, denyButton } = showHeroAbilityMayPopup(
@@ -7923,7 +7956,7 @@ function revealRangeOrWound() {
         )
     ];
 
-    if (cardsYouHave.filter(item => item.class1 === 'Range').length === 0) {
+    if (cardsYouHave.filter(item => item.classes && item.classes.includes('Range')).length === 0) {
         onscreenConsole.log('You are unable to reveal a <img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero.')
         drawWound();
     } else {
@@ -8000,7 +8033,7 @@ async function AmbushRevealRangeOrWound() {
         )
     ];
 
-    if (cardsYouHave.filter(item => item.class1 === 'Range').length === 0) {
+    if (cardsYouHave.filter(item => item.classes && item.classes.includes('Range')).length === 0) {
         onscreenConsole.log('You are unable to reveal a <img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero.')
         drawWound();
     } else {
@@ -8127,9 +8160,9 @@ if (explosion && explosionCount) {  // Add this null check
                 cardImage.alt = hero.name;
                 
                 // Determine eligibility - must be Tech or Range class AND not destroyed
-                const isTechOrRange = hero.class1 === 'Tech' || hero.class1 === 'Range';
-                const isDestroyed = explosionValue >= 6;
-                const isEligible = isTechOrRange && !isDestroyed;
+const isTechOrRange = (hero.classes && (hero.classes.includes('Tech') || hero.classes.includes('Range')));
+const isDestroyed = explosionValue >= 6;
+const isEligible = isTechOrRange && !isDestroyed;
                 
                 // Apply greyed out styling for ineligible cards
                 if (!isEligible) {
@@ -8237,9 +8270,9 @@ if (explosion && explosionCount) {  // Add this null check
         // Check if any eligible heroes exist - same logic as original
         const eligibleHeroesForDoomRecruit = hq.filter((hero, index) => {
             const explosionValue = explosionValues[index] || 0;
-            return hero && 
-                   (hero.class1 === 'Tech' || hero.class1 === 'Range') && 
-                   explosionValue < 6; // Not destroyed
+return hero && 
+       (hero.classes && (hero.classes.includes('Tech') || hero.classes.includes('Range'))) && 
+       explosionValue < 6; // Not destroyed
         });
 
         if (eligibleHeroesForDoomRecruit.length === 0) {
@@ -8361,7 +8394,7 @@ function instantVillainDefeat() {
                 // For destroyed spaces, use Master Strike image with same styling
                 // Create a new image element for the destroyed space
                 const destroyedImage = document.createElement('img');
-                destroyedImage.src = "Visual Assets/Other/MasterStrike.webp";
+                destroyedImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
                 destroyedImage.alt = "Destroyed City Space";
                 destroyedImage.className = 'city-hq-chosen-card-image';
                 destroyedImage.style.cursor = 'not-allowed';
@@ -10560,15 +10593,23 @@ function revealTop3AndChooseActions() {
                 case 'DISCARD':
                     await discardAvoidance();
                    
+                    if (hasDiscardAvoidance) {
+                    onscreenConsole.log(`You have revealed <span class="console-highlights">Iceman - Impenetrable Ice Wall</span> and avoided discarding.`);
+                    hasDiscardAvoidance = false;
+                    } else {
                     const { returned } = await checkDiscardForInvulnerability(card);
                     if (returned.length) {
                         playerHand.push(...returned);
                     }
+                }
                     break;
                 case 'RETURN TO DECK':
                     playerDeck.push(card);
                     card.revealed = true;
                     onscreenConsole.log(`<span class="console-highlights">${card.name}</span> has been returned to your deck.`);
+                    if (stingOfTheSpider) {
+                    await scarletSpiderStingOfTheSpiderDrawChoice(card);
+                }
                     break;
             }
 
@@ -12041,10 +12082,10 @@ if (explosion && explosionCount) {  // Add this null check
                 cardImage.src = hero.image;
                 cardImage.alt = hero.name;
                 
-                // Determine eligibility - must be a Hero (has class1 defined) AND not destroyed
-                const isHero = hero.class1 !== undefined && hero.class1 !== null;
-                const isDestroyed = explosionValue >= 6;
-                const isEligible = isHero && !isDestroyed;
+// Determine eligibility - must be a Hero (has classes defined) AND not destroyed
+const isHero = hero.classes !== undefined && hero.classes !== null && hero.classes.length > 0;
+const isDestroyed = explosionValue >= 6;
+const isEligible = isHero && !isDestroyed;
                 
                 // Apply greyed out styling for ineligible cards
                 if (!isEligible) {
@@ -12150,12 +12191,12 @@ if (explosion && explosionCount) {  // Add this null check
         });
 
         // Check if any eligible heroes exist - same logic as original
-        const eligibleHeroes = hq.filter((hero, index) => {
-            const explosionValue = explosionValues[index] || 0;
-            return hero && 
-                   hero.class1 !== undefined && hero.class1 !== null && 
-                   explosionValue < 6; // Not destroyed
-        });
+const eligibleHeroes = hq.filter((hero, index) => {
+    const explosionValue = explosionValues[index] || 0;
+    return hero && 
+           hero.classes !== undefined && hero.classes !== null && hero.classes.length > 0 && 
+           explosionValue < 6; // Not destroyed
+});
 
         if (eligibleHeroes.length === 0) {
             onscreenConsole.log('No available Heroes to gain.');
@@ -12355,8 +12396,8 @@ function strengthHeroesNumberToKO() {
         }
 
         // Find all Strength Heroes
-        const strengthHeroes = [...cardsPlayedThisTurn, ...playerHand]
-            .filter(card => card && card.class1 === 'Strength');
+const strengthHeroes = [...cardsPlayedThisTurn, ...playerHand]
+    .filter(card => card && card.classes && card.classes.includes('Strength'));
 
         const numberToKO = strengthHeroes.length;
 
@@ -13653,6 +13694,7 @@ async function genericDiscardChoice() {
         confirmButton.onclick = async (e) => {
             e.stopPropagation();
             e.preventDefault();
+            closeCardChoicePopup();
             if (!selectedCard) return;
 
             setTimeout(async () => {
@@ -13672,7 +13714,7 @@ async function genericDiscardChoice() {
                     resolve(true);
                 } else {
                     console.error('Selected card not found in playerHand');
-                    closeCardChoicePopup();
+                    
                     resolve(false);
                 }
             }, 100);

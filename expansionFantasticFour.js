@@ -1,5 +1,5 @@
 // Fantastic Four Expansion
-//27.10.2025 17.55
+//05.11.2025 10.45
 
 //Keywords
 
@@ -56,6 +56,326 @@ function getFocusDetails(card) {
     return { focusCost, focusFunction };
 }
 
+// Helper function for Cosmic Threat card selection
+async function handleCosmicThreatCardSelection(villain, villainIndex, className) {
+  const allRevealableCards = [
+    ...playerHand,
+    ...cardsPlayedThisTurn.filter(card => !card.isCopied && !card.sidekickToDestroy)
+  ];
+
+  const hasClass = (card, wanted) => {
+    if (!card?.classes) return false;
+    const wantedClass = String(wanted).trim().toLowerCase();
+    return card.classes.some(classType => {
+      const actualClass = String(classType ?? '').trim().toLowerCase();
+      return actualClass === wantedClass;
+    });
+  };
+
+  const cardsOfClass = allRevealableCards.filter(c => hasClass(c, className));
+  const maxCards = cardsOfClass.length;
+
+  // If only 1 card available, trigger cosmicThreat instantly
+  if (maxCards <= 1) {
+    const count = maxCards * 3;
+    cosmicThreat(villain, villainIndex, count, className.toLowerCase());
+    return;
+  }
+
+  // If multiple cards available, show popup for selection
+  return new Promise((resolve) => {
+    const popup = document.querySelector('.info-or-choice-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const titleEl = document.querySelector('.info-or-choice-popup-title');
+    const instrEl = document.querySelector('.info-or-choice-popup-instructions');
+    const previewEl = document.querySelector('.info-or-choice-popup-preview');
+    const confirmBtn = document.getElementById('info-or-choice-popup-confirm');
+    const otherBtn = document.getElementById('info-or-choice-popup-otherchoice');
+    const noThanksBtn = document.getElementById('info-or-choice-popup-nothanks');
+    const closeBtn = document.querySelector('.info-or-choice-popup-closebutton');
+    closeBtn.style.display = 'none';
+    const minimizeBtn = document.querySelector('.info-or-choice-popup-minimizebutton');
+
+    // Set popup content
+    titleEl.textContent = 'COSMIC THREAT';
+    instrEl.innerHTML = `How many <img src="Visual Assets/Icons/${className}.svg" alt="${className} Icon" class="cosmic-threat-card-icons"> cards to reveal? For each revealed card, <span class="console-highlights">${villain.name}</span> gets -3<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+    
+    // Set card preview background
+    if (villain.image) {
+      previewEl.style.backgroundImage = `url('${villain.image}')`;
+      previewEl.style.backgroundSize = 'contain';
+      previewEl.style.backgroundRepeat = 'no-repeat';
+      previewEl.style.backgroundPosition = 'center';
+    }
+
+    // PRESET TO MAXIMUM QUANTITY
+    let chosenQty = maxCards;
+
+    // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
+    noThanksBtn.textContent = '+';
+    otherBtn.textContent = 'CONFIRM';
+    confirmBtn.textContent = '-';
+
+    // Show all buttons
+    confirmBtn.style.display = 'inline-block';
+    otherBtn.style.display = 'inline-block';
+    noThanksBtn.style.display = 'inline-block';
+
+    function updateQuantityText() {
+      const plural = chosenQty === 1 ? 'card' : 'cards';
+      const maxPlural = maxCards === 1 ? 'card' : 'cards';
+      instrEl.innerHTML = 
+        `Chosen: <span class="console-highlights">${chosenQty}</span> ${plural} (max ${maxCards} ${maxPlural}). ` +
+        `For each revealed card, <span class="console-highlights">${villain.name}</span> gets -3<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+    }
+
+    // Button handlers
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty > 0) {
+        chosenQty -= 1;
+        updateQuantityText();
+      }
+    };
+
+    noThanksBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty < maxCards) {
+        chosenQty += 1;
+        updateQuantityText();
+      }
+    };
+
+    otherBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Close popup
+      popup.style.display = 'none';
+      modalOverlay.style.display = 'none';
+
+      // Trigger cosmicThreat with selected quantity
+      const count = chosenQty * 3;
+      cosmicThreat(villain, villainIndex, count, className.toLowerCase());
+    noThanksBtn.textContent = 'NO THANKS!';
+    otherBtn.textContent = 'OTHER';
+    confirmBtn.textContent = 'CONFIRM';
+
+    // Show all buttons
+    confirmBtn.style.display = 'inline-block';
+    otherBtn.style.display = 'none';
+    noThanksBtn.style.display = 'none';
+      resolve();
+    };
+
+    // Show popup
+    modalOverlay.style.display = 'block';
+    popup.style.display = 'block';
+    updateQuantityText();
+  });
+}
+
+// Helper function for Galactus Cosmic Threat card selection
+async function handleGalactusCosmicThreatCardSelection(chosenClass) {
+  const allRevealableCards = [
+    ...playerHand,
+    ...cardsPlayedThisTurn.filter(card => !card.isCopied && !card.sidekickToDestroy)
+  ];
+
+  const hasClass = (card, wanted) =>
+    card?.classes?.some(classType =>
+      String(classType ?? '').trim().toLowerCase() === String(wanted).trim().toLowerCase()
+    ) || false;
+
+  const cardsOfClass = allRevealableCards.filter(c => hasClass(c, chosenClass));
+  const maxCards = cardsOfClass.length;
+
+  // If only 1 card available, return instantly
+  if (maxCards <= 1) {
+    return { attackReduction: maxCards * 3, chosenClass };
+  }
+
+  // If multiple cards available, show popup for selection
+  return new Promise((resolve) => {
+    const popup = document.querySelector('.info-or-choice-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const titleEl = document.querySelector('.info-or-choice-popup-title');
+    const instrEl = document.querySelector('.info-or-choice-popup-instructions');
+    const previewEl = document.querySelector('.info-or-choice-popup-preview');
+    const confirmBtn = document.getElementById('info-or-choice-popup-confirm');
+    const otherBtn = document.getElementById('info-or-choice-popup-otherchoice');
+    const noThanksBtn = document.getElementById('info-or-choice-popup-nothanks');
+    const closeBtn = document.querySelector('.info-or-choice-popup-closebutton');
+    const minimizeBtn = document.querySelector('.info-or-choice-popup-minimizebutton');
+
+    // Set popup content
+    titleEl.textContent = 'GALACTUS COSMIC THREAT';
+    instrEl.innerHTML = `How many <img src="Visual Assets/Icons/${chosenClass}.svg" alt="${chosenClass} Icon" class="cosmic-threat-card-icons"> cards to reveal? For each revealed card, <span class="console-highlights">Galactus</span> gets -3<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+    
+    // Set Galactus preview
+    const mastermind = getSelectedMastermind();
+    if (mastermind?.image) {
+      previewEl.style.backgroundImage = `url('${mastermind.image}')`;
+      previewEl.style.backgroundSize = 'contain';
+      previewEl.style.backgroundRepeat = 'no-repeat';
+      previewEl.style.backgroundPosition = 'center';
+    }
+
+    // PRESET TO MAXIMUM QUANTITY
+    let chosenQty = maxCards;
+
+    // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
+    noThanksBtn.textContent = '+';
+    otherBtn.textContent = 'CONFIRM';
+    confirmBtn.textContent = '-';
+
+    // Show all buttons
+    confirmBtn.style.display = 'inline-block';
+    otherBtn.style.display = 'inline-block';
+    noThanksBtn.style.display = 'inline-block';
+
+    function updateQuantityText() {
+      const plural = chosenQty === 1 ? 'card' : 'cards';
+      const maxPlural = maxCards === 1 ? 'card' : 'cards';
+      instrEl.innerHTML = 
+        `Chosen: <span class="console-highlights">${chosenQty}</span> ${plural} (max ${maxCards} ${maxPlural}). ` +
+        `For each revealed card, <span class="console-highlights">Galactus</span> gets -3<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+    }
+
+    // Button handlers
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty > 0) {
+        chosenQty -= 1;
+        updateQuantityText();
+      }
+    };
+
+    noThanksBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty < maxCards) {
+        chosenQty += 1;
+        updateQuantityText();
+      }
+    };
+
+    otherBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Close popup
+      popup.style.display = 'none';
+      modalOverlay.style.display = 'none';
+
+      // Return the selected quantity
+      resolve({ attackReduction: chosenQty * 3, chosenClass });
+    };
+
+    // Show popup
+    modalOverlay.style.display = 'block';
+    popup.style.display = 'block';
+    updateQuantityText();
+  });
+}
+
+// Helper function for Beyonder Cosmic Threat card selection
+async function handleBeyonderCosmicThreatCardSelection(threshold) {
+  const allRevealableCards = [
+    ...playerHand,
+    ...cardsPlayedThisTurn.filter(card => !card.isCopied && !card.sidekickToDestroy)
+  ];
+
+  const highCostCards = allRevealableCards.filter(c => typeof c?.cost === 'number' && c.cost >= threshold);
+  const maxCards = highCostCards.length;
+
+  // If only 1 card available, return instantly
+  if (maxCards <= 1) {
+    return { attackReduction: maxCards * 3 };
+  }
+
+  // If multiple cards available, show popup for selection
+  return new Promise((resolve) => {
+    const popup = document.querySelector('.info-or-choice-popup');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const titleEl = document.querySelector('.info-or-choice-popup-title');
+    const instrEl = document.querySelector('.info-or-choice-popup-instructions');
+    const previewEl = document.querySelector('.info-or-choice-popup-preview');
+    const confirmBtn = document.getElementById('info-or-choice-popup-confirm');
+    const otherBtn = document.getElementById('info-or-choice-popup-otherchoice');
+    const noThanksBtn = document.getElementById('info-or-choice-popup-nothanks');
+    const closeBtn = document.querySelector('.info-or-choice-popup-closebutton');
+    const minimizeBtn = document.querySelector('.info-or-choice-popup-minimizebutton');
+
+    // Set popup content
+    titleEl.textContent = 'COSMIC THREAT';
+    instrEl.innerHTML = `How many cards with <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="cosmic-threat-card-icons"> ${threshold}+ to reveal? For each revealed card, <span class="console-highlights">The Beyonder</span> gets -3<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+    
+    // Set mastermind preview
+    const mastermind = getSelectedMastermind();
+    if (mastermind?.image) {
+      previewEl.style.backgroundImage = `url('${mastermind.image}')`;
+      previewEl.style.backgroundSize = 'contain';
+      previewEl.style.backgroundRepeat = 'no-repeat';
+      previewEl.style.backgroundPosition = 'center';
+    }
+
+    // PRESET TO MAXIMUM QUANTITY
+    let chosenQty = maxCards;
+
+    // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
+    noThanksBtn.textContent = '+';
+    otherBtn.textContent = 'CONFIRM';
+    confirmBtn.textContent = '-';
+
+    // Show all buttons
+    confirmBtn.style.display = 'inline-block';
+    otherBtn.style.display = 'inline-block';
+    noThanksBtn.style.display = 'inline-block';
+
+    function updateQuantityText() {
+      const plural = chosenQty === 1 ? 'card' : 'cards';
+      const maxPlural = maxCards === 1 ? 'card' : 'cards';
+      instrEl.innerHTML = 
+        `Chosen: <span class="console-highlights">${chosenQty}</span> ${plural} (max ${maxCards} ${maxPlural}). ` +
+        `For each revealed card, <span class="console-highlights">The Beyonder</span> gets -3<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+    }
+
+    // Button handlers
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty > 0) {
+        chosenQty -= 1;
+        updateQuantityText();
+      }
+    };
+
+    noThanksBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty < maxCards) {
+        chosenQty += 1;
+        updateQuantityText();
+      }
+    };
+
+    otherBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      // Close popup
+      popup.style.display = 'none';
+      modalOverlay.style.display = 'none';
+
+      // Return the selected quantity
+      resolve({ attackReduction: chosenQty * 3 });
+    };
+
+    // Show popup
+    modalOverlay.style.display = 'block';
+    popup.style.display = 'block';
+    updateQuantityText();
+  });
+}
+
 async function handleCosmicThreatChoice(card, index) {
     return new Promise((resolve) => {
         setTimeout(() => {
@@ -68,10 +388,11 @@ async function handleCosmicThreatChoice(card, index) {
                 )
             ];
 
- const hasClass = (card, wanted) =>
-  ['class1','class2','class3'].some(k =>
-    String(card?.[k] ?? '').trim().toLowerCase() === String(wanted).trim().toLowerCase()
-  );
+            // Updated hasClass function to check classes array
+            const hasClass = (card, wanted) =>
+                card?.classes?.some(classType => 
+                    String(classType ?? '').trim().toLowerCase() === String(wanted).trim().toLowerCase()
+                ) || false;
            
             let className1, className2, imagePath, attackPerCard;
             
@@ -118,14 +439,14 @@ async function handleCosmicThreatChoice(card, index) {
                     attackPerCard = 3;
             }
             
-
+            // Count cards with each class using the updated hasClass function
             const countClass1 = allRevealableCards
-  .filter(c => hasClass(c, className1))
-  .length;
+                .filter(c => hasClass(c, className1))
+                .length;
 
-           const countClass2 = allRevealableCards
-  .filter(c => hasClass(c, className2))
-  .length;
+            const countClass2 = allRevealableCards
+                .filter(c => hasClass(c, className2))
+                .length;
             
             // Calculate attack reduction values
             const valueClass1 = countClass1 * attackPerCard;
@@ -140,17 +461,19 @@ async function handleCosmicThreatChoice(card, index) {
                 confirmText,
                 denyText
             );
-
-            document.getElementById('heroAbilityHoverText').style.display = 'none';
             
-            const cardImage = document.getElementById('hero-ability-may-card');
-            cardImage.src = imagePath;
-            cardImage.style.display = 'block';
+        const previewArea = document.querySelector('.info-or-choice-popup-preview');
+        if (previewArea) {
+        previewArea.style.backgroundImage = `url('${imagePath}')`;
+        previewArea.style.backgroundSize = 'contain';
+        previewArea.style.backgroundRepeat = 'no-repeat';
+        previewArea.style.backgroundPosition = 'center';
+        previewArea.style.display = 'block';
+        }
 
             confirmButton.onclick = () => {
                 cosmicThreat(card, index, valueClass1, className1);
                 hideHeroAbilityMayPopup();
-                document.getElementById('heroAbilityHoverText').style.display = 'block';
                 cardImage.style.display = 'none';
                 resolve();
             };
@@ -158,7 +481,6 @@ async function handleCosmicThreatChoice(card, index) {
             denyButton.onclick = () => {
                 cosmicThreat(card, index, valueClass2, className2);
                 hideHeroAbilityMayPopup();
-                document.getElementById('heroAbilityHoverText').style.display = 'block';
                 cardImage.style.display = 'none';
                 resolve();
             };
@@ -819,7 +1141,7 @@ async function galactusCosmicEntity() {
   ];
 
   const cardHasClass = (card, cls) =>
-    !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
+    !!card && card.classes && card.classes.includes(cls);
 
   const countsByClass = {};
   for (const cls of CLASSES) {
@@ -950,28 +1272,29 @@ async function galactusCosmicEntity() {
     // Render quantity controls (repurpose the bottom buttons as – / +)
     function renderQuantityPicker() {
       phase = 'chooseQuantity';
-      confirmBtn.disabled = false; // Always allow confirming a number (including 0)
-      confirmBtn.textContent = 'CONFIRM QUANTITY';
+      
+      // PRESET TO MAXIMUM QUANTITY
+      chosenQty = maxQty;
+      
+      // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
+      noThanksBtn.textContent = '+';
+      otherBtn.textContent = 'CONFIRM';
+      confirmBtn.textContent = '-';
 
-      // Show – / + buttons
       otherBtn.style.display = 'inline-block';
       noThanksBtn.style.display = 'inline-block';
-      otherBtn.textContent = '–';
-      noThanksBtn.textContent = '+';
-
-      // Start at 0 (player may choose to reveal none)
-      chosenQty = 0;
 
       function updateQuantityText() {
         const plural = chosenQty === 1 ? 'card' : 'cards';
         const maxPlural = maxQty === 1 ? 'card' : 'cards';
         titleEl.innerHTML = `How many <img src="Visual Assets/Icons/${selectedClass}.svg" alt="${selectedClass} Icon" class="console-card-icons"> cards to reveal?`;
         instrEl.innerHTML =
-          `Chosen: <span class="console-highlights">${chosenQty}</span> (max ${maxQty} ${maxPlural}). Use – / +, then confirm.`;
+          `Chosen: <span class="console-highlights">${chosenQty}</span> (max ${maxQty} ${maxPlural}). Reveal that many, then draw that many cards.`;
       }
 
-      // Wire – / +
-      otherBtn.onclick = (e) => {
+      // NEW BUTTON BEHAVIORS:
+      // Confirm button (now -) decreases quantity
+      confirmBtn.onclick = (e) => {
         e.stopPropagation();
         if (chosenQty > 0) {
           chosenQty -= 1;
@@ -979,6 +1302,7 @@ async function galactusCosmicEntity() {
         }
       };
 
+      // No Thanks button (now +) increases quantity
       noThanksBtn.onclick = (e) => {
         e.stopPropagation();
         if (chosenQty < maxQty) {
@@ -987,11 +1311,29 @@ async function galactusCosmicEntity() {
         }
       };
 
+      // Other button (now CONFIRM) confirms the selection
+      otherBtn.onclick = async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        // Close/reset via your centralised closer
+        if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
+
+        // Execute draws
+        for (let i = 0; i < chosenQty; i++) {
+          if (typeof extraDraw === 'function') extraDraw();
+        }
+
+        // Update board & resolve
+        updateGameBoard?.();
+        resolve();
+      };
+
       updateQuantityText();
     }
 
-    // Confirm button behaviour (phase-dependent)
-    confirmBtn.onclick = async (e) => {
+    // Original confirm button behavior (for class selection phase)
+    confirmBtn.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
 
@@ -999,20 +1341,6 @@ async function galactusCosmicEntity() {
         if (selectedClass == null) return;
         renderQuantityPicker();
         return;
-      }
-
-      if (phase === 'chooseQuantity') {
-        // Execute draws
-        for (let i = 0; i < chosenQty; i++) {
-          if (typeof extraDraw === 'function') extraDraw();
-        }
-
-        // Close/reset via your centralised closer
-        if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
-
-        // Update board & resolve
-        updateGameBoard?.();
-        resolve();
       }
     };
 
@@ -1037,7 +1365,7 @@ async function galactusPanickedMobs() {
     ...cardsPlayedThisTurn.filter(c => !c?.isCopied && !c?.sidekickToDestroy),
   ];
   const cardHasClass = (card, cls) =>
-    !!card && (card.class1 === cls || card.class2 === cls || card.class3 === cls);
+    !!card && card.classes && card.classes.includes(cls);
   const countsByClass = {};
   for (const cls of CLASSES) {
     countsByClass[cls] = cardsPool.reduce((acc, c) => acc + (cardHasClass(c, cls) ? 1 : 0), 0);
@@ -1169,15 +1497,17 @@ async function galactusPanickedMobs() {
     // Quantity picker using – / + on the bottom buttons
     function renderQuantityPicker() {
       phase = 'chooseQuantity';
-      confirmBtn.disabled = false; // allow 0..max
-      confirmBtn.textContent = 'CONFIRM QUANTITY';
+      
+      // PRESET TO MAXIMUM QUANTITY
+      chosenQty = maxQty;
+      
+      // SWAP BUTTON ROLES: noThanks becomes –, other becomes confirm, confirm becomes +
+      noThanksBtn.textContent = '+';
+      otherBtn.textContent = 'CONFIRM';
+      confirmBtn.textContent = '-';
 
       otherBtn.style.display = 'inline-block';
       noThanksBtn.style.display = 'inline-block';
-      otherBtn.textContent = '–';
-      noThanksBtn.textContent = '+';
-
-      chosenQty = 0;
 
       function updateQuantityText() {
         const plural = chosenQty === 1 ? 'card' : 'cards';
@@ -1187,7 +1517,9 @@ async function galactusPanickedMobs() {
           `Chosen: <span class="console-highlights">${chosenQty}</span> (max ${maxQty} ${maxPlural}). Reveal that many, then rescue the same number of Bystanders.`;
       }
 
-      otherBtn.onclick = (e) => {
+      // NEW BUTTON BEHAVIORS:
+      // No Thanks button (now –) decreases quantity
+      confirmBtn.onclick = (e) => {
         e.stopPropagation();
         if (chosenQty > 0) {
           chosenQty -= 1;
@@ -1195,6 +1527,7 @@ async function galactusPanickedMobs() {
         }
       };
 
+      // Confirm button (now +) increases quantity
       noThanksBtn.onclick = (e) => {
         e.stopPropagation();
         if (chosenQty < maxQty) {
@@ -1203,21 +1536,14 @@ async function galactusPanickedMobs() {
         }
       };
 
-      updateQuantityText();
-    }
+      // Other button (now CONFIRM) confirms the selection
+      otherBtn.onclick = async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
 
-    // Confirm button behaviour
-    confirmBtn.onclick = async (e) => {
-      e.stopPropagation();
-      e.preventDefault();
+        // Close/reset via your centralised closer
+        if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
 
-      if (phase === 'chooseClass') {
-        if (selectedClass == null) return;
-        renderQuantityPicker();
-        return;
-      }
-
-      if (phase === 'chooseQuantity') {
         // Rescue that many Bystanders
         for (let i = 0; i < chosenQty; i++) {
           if (typeof rescueBystander === 'function') {
@@ -1227,11 +1553,22 @@ async function galactusPanickedMobs() {
           }
         }
 
-        // Close/reset via your centralised closer
-        if (typeof closeHQCityCardChoicePopup === 'function') closeHQCityCardChoicePopup();
-
         updateGameBoard?.();
         resolve();
+      };
+
+      updateQuantityText();
+    }
+
+    // Original confirm button behavior (for class selection phase)
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (phase === 'chooseClass') {
+        if (selectedClass == null) return;
+        renderQuantityPicker();
+        return;
       }
     };
 
@@ -1487,7 +1824,7 @@ function galactusForceOfEternityDiscard() {
       e.stopPropagation();
       e.preventDefault();
       if (selected.length !== 6) return;
-
+        closeCardChoicePopup();
       setTimeout(async () => {
         confirmButton.disabled = true;
 
@@ -1507,7 +1844,7 @@ function galactusForceOfEternityDiscard() {
 
         updateGameBoard();
         onscreenConsole.log(`Discarded 6 cards.`);
-        closeCardChoicePopup();
+        
         resolve();
       }, 100);
     };
@@ -2313,7 +2650,7 @@ function FirelordRevealRangeOrWound() {
         )
     ];
 
-    if (cardsYouHave.filter(item => item.class1 === 'Range').length === 0) {
+if (cardsYouHave.filter(item => item.classes && item.classes.includes('Range')).length === 0) {
         onscreenConsole.log('You are unable to reveal a <img src="Visual Assets/Icons/Range.svg" alt="Range Icon" class="console-card-icons"> Hero.')
         drawWound();
     } else {
@@ -2369,9 +2706,7 @@ function morgAmbush() {
     for (let i = 0; i < 5; i++) {
         if (hq[i] && hq[i].type === "Hero") {
             const hero = hq[i];
-            const hasInstinct = hero.class1 === "Instinct" || 
-                               hero.class2 === "Instinct" || 
-                               hero.class3 === "Instinct";
+const hasInstinct = hero.classes && hero.classes.includes("Instinct");
             
             if (!hasInstinct) {
                 // Move non-Instinct hero to bottom of deck
@@ -2411,13 +2746,11 @@ function stardustFight() {
             )
         ];
         
-        const CovertCardsYouHave = cardsYouHave.filter(item => 
-            item.type === "Hero" && (
-                item.class1 === "Covert" || 
-                item.class2 === "Covert" || 
-                item.class3 === "Covert"
-            )
-        );
+const CovertCardsYouHave = cardsYouHave.filter(item => 
+    item.type === "Hero" && 
+    item.classes && 
+    item.classes.includes("Covert")
+);
 
         if (CovertCardsYouHave.length === 0) {
             console.log('No available Covert Heroes.');
@@ -2653,13 +2986,9 @@ function stardustFight() {
 async function terraxTheTamerAmbush(terrax) {
     onscreenConsole.log(`Ambush! For each <img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Hero in the HQ, <span class="console-highlight">Terrax the Tamer</span> captures a Bystander.`);
     
-    const strengthCardsInHQCount = hq.filter(card => 
-        card && (
-            card.class1 === "Strength" || 
-            card.class2 === "Strength" || 
-            card.class3 === "Strength"
-        )
-    ).length;
+const strengthCardsInHQCount = hq.filter(card => 
+    card && card.classes && card.classes.includes("Strength")
+).length;
     
     let strengthHQText = "Heroes";
     if (strengthCardsInHQCount === 1) {
@@ -3384,7 +3713,7 @@ function canRevealMrFantasticUltimateNullifier() {
 }
 
 async function promptNegateFightEffectWithMrFantastic() {
-    const MR_FANTASTIC_IMAGE = 'Visual Assets/Heroes/Fantastic Four/Fantastic_Four_MrFantastic_UltimateNullifier.webp';
+    const MR_FANTASTIC_IMAGE = 'Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_UltimateNullifier.webp';
 
     return new Promise((resolve) => {
         // Safety: if player cannot reveal, immediately resolve "no negate"
@@ -3451,6 +3780,7 @@ updateGameBoard();
 }
 
 function thingCrimeStopperFocus() {
+    document.getElementById('played-cards-popup').style.display = 'none';
     onscreenConsole.log(`Focus! You have spent 1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to move a Villain to an adjacent city space.`);
     totalRecruitPoints -= 1;
     if (isCityEmpty()) {
@@ -3482,7 +3812,7 @@ function thingCrimeStopperFocus() {
     function isCellDestroyed(cellElement) {
         // Check if this cell contains a destroyed space
         const destroyedImage = cellElement.querySelector('.destroyed-space');
-        return destroyedImage !== null && destroyedImage.src.includes('MasterStrike.webp');
+        return destroyedImage !== null && destroyedImage.src.includes('Galactus_MasterStrike.webp');
     }
 
     function selectCell(cellElement) {
@@ -3562,7 +3892,7 @@ function thingCrimeStopperFocus() {
 
                 // Create destroyed space image
                 const cardImage = document.createElement('img');
-                cardImage.src = "Visual Assets/Other/MasterStrike.webp";
+                cardImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
                 cardImage.alt = "Destroyed City Space";
                 cardImage.classList.add('destroyed-space');
                 cardContainer.appendChild(cardImage);
@@ -3834,10 +4164,12 @@ function thingCrimeStopperFocus() {
 
     noThanksButton.onclick = () => {
         hidePopup();
+        document.getElementById('played-cards-popup').style.display = 'block';
         onscreenConsole.log(`You chose to not move any Villains.`);
     };
     
     confirmButton.onclick = async () => {
+        document.getElementById('played-cards-popup').style.display = 'block';
         if (selectedCells.length === 2) {
             const firstCell = selectedCells[0];
             const secondCell = selectedCells[1];
@@ -3894,11 +4226,9 @@ function thingItsClobberinTime() {
     const previousCards = cardsPlayedThisTurn.slice(0, -1);
 
     // Filter for cards that have "Strength" in any class attribute
-    const StrengthCount = previousCards.filter(item => 
-        item.class1 === "Strength" || 
-        item.class2 === "Strength" || 
-        item.class3 === "Strength"
-    ).length;
+const StrengthCount = previousCards.filter(item => 
+    item.classes && item.classes.includes("Strength")
+).length;
     
     let StrengthText = "Heroes";  // Use let to allow reassignment
 
@@ -4019,7 +4349,7 @@ function silverSurferEpicDestiny() {
             if (destroyedSpaces[i]) {
                 // For destroyed spaces, use Master Strike image with same styling
                 const destroyedImage = document.createElement('img');
-                destroyedImage.src = "Visual Assets/Other/MasterStrike.webp";
+                destroyedImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
                 destroyedImage.alt = "Destroyed City Space";
                 destroyedImage.className = 'city-hq-chosen-card-image';
                 destroyedImage.style.cursor = 'not-allowed';
@@ -4358,128 +4688,4 @@ function silverSurferEnergySurge() {
 }
 
 //Expansion Popup
-
-var number_of_stars = 300;
-        
-        var random_number = function(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        };
-        
-        var createStars = function() {
-            for(var i = 0; i < number_of_stars; i++) {
-                var star_top = random_number(0, document.documentElement.clientHeight);
-                var star_left = random_number(0, document.documentElement.clientWidth);
-                var star_radius = random_number(1, 2);
-                var pulse_duration = random_number(6, 12);
-                var pulse_delay = random_number(0, 6);
-                
-                var star = document.createElement('div');
-                star.className = 'star';
-                star.style.top = star_top + 'px';
-                star.style.left = star_left + 'px';
-                star.style.width = star_radius + 'px';
-                star.style.height = star_radius + 'px';
-                star.style.animationDuration = pulse_duration + 's';
-                star.style.animationDelay = pulse_delay + 's';
-                
-                // Add slight color variation for a few stars
-                if (Math.random() > 0.9) {
-                    star.style.backgroundColor = 'rgba(210, 225, 255, 0.8)';
-                }
-                
-                document.getElementById('background-for-expansion-popup').appendChild(star);
-            }
-        };
-        
-        // Create shooting stars (your preferred version)
-        function createShootingStars() {
-            for (var i = 0; i < 10; i++) {
-                var shootingStar = document.createElement('div');
-                shootingStar.className = 'shooting-star';
-                
-                // Random starting position
-                var startTop = random_number(-100, document.documentElement.clientHeight);
-                var startLeft = random_number(-100, document.documentElement.clientWidth/2);
-                
-                // Random delay and duration
-                var delay = random_number(0, 15);
-                var duration = random_number(2, 4);
-                
-                shootingStar.style.top = startTop + 'px';
-                shootingStar.style.left = startLeft + 'px';
-                shootingStar.style.animation = `shooting ${duration}s linear infinite`;
-                shootingStar.style.animationDelay = delay + 's';
-                
-                document.getElementById('background-for-expansion-popup').appendChild(shootingStar);
-            }
-        }
-        
- function initSplash() {
-            const splashContent = document.getElementById('splashContent');
-            const splashText = document.getElementById('splashText');
-            const backgroundElement = document.getElementById('background-for-expansion-popup');
-            const popupContainer = document.getElementById('expansion-popup-container');
-            
-            // Start as a circle
-            setTimeout(() => {
-                // Calculate size based on screen dimensions
-                const screenWidth = window.innerWidth;
-                const screenHeight = window.innerHeight;
-                const size = Math.min(screenWidth, screenHeight) * 0.3;
-                
-                splashContent.style.width = size + 'px';
-                splashContent.style.height = size + 'px';
-                splashContent.classList.add('visible');
-                
-                // After 4 seconds, transform to rectangle
-                setTimeout(() => {
-                    splashContent.classList.remove('circular');
-                    splashContent.classList.add('rectangular');
-                    
-                    // Set rectangle dimensions based on screen size
-                    const isPortrait = window.innerHeight > window.innerWidth;
-                    if (isPortrait) {
-                        splashContent.style.width = '70%';
-                        splashContent.style.height = 'auto';
-                        splashContent.style.minHeight = '40%';
-                    } else {
-                        splashContent.style.width = '70%';
-                        splashContent.style.height = 'auto';
-                        splashContent.style.maxWidth = '600px';
-                    }
-                                       
-                    // Fade in content
-                    setTimeout(() => {
-                        splashText.classList.add('visible');
-                    }, 1000);
-                }, 4000);
-            }, 2000); // Initial delay
-        }
-              
-        // Initialize everything when the window loads
-        window.onload = function() {
-const urlParams = new URLSearchParams(window.location.search);
-    const restartParam = urlParams.get('restart');
-    
-    if (restartParam === 'true') {
-        skipSplashAndIntro();
-        return;
-    }
-
-            createStars();
-            createShootingStars();
-            initSplash();
-        };
-        
-        // Adjust on window resize
-        window.onresize = function() {
-            // Remove existing stars
-            var stars = document.querySelectorAll('.star, .shooting-star');
-            stars.forEach(function(star) {
-                star.remove();
-            });
-            
-            // Create new ones based on new dimensions
-            createStars();
-            createShootingStars();
-        };
+      
