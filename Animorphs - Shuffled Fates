@@ -1,0 +1,28 @@
+//MORPH DECK
+
+const morphDeck = [
+    { id: 1, name: "Tiger", type: "morph", staminaCost: 3, attack: 4, health: 5, description: "Powerful predator" },
+    { id: 2, name: "Flea", type: "morph", staminaCost: 1, attack: 1, health: 1, description: "Small and hard to hit" },
+    { id: 3, name: "Hawk", type: "morph", staminaCost: 2, attack: 2, health: 2, description: "Flying scout" },
+    // Add 10-15 more for testing
+];
+
+//CORE ENEMY DECK
+
+const enemyTypes = [
+    { id: 501, name: "Human Controller", attack: 2, health: 5 },
+    { id: 502, name: "Taxxon Controller", attack: 3, health: 6 },
+		{ id: 503, name: "Hork-Bajir Controller", attack: 4, health: 8 },
+		{ id: 504, name: "Tom", attack: 2, health: 5 },
+		{ id: 505, name: "Vice Principal Chapman", attack: 2, health: 5 },
+		{ id: 506, name: "Visser 3", attack: 6, health: 10 },
+    // Add more
+];
+
+//PLOT TWIST DECK
+
+const plotDeck = [
+    { id: 101, name: "Visser Three Appears", type: "plot", effect: "spawnEnemy", enemyType: "VisserThree" },
+    { id: 102, name: "Taxxon Hunger", type: "plot", effect: "allEnemiesBuff", attackBonus: 1 },
+    // Add more plot cards
+];
