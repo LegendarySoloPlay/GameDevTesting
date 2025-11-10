@@ -16,7 +16,17 @@ const enemyTypes = [
 		{ id: 504, name: "Tom", attack: 2, health: 5 },
 		{ id: 505, name: "Vice Principal Chapman", attack: 2, health: 5 },
 		{ id: 506, name: "Visser 3", attack: 6, health: 10 },
-    // Add more
+    Ambush, Fight, Strike, Danger
+
+ambush engage - human (capture innocent, rescue innocent)
+ambush strike - visser 3 (morphs on arrival, splits his attack over two targets)
+ambush danger - chapman (human controller enters, all humans get +attack)
+engage strike - hork bajir (you take damage on attack, slashing blades does damage to a second hero)
+engage danger - tom (emotional damage on attack, cant be targetted by jake)
+danger strike - taxxon (killing an adjacent enemy heals a taxxon for 3, its attack heals for 1 stamina)
+
+
+
 ];
 
 //PLOT TWIST DECK
