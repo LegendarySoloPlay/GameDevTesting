@@ -10,13 +10,12 @@ const morphDeck = [
 //CORE ENEMY DECK
 
 const enemyTypes = [
-    { id: 501, name: "Human Controller", attack: 2, health: 5 },
-    { id: 502, name: "Taxxon Controller", attack: 3, health: 6 },
-		{ id: 503, name: "Hork-Bajir Controller", attack: 4, health: 8 },
-		{ id: 504, name: "Tom", attack: 2, health: 5 },
-		{ id: 505, name: "Vice Principal Chapman", attack: 2, health: 5 },
-		{ id: 506, name: "Visser 3", attack: 6, health: 10 },
-    Ambush, Fight, Strike, Danger
+    { id: 501, name: "Human Controller", type: "Enemy", copies: 6, attack: 2, health: 5, ambush: "humanControllerAmbush", engage: "humanControllerEngage", strike: "None", danger: "None"},
+    { id: 502, name: "Taxxon Controller", type: "Enemy", copies: 6, attack: 3, health: 6, ambush: "None", engage: "None", strike: "taxxonStrike", danger: "taxxonDanger"},
+		{ id: 503, name: "Hork-Bajir Controller", type: "Enemy", copies: 6, attack: 4, health: 8, ambush: "None", engage: "horkBajirEngage", strike: "horkBajirStrike", danger: "None"},
+		{ id: 504, name: "Tom", type: "Enemy", copies: 1, attack: 2, health: 5, ambush: "None", engage: "tomEngage", strike: "None", danger: "tomDanger"},
+		{ id: 505, name: "Vice Principal Chapman", type: "Enemy", copies: 1, attack: 2, health: 5, ambush: "chapmanAmbush", engage: "None", strike: "None", danger: "chapmanDanger"},
+		{ id: 506, name: "Visser 3", type: "Enemy", copies: 1, attack: 6, health: 10, ambush: "visser3Ambush", engage: "None", strike: "visser3Strike", danger: "None"}
 
 ambush engage - human (capture innocent, rescue innocent)
 ambush strike - visser 3 (morphs on arrival, splits his attack over two targets)
@@ -32,7 +31,7 @@ danger strike - taxxon (killing an adjacent enemy heals a taxxon for 3, its atta
 //PLOT TWIST DECK
 
 const plotDeck = [
-    { id: 101, name: "Visser Three Appears", type: "plot", effect: "spawnEnemy", enemyType: "VisserThree" },
-    { id: 102, name: "Taxxon Hunger", type: "plot", effect: "allEnemiesBuff", attackBonus: 1 },
+    { id: 601, name: "Visser Three Appears", type: "plot", copies: 5, effect: "spawnEnemy", enemyType: "VisserThree" },
+    { id: 602, name: "Taxxon Hunger", type: "plot", copies: 8, effect: "allEnemiesBuff", attackBonus: 1 },
     // Add more plot cards
 ];
