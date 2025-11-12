@@ -24,6 +24,10 @@ const updatesHTML = `
 <li><strong>Too many to name!</strong> In revamping all popups, a lot of gameplay mechanics have had under-the-hood updates. The most noticeable will be <i>Investigate</i> and <i>Cosmic Threat</i> popups which should be a little more player-friendly now. In particular, <i>Cosmic Threat</i> will let you select a class, when necessary, and then choose how many cards to reveal - but to save you time, the default will be the max.
 <li><strong>No false hope -</strong> Game ending conditions like Galactus destroying the city will now correctly end the game as soon as any Villain escapes are resolved.
 </ul>
+<p>🔁 <span style="text-decoration:underline;"><strong>GAME SETUP:</strong></span></p>
+<ul>
+<li><strong>I choose you! </strong> The Scheme selection pane now includes drop-downs so you can customise which Hero is shuffled into the Villain deck for X-Cutioner's Song, and which Henchmen is used for Invade the Daily Bugle News HQ. If you do not select an option, they will be randomized and avoid your other selections.
+</ul>
 <p>I hope you enjoy this new expansion!</p>
 <p><i>Warning: Side effects may include webbed-up criminals, shattered illusions, and a dramatically improved skyline.</i></p>
 <p>📧 For any bugs, issues, feedback, or suggestions, please email us at legendarysoloplay@gmail.com - We appreciate your input!</p>
