@@ -44,7 +44,7 @@ const updatesHTML = `
 <li><strong>Just a tip -</strong> If you play on a mobile device, try adding the site to your homescreen - this removes the Safari menu ribbon, allowing fullscreen much easier!
 </ul>
 <hr>
-<h3>✨ <i>Version 3.0.0</i> - Fantastic Four <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="popup-card-icons"></h3>
+<h3>✨ <i>Version 3.0.0</i> - Fantastic Four  <img src="Visual Assets/Icons/Fantastic Four.svg" alt="Fantastic Four Icon" class="popup-card-icons"></h3>
 <p>Welcome to our next expansion! This update brings you the <strong>Fantastic Four</strong> at their finest - all new cards and mechanics! There have also been some major patches and changes under the hood.</p>
 <p>Another massive thank you to this incredible community! Keep the feedback coming!</p>
 <p>📧 For any bugs, issues, feedback, or suggestions, please email us at legendarysoloplay@gmail.com - We appreciate your input!</p>
