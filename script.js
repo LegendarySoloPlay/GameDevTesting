@@ -49,6 +49,56 @@ document
     window.open("https://www.paypal.me/benjaminb21", "_blank", "noopener");
   });
 
+document.getElementById("theme-switch").addEventListener("click", () => {
+  const body = document.body;
+  
+  // Change THEME to Paint the Town Red
+  const themeButtons = document.querySelectorAll(".theme-button");
+  
+  // Remove selected class from all theme buttons
+  themeButtons.forEach((btn) => btn.classList.remove("selected"));
+  
+  // Add selected class to Paint the Town Red theme button
+  themeButtons.forEach((button) => {
+    if (button.getAttribute("data-theme") === "theme-paint-the-town-red") {
+      button.classList.add("selected");
+    }
+  });
+  
+  // Update body class to apply Paint the Town Red theme
+  body.className = "theme-paint-the-town-red";
+  updateThemeImages("theme-paint-the-town-red");
+  
+  // Save theme preference
+  localStorage.setItem("selectedTheme", "theme-paint-the-town-red");
+  
+  // Change FONT to PaintTheTownRed
+  const ALL_FONT_CLASSES = [
+    "font-Core",
+    "font-DarkCity",
+    "font-FantasticFour",
+    "font-PaintTheTownRed",
+  ];
+  
+  // Remove all known font classes, add PaintTheTownRed
+  body.classList.remove(...ALL_FONT_CLASSES);
+  body.classList.add("font-PaintTheTownRed");
+  
+  // Update CSS variables for PaintTheTownRed
+  updateFontVariables("PaintTheTownRed");
+  
+  // Save font preference
+  localStorage.setItem("selectedFont", "PaintTheTownRed");
+  
+  // Update font selector if it exists
+  const fontSelector = document.getElementById("font-selector");
+  if (fontSelector) {
+    fontSelector.value = "PaintTheTownRed";
+  }
+  
+  console.log("Theme and font changed to: Paint the Town Red");
+});
+
 // Custom on-screen log function
 const onscreenConsole = {
   log: function (...args) {

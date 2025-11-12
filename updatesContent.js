@@ -10,6 +10,7 @@ const updatesHTML = `
 <li><strong>New Heroes -</strong> 5 new Heroes to recruit: Black Cat, Moon Knight, Scarlet Spider, Spider-Woman and Symbiote Spider-Man.
 <li><strong>New Threats -</strong> Take on four new schemes, Mysterio, Carnage, Maximum Carnage and the Sinister Six. 
 <li><strong>New Keywords -</strong> Recruit to the top of your deck with <i>Wall-Crawl</i> and beware enemies who <i>Feast</i> on your Heroes. The rules for each will show in the Keywords panel.
+<li><strong>New Theme -</strong> Another theme and font that you can use to customise your gameboard.
 </ul>
 <p>🖼️ <span style="text-decoration:underline;"><strong>USER INTERFACE:</strong></span></p>
 <ul>

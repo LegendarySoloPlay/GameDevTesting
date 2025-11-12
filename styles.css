@@ -4855,6 +4855,12 @@ button:disabled:hover {
   padding: 10px;
 }
 
+.pulsing-glow-button {
+  animation: pulse-glow 2s infinite ease-in-out;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .pulsing-glow-updates {
   text-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent);
   animation: pulse-glow 2s infinite ease-in-out;
