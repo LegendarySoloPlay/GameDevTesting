@@ -33,14 +33,60 @@ danger strike - taxxon (killing an adjacent enemy heals a taxxon for 3, its atta
 const plotDeck = [
     { id: 601, name: "Visser Three Appears", type: "plot", copies: 5, effect: "spawnEnemy", enemyType: "VisserThree" },
     { id: 602, name: "Taxxon Hunger", type: "plot", copies: 8, effect: "allEnemiesBuff", attackBonus: 1 },
-    // Add more plot cards
 ];
 
 //MISSION DECK
 
 const missionDeck = [
-    { id: 01, name: "The Invasion", type: "mission", plotTwistCount: 6, plotTwistEffect: "invasionPlotTwist", enemyAssault: "invasionAssault", objectives: ["1", "2", "3", "4", "5", "6"]  },
-    { id: 02, name: "The Visitor", type: "mission", },
-    { id: 03, name: "The Encounter", type: "mission", },
-// Add more missions
+		{
+			id: 1, 
+			name: "The Invasion", 
+			type: "mission", 
+			boardSize: 5, 
+			plotTwistCount: 6, 
+			plotTwistEffect: "invasionPlotTwist", 
+			enemyAssault: "invasionAssault", 
+			objectives: [
+										`1`, 
+										`2`, 
+										`3`, 
+										`4`, 
+										`5`, 
+										`One Animorph must cover the team's escape, even if it means being <i>trapped</i> forever.`
+									]  
+		},
+		{
+			id: 2, 
+			name: "The Visitor", 
+			type: "mission", 
+			boardSize: 5, 
+			plotTwistCount: 6, 
+			plotTwistEffect: "visitorPlotTwist", 
+			enemyAssault: "visitorAssault", 
+			objectives: [
+										`1`, 
+										`2`, 
+										`3`, 
+										`4`, 
+										`5`, 
+										`6`
+									] 
+		},
+		{
+			id: 3, 
+			name: "The Visitor", 
+			type: "mission", 
+			boardSize: 5, 
+			plotTwistCount: 6, 
+			plotTwistEffect: "encounterPlotTwist", 
+			enemyAssault: "encounterAssault", 
+			objectives: [
+										`1`, 
+										`2`, 
+										`3`, 
+										`4`, 
+										`5`, 
+										`6`
+									] 
+		},
 ];
