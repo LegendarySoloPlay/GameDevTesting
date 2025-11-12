@@ -1,5 +1,5 @@
 // Fantastic Four Expansion
-//11.11.2025 15.35
+//12.11.2025 15.15
 
 //Keywords
 
@@ -547,6 +547,7 @@ async function handleCosmicThreatChoice(card, index) {
 }
 
 function cosmicThreat(card, index, attackReduction, className) {
+  playSFX("cosmic-threat");
   // temp buff
   if (index === 0) city1TempBuff -= attackReduction;
   else if (index === 1) city2TempBuff -= attackReduction;
@@ -1253,6 +1254,16 @@ function galactusMasterStrike() {
         `<span class="console-destruction">${citySpaceLabels[i]} is destroyed!</span>`,
       );
 
+      const allSpacesDestroyed = destroyedSpaces.every(
+        (space) => space === true,
+      );
+
+      if (allSpacesDestroyed) {
+        onscreenConsole.log("The entire city has been destroyed!");
+      }
+
+      galactusDestroyedCityDelay = true;
+
       // Any villain at this space immediately escapes
       if (city[i] !== null) {
         const escapedVillain = city[i];
@@ -1266,15 +1277,15 @@ function galactusMasterStrike() {
           });
           await handleVillainEscape(escapedVillain);
           addHRToTopWithInnerHTML();
+          
+          // MOVE THIS INSIDE the setTimeout after escape handling is complete
+          galactusDestroyedCityDelay = false;
+          updateGameBoard();
         }, 200);
-      }
-      updateGameBoard();
-      const allSpacesDestroyed = destroyedSpaces.every(
-        (space) => space === true,
-      );
-
-      if (allSpacesDestroyed) {
-        onscreenConsole.log("The entire city has been destroyed!");
+      } else {
+        // If no villain to escape, set delay to false immediately
+        galactusDestroyedCityDelay = false;
+        updateGameBoard();
       }
 
       return; // Exit after destroying one space
@@ -4527,7 +4538,7 @@ function thingCrimeStopperFocus() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
 
@@ -4690,7 +4701,7 @@ function thingCrimeStopperFocus() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
       }

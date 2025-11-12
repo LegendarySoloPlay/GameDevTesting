@@ -1,5 +1,5 @@
 // Card Abilities for Sidekicks
-//11.11.2025 15.35
+//12.11.2025 15.15
 
 function returnToSidekickDeck(card) {
   if (!card) {
@@ -253,7 +253,7 @@ function lockjawPhasing() {
       try {
         if (playerDeck.length > 0) {
           // Swap Lockjaw with the top card of the playerDeck
-          playSFX("card-draw");
+          playSFX("phase");
           const topCard = playerDeck.pop(); // Remove the top card from the deck
           playerHand.push(topCard); // Add the top card to the player's hand
           playerDeck.push(playedSidekick); // Move Lockjaw to the top of the deck
@@ -283,7 +283,7 @@ function lockjawPhasing() {
           onscreenConsole.log("Discard pile shuffled into the player deck.");
 
           if (playerDeck.length > 0) {
-            playSFX("card-draw");
+            playSFX("phase");
             const topCard = playerDeck.pop(); // Remove the top card from the deck
             playerHand.push(topCard); // Add the top card to the player's hand
             playerDeck.push(playedSidekick); // Move Lockjaw to the top of the deck
@@ -908,6 +908,7 @@ function RustyRevealTopTwoAndHandle() {
     onscreenConsole.log(
       `<span class="console-highlights">Rusty 'Firefist' Collins</span> played. Special Ability activated.`,
     );
+    playSFX("investigate");
 
     // Draw up to two cards
     let revealedCards = [];
@@ -1040,8 +1041,8 @@ function boomBoomNicknames() {
     const { confirmButton, denyButton, extraButton } = showHeroAbilityMayPopup(
       `Which of <span class="console-highlights">Boom-Boom</span><span class="bold-spans">'s</span> nicknames would you like to choose?`,
       "Time Bomb",
-      "Boomer",
       "Meltdown",
+      "Boomer",
       true,
     );
 
@@ -1875,7 +1876,7 @@ function shatter(card) {
     const shatteredValue = Math.floor(shatteredVillainAttack / 2);
 
     card.shattered = (card.shattered || 0) + shatteredValue;
-
+    playSFX("shatter");
     onscreenConsole.log(
       `Shatter! <span class="console-highlights">${card.name}</span> loses ${shatteredValue}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
     );
@@ -1887,6 +1888,7 @@ function shatter(card) {
 }
 
 function laylaMillerInvestigate() {
+  playSFX("investigate");
   return new Promise((resolve) => {
     // 1. Display the popup
     const popup = document.querySelector(".investigate-popup");

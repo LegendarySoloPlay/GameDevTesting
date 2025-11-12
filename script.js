@@ -1,5 +1,5 @@
 // Core Mechanics
-//11.11.2025 15.35
+//12.11.2025 15.15
 
 console.log("Script loaded");
 console.log(window.henchmen);
@@ -657,6 +657,7 @@ let sewerRooftopDefeats = 0;
 let thingCrimeStopperRescue = false;
 let bystandersRescuedThisTurn = 0;
 let galactusForceOfEternityDraw = false;
+let galactusDestroyedCityDelay = false;
 let negativeZoneAttackAndRecruit = false;
 let invincibleForceField = 0;
 let city1CosmicThreat = 0;
@@ -800,6 +801,7 @@ function filterSchemes() {
 
   // Get all hr elements
   const hrElements = document.querySelectorAll("#scheme-selection hr");
+  const dropdownElements = document.querySelectorAll("#scheme-selection .dropdown-check-list");
 
   // If no filters are selected, show all schemes and hr elements
   if (selectedFilters.length === 0) {
@@ -807,6 +809,7 @@ function filterSchemes() {
       (button) => (button.parentElement.style.display = "flex"),
     );
     hrElements.forEach((hr) => (hr.style.display = "block"));
+    dropdownElements.forEach((hr) => (hr.style.display = "block"));
     return; // Exit if no filters are selected
   }
 
@@ -827,6 +830,15 @@ function filterSchemes() {
       hr.style.display = "block"; // Show hr that match the filters
     } else {
       hr.style.display = "none"; // Hide hr that don't match
+    }
+  });
+
+    dropdownElements.forEach((dropdown) => {
+    const dropdownSet = dropdown.getAttribute("data-set");
+    if (selectedFilters.includes(dropdownSet)) {
+      dropdown.style.display = "block"; // Show hr that match the filters
+    } else {
+      dropdown.style.display = "none"; // Hide hr that don't match
     }
   });
 }
@@ -1303,10 +1315,22 @@ function cycleHeroImages() {
 
 // Event listener for user selecting a scheme manually
 document
-  .querySelectorAll("#scheme-section input[type=radio]")
+  .querySelectorAll("#scheme-selection input[type=radio][name='scheme']")
   .forEach((radio) => {
     radio.addEventListener("change", function () {
-      updateSchemeImage(this.value); // Update the image when the user selects a scheme
+      updateSchemeImage(this.value);
+    });
+  });
+
+document
+  .querySelectorAll("#xCutionersSongHero input[type=radio][name='hero']")
+  .forEach((radio) => {
+    radio.addEventListener("change", function () {
+      // Change the dropdown anchor's inner HTML to the radio button's value
+      const dropdownAnchor = document.getElementById("xCutioner-scheme-dropdown-anchor");
+      if (dropdownAnchor) {
+        dropdownAnchor.textContent = this.value;
+      }
     });
   });
 
@@ -3479,30 +3503,63 @@ function generateHeroDeck(selectedHeroes, selectedHenchmen) {
     }
   }
 
-  // Add 6 henchmen to hero deck for Midtown Bank Robbery scheme
-  if (selectedSchemeForHeroDeck.name === "Invade the Daily Bugle News HQ") {
-    // Get the selected henchmen from your game state
-    // You'll need to make sure selectedHenchmen is accessible in this function
+// Add 6 henchmen to hero deck for Daily Bugle Scheme
+if (selectedSchemeForHeroDeck.name === "Invade the Daily Bugle News HQ") {
+  // Check if a specific henchman was selected in the dropdown
+  const selectedHenchmanRadio = document.querySelector(
+    "#invadeTheDailyBugleHenchmen input[type=radio][name='dailyBugle-henchmen']:checked"
+  );
+  
+  if (selectedHenchmanRadio && selectedHenchmanRadio.value !== "Random") {
+    // User selected a specific henchman from the dropdown
+    const selectedHenchmanName = selectedHenchmanRadio.value;
+    console.log("Using selected henchman:", selectedHenchmanName);
+    
+    const henchmenToAdd = window.henchmen.find(
+      (h) => h.name === selectedHenchmanName
+    );
 
-    if (selectedHenchmen && selectedHenchmen.length > 0) {
-      // Pick a random henchman from the selected ones
-      const randomIndex = Math.floor(Math.random() * selectedHenchmen.length);
-      const randomHenchmanName = selectedHenchmen[randomIndex];
-      const henchmenToAdd = window.henchmen.find(
-        (h) => h.name === randomHenchmanName,
-      );
-
-      if (henchmenToAdd) {
-        // Store which henchman we used for the hero deck
-        window.heroDeckHenchman = randomHenchmanName;
-        
-        // Add 6 copies to the hero deck
-        for (let i = 0; i < 6; i++) {
-          deck.push({ ...henchmenToAdd, subtype: "Henchman" });
-        }
+    if (henchmenToAdd) {
+      // Store which henchman we used for the hero deck
+      window.heroDeckHenchman = selectedHenchmanName;
+      
+      // Add 6 copies to the hero deck
+      for (let i = 0; i < 6; i++) {
+        deck.push({ ...henchmenToAdd, subtype: "Henchman" });
       }
+      console.log(`Added 6 copies of ${selectedHenchmanName} to hero deck`);
+    } else {
+      console.warn("Selected henchman not found:", selectedHenchmanName);
+      // Fallback to random selection from all available henchmen
+      selectRandomHenchman();
+    }
+    
+  } else {
+    // User selected "Random" or no specific henchman - pick randomly from all henchmen
+    console.log("Using random henchman selection from all henchmen");
+    selectRandomHenchman();
+  }
+
+  // Helper function for random henchman selection from all available henchmen
+  function selectRandomHenchman() {
+    if (window.henchmen && window.henchmen.length > 0) {
+      // Pick a random henchman from ALL available henchmen
+      const randomIndex = Math.floor(Math.random() * window.henchmen.length);
+      const randomHenchman = window.henchmen[randomIndex];
+      
+      // Store which henchman we used for the hero deck
+      window.heroDeckHenchman = randomHenchman.name;
+      
+      // Add 6 copies to the hero deck
+      for (let i = 0; i < 6; i++) {
+        deck.push({ ...randomHenchman, subtype: "Henchman" });
+      }
+      console.log(`Added 6 random copies of ${randomHenchman.name} to hero deck`);
+    } else {
+      console.warn("No henchmen available for random selection");
     }
   }
+}
 
   return shuffle(deck);
 }
@@ -3585,11 +3642,6 @@ function generateVillainDeck(
   // For the villain deck, use only the henchman that wasn't used in the hero deck
   let villainDeckHenchmen = [...selectedHenchmen];
   
-  // Remove the henchman that was used in the hero deck (if any)
-  if (window.heroDeckHenchman) {
-    villainDeckHenchmen = selectedHenchmen.filter(henchman => henchman !== window.heroDeckHenchman);
-  }
-
   const selectedSpecialHenchman = villainDeckHenchmen[Math.floor(Math.random() * villainDeckHenchmen.length)];
   let henchmenToPlaceOnTop = [];
 
@@ -3817,8 +3869,68 @@ function generateVillainDeck(
   }
 
   if (scheme.name === "X-Cutioner's Song") {
-    console.log("Processing X-Cutioner's Song scheme");
+  console.log("Processing X-Cutioner's Song scheme");
 
+  // Check if a specific hero was selected in the dropdown
+  const selectedHeroRadio = document.querySelector(
+    "#xCutionersSongHero input[type=radio][name='hero']:checked"
+  );
+  
+  if (selectedHeroRadio && selectedHeroRadio.value !== "Random") {
+    // User selected a specific hero from the dropdown
+    const selectedHeroName = selectedHeroRadio.value;
+    console.log("Using selected hero:", selectedHeroName);
+    
+    const selectedHero = heroes.find(hero => hero.name === selectedHeroName);
+    
+    if (selectedHero) {
+      console.log("Found selected hero data:", selectedHero.name);
+      
+      selectedHero.cards.forEach((card) => {
+        let copiesToAdd;
+        switch (card.rarity) {
+          case "Common":
+          case "Common 2":
+            copiesToAdd = 5;
+            break;
+          case "Uncommon":
+            copiesToAdd = 3;
+            break;
+          case "Rare":
+            copiesToAdd = 1;
+            break;
+          default:
+            copiesToAdd = 0;
+        }
+
+        console.log(
+          `Adding ${copiesToAdd} copies of ${card.name} (${card.rarity})`,
+        );
+
+        for (let i = 0; i < copiesToAdd; i++) {
+          deck.push({
+            ...card,
+            type: "Hero",
+            capturedHero: true,
+            capturedHeroAbility: "gainedByPlayer",
+            originalHero: selectedHero.name,
+          });
+        }
+      });
+    } else {
+      console.warn("Selected hero not found in heroes data:", selectedHeroName);
+      // Fallback to random selection
+      selectRandomHero();
+    }
+    
+  } else {
+    // User selected "Random" or no specific hero - use original random logic
+    console.log("Using random hero selection");
+    selectRandomHero();
+  }
+
+  // Helper function for random hero selection
+  function selectRandomHero() {
     // Debug: Log all heroes first
     console.log(
       "All heroes:",
@@ -3890,6 +4002,7 @@ function generateVillainDeck(
       // Example: const defaultHero = heroes.find(h => h.name === 'Wolverine');
     }
   }
+}
 
   for (let i = 0; i < 5; i++) {
     deck.push({
@@ -3899,22 +4012,97 @@ function generateVillainDeck(
     });
   }
 
-  for (let i = 0; i < scheme.twistCount; i++) {
-    const twistCard = {
-      name: "Scheme Twist",
-      type: "Scheme Twist",
-      // Change image based on scheme
-      image:
-        scheme.name === "Steal the Weaponized Plutonium"
-          ? "Visual Assets/Other/Plutonium.webp"
-          : "Visual Assets/Other/SchemeTwist.webp",
-      // Add plutonium attribute conditionally
-      ...(scheme.name === "Steal the Weaponized Plutonium" && {
-        plutonium: true,
-      }),
-    };
-    deck.push(twistCard);
+const schemeTwistConfigs = {
+  "Midtown Bank Robbery": {
+    image: "Visual Assets/Schemes/Custom Twists/midtownBankRobbery.webp"
+  },
+  "Negative Zone Prison Breakout": {
+    image: "Visual Assets/Schemes/Custom Twists/negativeZonePrisonBreakout.webp"
+  },
+  "Portals to the Dark Dimension": {
+    image: "Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp"
+  },
+  "Replace Earth's Leaders with Killbots": {
+    image: "Visual Assets/Schemes/Custom Twists/replaceEarthsLeadersWithKillbots.webp"
+  },
+  "Secret Invasion of the Skrull Shapeshifters": {
+    image: "Visual Assets/Schemes/Custom Twists/secretInvasionOfTheSkrullShapeshifters.webp"
+  },
+  "Superhero Civil War": {
+    image: "Visual Assets/Schemes/Custom Twists/superHeroCivilWar.webp"
+  },
+  "The Legacy Virus": {
+    image: "Visual Assets/Schemes/Custom Twists/theLegacyVirus.webp"
+  },
+  "Unleash the Power of the Cosmic Cube": {
+    image: "Visual Assets/Schemes/Custom Twists/unleashThePowerOfTheCosmicCube.webp"
+  },
+  "Capture Baby Hope": {
+    image: "Visual Assets/Schemes/Custom Twists/captureBabyHope.webp"
+  },
+  "Detonate the Helicarrier": {
+    image: "Visual Assets/Schemes/Custom Twists/detonateTheHelicarrier.webp"
+  },
+  "Massive Earthquake Generator": {
+    image: "Visual Assets/Schemes/Custom Twists/massiveEarthquakeGenerator.webp"
+  },
+  "Organized Crime Wave": {
+    image: "Visual Assets/Schemes/Custom Twists/organizedCrimeWave.webp"
+  },
+  "Save Humanity": {
+    image: "Visual Assets/Schemes/Custom Twists/saveHumanity.webp"
+  },
+  "Steal the Weaponized Plutonium": {
+    image: "Visual Assets/Schemes/Custom Twists/stealTheWeaponizedPlutonium.webp",
+    plutonium: true
+  },
+  "Transform Citizens Into Demons": {
+    image: "Visual Assets/Schemes/Custom Twists/transformCitizensIntoDemons.webp"
+  },
+  "X-Cutioner's Song": {
+    image: "Visual Assets/Schemes/Custom Twists/xCutionersSong.webp"
+  },
+  "Bathe Earth in Cosmic Rays": {
+    image: "Visual Assets/Schemes/Custom Twists/batheEarthInCosmicRays.webp"
+  },
+  "Flood the Planet with Melted Glaciers": {
+    image: "Visual Assets/Schemes/Custom Twists/floodThePlanetWithMeltedGlaciers.webp"
+  },
+  "Invincible Force Field": {
+    image: "Visual Assets/Schemes/Custom Twists/invincibleForceField.webp"
+  },
+  "Pull Reality Into the Negative Zone": {
+    image: "Visual Assets/Schemes/Custom Twists/pullRealityIntoTheNegativeZone.webp"
+  },
+  "The Clone Saga": {
+    image: "Visual Assets/Schemes/Custom Twists/theCloneSaga.webp"
+  },
+  "Invade the Daily Bugle News HQ": {
+    image: "Visual Assets/Schemes/Custom Twists/invadeTheDailyBugleNewsHQ.webp"
+  },
+  "Splice Humans with Spider DNA": {
+    image: "Visual Assets/Schemes/Custom Twists/spliceHumansWithSpiderDNA.webp"
+  },
+  "Weave a Web of Lies": {
+    image: "Visual Assets/Schemes/Custom Twists/weaveAWebOfLies.webp"
+  },
+  "default": {
+    image: "Visual Assets/Other/SchemeTwist.webp"
   }
+};
+
+for (let i = 0; i < scheme.twistCount; i++) {
+  const config = schemeTwistConfigs[scheme.name] || schemeTwistConfigs.default;
+  
+  const twistCard = {
+    name: "Scheme Twist",
+    type: "Scheme Twist",
+    image: config.image,
+    ...config
+  };
+  
+  deck.push(twistCard);
+}
 
   // Shuffle the deck
   deck = shuffle(deck);
@@ -4495,7 +4683,7 @@ function updateMastermindOverlay() {
   if (darkPortalMastermind && !darkPortalMastermindRendered) {
     const darkPortalOverlay = document.createElement("div");
     darkPortalOverlay.className = "mastermind-dark-portal-overlay";
-    darkPortalOverlay.innerHTML = `<img src='Visual Assets/Other/DarkPortal.webp' alt='Dark Portal' class='dark-portal-image'>`;
+    darkPortalOverlay.innerHTML = `<img src='Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp' alt='Dark Portal' class='dark-portal-image'>`;
     mastermindCard.appendChild(darkPortalOverlay);
     darkPortalMastermindRendered = true;
   }
@@ -5542,18 +5730,21 @@ function showPopup(type, drawnCard, confirmCallback) {
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Villain Escape") {
+    playSFX("escape");
     popupTitle.innerText = `Escape`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `A new Villain in the city means <span class="console-highlights">${drawnCard.name}</span> escapes!`;
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Villain Ambush") {
+    playSFX("villain-entry");
     popupTitle.innerText = `Ambush`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city with an ambush!`;
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Villain Arrival") {
+    playSFX("villain-entry");
     popupTitle.innerText = `Villain`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city.`;
@@ -5572,12 +5763,14 @@ function showPopup(type, drawnCard, confirmCallback) {
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Destroyed City Villain Escape") {
+    playSFX("escape");
     popupTitle.innerText = `Escape`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `As <span class="console-highlights">Galactus</span> destroys the city <span class="console-highlights">${drawnCard.name}</span> escapes!`;
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Raktar Villain Escape") {
+    playSFX("escape");
     popupTitle.innerText = `Escape`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `The actions of <span class="console-highlights">Ra'ktar the Molan King</span> help <span class="console-highlights">${drawnCard.name}</span> to escape!`;
@@ -6964,21 +7157,111 @@ function updateGameBoard() {
     }
   }
 
-  const stackedCardsByMastermind = document.getElementById(
-    "stacked-mastermind-cards",
-  );
-  const stackedCardsByMastermindCount = document.getElementById(
-    "stacked-mastermind-cards-count",
-  );
-
-  if (stackedTwistNextToMastermind > 0) {
-    stackedCardsByMastermind.style.display = "flex";
-    stackedCardsByMastermindCount.style.display = "block";
-    stackedCardsByMastermindCount.textContent = stackedTwistNextToMastermind;
-  } else {
-    stackedCardsByMastermind.style.display = "none";
-    stackedCardsByMastermindCount.style.display = "none";
+  const schemeTwistConfigs = {
+  "Midtown Bank Robbery": {
+    image: "Visual Assets/Schemes/Custom Twists/midtownBankRobbery.webp"
+  },
+  "Negative Zone Prison Breakout": {
+    image: "Visual Assets/Schemes/Custom Twists/negativeZonePrisonBreakout.webp"
+  },
+  "Portals to the Dark Dimension": {
+    image: "Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp"
+  },
+  "Replace Earth's Leaders with Killbots": {
+    image: "Visual Assets/Schemes/Custom Twists/replaceEarthsLeadersWithKillbots.webp"
+  },
+  "Secret Invasion of the Skrull Shapeshifters": {
+    image: "Visual Assets/Schemes/Custom Twists/secretInvasionOfTheSkrullShapeshifters.webp"
+  },
+  "Superhero Civil War": {
+    image: "Visual Assets/Schemes/Custom Twists/superHeroCivilWar.webp"
+  },
+  "The Legacy Virus": {
+    image: "Visual Assets/Schemes/Custom Twists/theLegacyVirus.webp"
+  },
+  "Unleash the Power of the Cosmic Cube": {
+    image: "Visual Assets/Schemes/Custom Twists/unleashThePowerOfTheCosmicCube.webp"
+  },
+  "Capture Baby Hope": {
+    image: "Visual Assets/Schemes/Custom Twists/captureBabyHope.webp"
+  },
+  "Detonate the Helicarrier": {
+    image: "Visual Assets/Schemes/Custom Twists/detonateTheHelicarrier.webp"
+  },
+  "Massive Earthquake Generator": {
+    image: "Visual Assets/Schemes/Custom Twists/massiveEarthquakeGenerator.webp"
+  },
+  "Organized Crime Wave": {
+    image: "Visual Assets/Schemes/Custom Twists/organizedCrimeWave.webp"
+  },
+  "Save Humanity": {
+    image: "Visual Assets/Schemes/Custom Twists/saveHumanity.webp"
+  },
+  "Steal the Weaponized Plutonium": {
+    image: "Visual Assets/Schemes/Custom Twists/stealTheWeaponizedPlutonium.webp",
+    plutonium: true
+  },
+  "Transform Citizens Into Demons": {
+    image: "Visual Assets/Schemes/Custom Twists/transformCitizensIntoDemons.webp"
+  },
+  "X-Cutioner's Song": {
+    image: "Visual Assets/Schemes/Custom Twists/xCutionersSong.webp"
+  },
+  "Bathe Earth in Cosmic Rays": {
+    image: "Visual Assets/Schemes/Custom Twists/batheEarthInCosmicRays.webp"
+  },
+  "Flood the Planet with Melted Glaciers": {
+    image: "Visual Assets/Schemes/Custom Twists/floodThePlanetWithMeltedGlaciers.webp"
+  },
+  "Invincible Force Field": {
+    image: "Visual Assets/Schemes/Custom Twists/invincibleForceField.webp"
+  },
+  "Pull Reality Into the Negative Zone": {
+    image: "Visual Assets/Schemes/Custom Twists/pullRealityIntoTheNegativeZone.webp"
+  },
+  "The Clone Saga": {
+    image: "Visual Assets/Schemes/Custom Twists/theCloneSaga.webp"
+  },
+  "Invade the Daily Bugle News HQ": {
+    image: "Visual Assets/Schemes/Custom Twists/invadeTheDailyBugleNewsHQ.webp"
+  },
+  "Splice Humans with Spider DNA": {
+    image: "Visual Assets/Schemes/Custom Twists/spliceHumansWithSpiderDNA.webp"
+  },
+  "Weave a Web of Lies": {
+    image: "Visual Assets/Schemes/Custom Twists/weaveAWebOfLies.webp"
+  },
+  "default": {
+    image: "Visual Assets/Other/SchemeTwist.webp"
   }
+};
+
+    const selectedSchemeName = document.querySelector(
+      "#scheme-section input[type=radio]:checked",
+    ).value;
+    const selectedScheme = schemes.find(
+      (scheme) => scheme.name === selectedSchemeName,
+    );
+
+const stackedCardsByMastermind = document.getElementById(
+  "stacked-mastermind-cards",
+);
+const stackedCardsByMastermindCount = document.getElementById(
+  "stacked-mastermind-cards-count",
+);
+
+if (stackedTwistNextToMastermind > 0) {
+  stackedCardsByMastermind.style.display = "flex";
+  stackedCardsByMastermindCount.style.display = "block";
+  stackedCardsByMastermindCount.textContent = stackedTwistNextToMastermind;
+  
+  // Use the same image mapping logic
+  const config = schemeTwistConfigs[selectedScheme.name] || schemeTwistConfigs.default;
+  stackedCardsByMastermind.style.backgroundImage = `url('${config.image}')`;
+} else {
+  stackedCardsByMastermind.style.display = "none";
+  stackedCardsByMastermindCount.style.display = "none";
+}
 
   // Define explosion values (modify if your variables are named differently)
   const explosionValues = [
@@ -7277,7 +7560,7 @@ function updateGameBoard() {
       if (currentPermBuff !== 0) {
         const permBuffOverlay = document.createElement("div");
         permBuffOverlay.className = "perm-buff-overlay";
-        permBuffOverlay.innerHTML = `<img src='Visual Assets/Other/DarkPortal.webp' alt='Dark Portal' class='dark-portal-image'>`;
+        permBuffOverlay.innerHTML = `<img src='Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp' alt='Dark Portal' class='dark-portal-image'>`;
         cardContainer.appendChild(permBuffOverlay);
       }
 
@@ -7285,7 +7568,7 @@ function updateGameBoard() {
       if (darkPortalSpaces[i]) {
         const darkPortalOverlay = document.createElement("div");
         darkPortalOverlay.className = "dark-portal-overlay";
-        darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+        darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
         cardContainer.appendChild(darkPortalOverlay);
       }
 
@@ -7753,7 +8036,7 @@ function updateGameBoard() {
 
       // Create an image element
       const cardImage = document.createElement("img");
-      cardImage.src = "Visual Assets/Other/DarkPortal.webp";
+      cardImage.src = "Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp";
       cardImage.alt = "Dark Portal Space";
       cardImage.classList.add("destroyed-space");
       cardContainer.appendChild(cardImage);
@@ -8178,7 +8461,7 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
   if (darkPortalSpaces[index] && location === "city") {
     const darkPortalOverlay = document.createElement("div");
     darkPortalOverlay.className = "dark-portal-overlay";
-    darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+    darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
     cardContainer.appendChild(darkPortalOverlay);
   }
 
@@ -9730,6 +10013,7 @@ async function endTurn() {
   thingCrimeStopperRescue = false;
   bystandersRescuedThisTurn = 0;
   mastermindCosmicThreatResolved = false;
+  galactusDestroyedCityDelay = false;
   backflipRecruit = false;
   city1CosmicThreat = 0;
   city2CosmicThreat = 0;
@@ -10933,6 +11217,7 @@ async function handlePostDefeat(
       }
       if (!negate) {
         city[1] = villainCard;
+        playSFX("burrow");
         onscreenConsole.log(
           `<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`,
         );
@@ -11295,6 +11580,7 @@ function removeHQCosmicThreatBuff(index) {
 }
 
 function applyMastermindCosmicThreat(mastermindCard, attackReduction, label) {
+  playSFX("cosmic-threat");
   // Apply temp buff
   mastermindTempBuff -= attackReduction;
   // Record for later removal
@@ -13157,17 +13443,24 @@ function returnHome() {
 }
 
 function checkDefeat() {
+
+  if (galactusDestroyedCityDelay) {
+    return false;
+  }
   // Check if defeat should be delayed due to victory conditions
   const mastermind = getSelectedMastermind();
-  if (!isMastermindDefeated(mastermind)) {
+  
+  // If mastermind IS already defeated, return false (no additional defeat check needed)
+  if (isMastermindDefeated(mastermind)) {
     return false;
   }
 
+  // If game end is delayed or already marked defeated, return false
   if (delayEndGame || mastermindDefeated) {
     return false;
   }
 
-  // Check mastermind-specific defeat conditions
+  // Only check mastermind-specific defeat conditions if mastermind isn't defeated yet
   const mastermindEndGame = mastermind ? mastermind.endGame : null;
 
   if (mastermindEndGame) {
@@ -13477,7 +13770,7 @@ async function showWinPopup() {
         winText.innerHTML = `You've shattered ${mastermind.name}'s invincible force field. With their defenses down, the threat is over. Excellent work!`;
         break;
 
-      case "Pull Reality into the Negative Zone":
+      case "Pull Reality Into the Negative Zone":
         winText.innerHTML = `You've stopped ${mastermind.name} from pulling reality into the Negative Zone. The dimensional breach is sealed and the world is safe. Excellent work!`;
         break;
 
@@ -14225,7 +14518,7 @@ function openPlayedCardsPopup() {
       // Focus button click handler
       focusButton.addEventListener("click", async (e) => {
         e.stopPropagation();
-
+        playSFX("focus");
         if (focusFunction && typeof focusFunction === "function") {
           try {
             // Execute the focus ability
@@ -15334,6 +15627,7 @@ document.getElementById("decreaseB").addEventListener("click", () => {
 
 // Popup control
 async function showCounterPopup(villainCard, villainAttack) {
+  playSFX("bribe");
   return new Promise((resolve, reject) => {
     counterResolve = resolve;
     counterReject = reject;
@@ -15407,16 +15701,29 @@ function openSettings() {
 
   const SOUND_KEYS = [
     "attack",
+    "bribe",
+    "burrow",
     "card-draw",
+    "cosmic-threat",
+    "escape",
     "evil-wins",
+    "feast",
+    "focus",
     "game-draw",
     "good-wins",
     "hand-dealt",
+    "investigate",
     "ko",
     "master-strike",
+    "phase",
     "recruit",
     "rescue",
     "scheme-twist",
+    "shatter",
+    "teleport",
+    "versatile",
+    "villain-entry",
+    "wall-crawl",
     "wound",
   ];
   const MUSIC_KEY = "background-music";

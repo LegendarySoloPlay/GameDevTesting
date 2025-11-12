@@ -1,5 +1,5 @@
 // Card Database
-//11.11.2025 15.35
+//12.11.2025 15.15
 
 const bystanders = [
 { id: 1, name: 'Bystander', type: 'Bystander', victoryPoints: 1, classes: [], keywords: [], image: "Visual Assets/Other/Bystander.webp" },
@@ -480,9 +480,10 @@ const schemes = [
     endGame: "5VillainHQ",
     twistEffect: "invadeTheDailyBugleNewsHQTwist",
     requiredVillains: 1,
-    requiredHenchmen: 2,
+    requiredHenchmen: 1,
     requiredHeroes: 3,
     variableTwist: false,
+    errata: "Invade the Daily Bugle News HQ",
     twistText: `KO a Hero from the HQ. Put the highest-<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> Villain from the city into that HQ space.`,
     image: "Visual Assets/Schemes/PtTR_invadeTheDailyBugleNewsHQ.webp",
   },
@@ -768,6 +769,7 @@ const masterminds = [
     masterStrikeImage: "Visual Assets/Masterminds/Apocalypse_MasterStrike.webp",
     image: "Visual Assets/Masterminds/DarkCity_Apocalypse.webp",
     keywords: [],
+    errata: "Apocalypse",
     tactics: [
       {
         id: 17,
@@ -1135,6 +1137,7 @@ const masterminds = [
     masterStrikeImage: "Visual Assets/Masterminds/MoleMan_MasterStrike.webp",
     image: "Visual Assets/Masterminds/FantasticFour_MoleMan.webp",
     keywords: [],
+    errata: "Mole Man",
     tactics: [
       {
         id: 41,
@@ -8762,6 +8765,10 @@ const keywordDescriptions = {
   "Emma Frost - Shadowed Thoughts Errata": `This card's <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> should read "2+" instead of "2".`,
   "Nick Fury - High Tech Weaponry Errata": `This card's <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> should read "2+" instead of "2".`,
   "Vertigo - Errata": `The text on this card is a Fight effect.`,
+  "Apocalypse": `Apocalypse gives +2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> to whichever Villain Group you are using, as if they were the Four Horsemen. If one of each of the different Villains in the Villain Group escapes, Apocalypse instantly wins.`,
+  "Mole Man": `Mole Man's abilities apply to whichever Villain Group you are using, as if they were Subterranea.`,
+  "Invade the Daily Bugle News HQ": `Villains entering the HQ don't cause Ambush or Escape effects. Villains in the HQ aren't in any city space. For example, if Carrion is fought while in the HQ, he can't be “put back in the city space where he was.” If there is a Villain in the HQ space under Doppelganger, or if Doppelganger is in the HQ, then Doppelganger's <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> is 0.`,
+
 };
 
 window.henchmen = henchmen;

@@ -1,5 +1,5 @@
 // cardAbilities.js
-//11.11.2025 15.35
+//12.11.2025 15.15
 
 function koBonuses() {
   playSFX("ko");
@@ -4255,7 +4255,7 @@ function DeadpoolAssignBystanderToVillain() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
       }
@@ -6556,7 +6556,7 @@ function StormMoveVillain() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
 
@@ -6719,7 +6719,7 @@ function StormMoveVillain() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
       }
@@ -10015,7 +10015,7 @@ function instantVillainDefeat() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
       }
@@ -10066,7 +10066,7 @@ function addCardOverlays(cardContainer, card, cityIndex) {
   if (darkPortalSpaces[cityIndex]) {
     const darkPortalOverlay = document.createElement("div");
     darkPortalOverlay.className = "dark-portal-overlay";
-    darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+    darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
     cardContainer.appendChild(darkPortalOverlay);
   }
 
@@ -10263,7 +10263,7 @@ function addMastermindOverlays(cardContainer, mastermind, isPopup = true) {
   if (darkPortalMastermind) {
     const darkPortalOverlay = document.createElement("div");
     darkPortalOverlay.className = "dark-portal-overlay";
-    darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+    darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
     cardContainer.appendChild(darkPortalOverlay);
   }
 

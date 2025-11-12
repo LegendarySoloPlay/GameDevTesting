@@ -1,5 +1,5 @@
 // Card Abilities for Dark City
-//11.11.2025 15.35
+//12.11.2025 15.15
 
 async function angelDivingCatch(card) {
   return new Promise((resolve) => {
@@ -2573,6 +2573,7 @@ function ironfistAncientLegacy() {
 }
 
 async function versatile(amount, cardImage) {
+  playSFX("versatile");
   return new Promise((resolve) => {
     if (trueVersatility) {
       onscreenConsole.log(
@@ -3139,7 +3140,7 @@ function bladeStalkThePrey() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
 
@@ -3302,7 +3303,7 @@ function bladeStalkThePrey() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
       }
@@ -3560,6 +3561,7 @@ function playOrTeleport(card) {
     }
 
     confirmBtn.onclick = () => {
+      playSFX("teleport");
       onscreenConsole.log(
         `<span class="console-highlights">${card.name}</span> has teleported and will be drawn as an extra card next turn.`,
       );
@@ -3929,7 +3931,7 @@ async function nightcrawlerAlongForTheRide() {
     confirmButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-
+      playSFX("teleport");
       if (selectedCards.length > 0) {
         selectedCards.forEach((card) => {
           // Find by ID in the original playerHand array
@@ -5375,23 +5377,21 @@ function forgeOverdrive() {
 
 async function forgeBFG() {
   let mastermind = getSelectedMastermind();
+  const finalBlowNow = isFinalBlowRequired(mastermind); // Use proper Final Blow detection
 
-  if (mastermind.tactics.length === 0) {
-    const defeatedMasterminds = victoryPile.filter(
-      (card) => card.type === "Mastermind",
+  if (mastermind.tactics.length === 0 && !finalBlowNow) {
+    // Mastermind is truly defeated (no tactics and no Final Blow needed)
+    onscreenConsole.log(
+      `<span class="console-highlights">${mastermind.name}</span> has been defeated! Finish your turn to win.`,
     );
-
-    if (finalBlowEnabled === true && defeatedMasterminds.length < 5) {
-      onscreenConsole.log(`Defeating the Mastermind!`);
-    } else {
-      onscreenConsole.log(
-        `<span class="console-highlights">${mastermind.name}</span> has been defeated! Finish your turn to win.`,
-      );
-      return;
-    }
+    return;
   }
 
-  confirmInstantMastermindAttack();
+  // If we get here, either:
+  // 1. There are tactics remaining, OR
+  // 2. It's Final Blow time (no tactics but Final Blow is required)
+  onscreenConsole.log(`Defeating the Mastermind!`);
+  await confirmInstantMastermindAttack();
   updateGameBoard();
 }
 
@@ -16391,71 +16391,75 @@ async function professorXMindControlGainVillain(villainCard) {
 async function confirmInstantMastermindAttack() {
   playSFX("attack");
   try {
-    const defeatedMasterminds = victoryPile.filter(
-      (card) => card.type === "Mastermind",
-    );
-    let mastermind = getSelectedMastermind();
+    const mastermind = getSelectedMastermind();
+    const finalBlowNow = isFinalBlowRequired(mastermind); // Check for Final Blow
     healingPossible = false;
-    let mastermindAttack = recalculateMastermindAttack(mastermind);
 
     // Handle doom delay logic
     if (doomDelayEndGameFinalBlow) {
       delayEndGame = mastermindDefeatTurn === turnCount;
     }
 
-    // Handle bystanders and recruit points
+    // Create a copy of the mastermind data for operations
+    const mastermindCopy = createMastermindCopy(mastermind);
+
+    // Collect all possible operations (bystanders, XCutioner heroes, etc.)
+    const operations = await collectMastermindRescueOperations(mastermindCopy);
+
+    // Execute operations in player-chosen order if needed
+    if (operations.length > 1) {
+      await executeOperationsInPlayerOrder(operations, mastermindCopy);
+    } else if (operations.length === 1) {
+      await operations[0].execute();
+    }
+
+    // Handle extra bystanders from other effects
     if (rescueExtraBystanders > 0) {
       for (let i = 0; i < rescueExtraBystanders; i++) {
         await rescueBystander();
       }
     }
 
+    // Apply defeat bonuses
     defeatBonuses();
-
-    if (mastermind.XCutionerHeroes && mastermind.XCutionerHeroes.length > 0) {
-      for (const hero of mastermind.XCutionerHeroes) {
-        playerDiscardPile.push(hero);
-        onscreenConsole.log(
-          `You have rescued <span class="console-highlights">${hero.name}</span>. They have been added to your Discard pile.`,
-        );
-      }
-
-      mastermind.XCutionerHeroes = [];
-    }
-
-    // Handle mastermind defeat
-    for (const bystander of mastermind.bystanders) {
-      victoryPile.push(bystander);
-      bystanderBonuses();
-      await rescueBystanderAbility(bystander); // Now works properly
-    }
-    mastermind.bystanders = [];
-
     updateMastermindOverlay();
     updateGameBoard();
 
     onscreenConsole.log(
-      `You attacked <span class="console-highlights">${mastermind.name}</span>. Revealing tactic now!`,
+      `You attacked <span class="console-highlights">${mastermind.name}</span> with an instant defeat!`,
     );
 
-    // Check win condition
-    if (mastermind.tactics.length === 0) {
-      if (finalBlowEnabled) {
-        const finalBlowCard = {
-          name: "Final Blow",
-          type: "Mastermind",
-          victoryPoints: mastermind.victoryPoints,
-          image: mastermind.image,
-        };
-        victoryPile.push(finalBlowCard);
-        updateGameBoard();
-      }
+    // Handle Final Blow logic
+    if (finalBlowNow) {
+      finalBlowDelivered = true;
+      
+      const finalBlowCard = {
+        name: "Final Blow",
+        type: "Mastermind",
+        victoryPoints: mastermind.victoryPoints,
+        image: mastermind.image,
+      };
+      victoryPile.push(finalBlowCard);
+      updateGameBoard();
+
+      onscreenConsole.log(
+        `You delivered the Final Blow to <span class="console-highlights">${mastermind.name}</span>!`,
+      );
+      checkWinCondition();
+    } else if (mastermind.tactics.length === 0) {
+      // Regular defeat without Final Blow
       checkWinCondition();
     } else {
+      // Reveal next tactic
       revealMastermindTactic(mastermind);
     }
+
+    // Clear the mastermind data after operations are complete
+    mastermind.bystanders = [];
+    mastermind.XCutionerHeroes = [];
+
   } catch (error) {
-    console.error("Mastermind attack error:", error);
-    throw error; // Re-throw to be caught by the caller
+    console.error("Instant Mastermind attack error:", error);
+    throw error;
   }
 }

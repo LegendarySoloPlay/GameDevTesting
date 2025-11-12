@@ -1,5 +1,5 @@
 /* Styles */
-/* //11.11.2025 15.35 */
+/* //12.11.2025 15.15 */
 
 body {
   font-family: Arial, sans-serif;
@@ -1675,6 +1675,7 @@ h2 {
     box-shadow: 0 0 2vh black;
     z-index: 999;
     display: none;
+    transition: opacity 1s ease;
 }
 
 #healing-message {
@@ -3689,7 +3690,7 @@ button:disabled:hover {
 
 #healing-popup-card {
   opacity: 0;
-  transition: opacity 3s ease;
+  transition: opacity 1s ease;
 }
 
 .discard-buttons button {
@@ -7975,4 +7976,33 @@ hr {
 .deck-windows-close-button:hover {
   background-color: var(--hoverAccent);
   color: var(--contrastText);
+}
+
+.scheme-dropdown-check-list {
+    width: calc(12vh + 12vw);
+    margin-left: 10%;
+    position: relative;
+    margin-bottom: 1vh;
+    color: black;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#xCutioner-scheme-dropdown-anchor, #invadeTheDailyBugle-scheme-dropdown-anchor {
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+    padding: 5px 50px 5px 10px;
+    border: 1px solid #ccc;
+    background-color: white;
+    z-index: 1;
+    width: 13vw;
+    text-align: left;
+    color: black;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }

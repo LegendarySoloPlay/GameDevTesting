@@ -1,5 +1,5 @@
 // Paint the Town Red Expansion
-//11.11.2025 15.35
+//12.11.2025 15.15
 
 //Schemes
 
@@ -18,10 +18,15 @@ async function invadeTheDailyBugleNewsHQTwist() {
       ".card-choice-city-hq-popup-instructions",
     );
 
-    // Set popup content
-    titleElement.textContent = "SCHEME TWIST";
-    instructionsElement.innerHTML =
-      'SELECT A HERO IN THE HQ TO KO. THEY WILL BE REPLACED BY THE HIGHEST-<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> VILLAIN IN THE CITY.';
+const villainsInCity = city.filter((card) => card && card.type === "Villain");
+
+// Set popup content
+titleElement.textContent = "SCHEME TWIST";
+instructionsElement.innerHTML =
+  'SELECT A HERO IN THE HQ TO KO.' + 
+  (villainsInCity.length === 0 
+    ? ` THANKFULLY, THERE ARE NO VILLAINS IN THE CITY TO INVADE AT THIS TIME.`
+    : ` THEY WILL BE REPLACED BY THE HIGHEST-<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> VILLAIN IN THE CITY.`);
 
     // Clear preview
     previewElement.innerHTML = "";
@@ -532,7 +537,7 @@ async function dailyBugleSelectHighAttackVillain(
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
       }
@@ -1348,6 +1353,7 @@ async function theCloneSagaDiscard() {
 //Keywords
 
 async function wallCrawlRecruit(card) {
+  playSFX("wall-crawl");
   return new Promise(async (resolve) => {
     const drawChoicePopup = document.querySelector(".draw-choice-popup");
     const modalOverlay = document.getElementById("modal-overlay");
@@ -1435,6 +1441,7 @@ async function carrionFeast() {
 
   playerDeck.pop();
   koPile.push(topCard);
+  playSFX("feast");
   onscreenConsole.log(
     `<span class="console-highlights">Carrion</span> feasted upon <span class="console-highlights">${topCard.name}</span>, KOing them.`,
   );
@@ -1479,6 +1486,7 @@ async function demogoblinFeast() {
 
   playerDeck.pop();
   koPile.push(topCard);
+  playSFX("feast");
   onscreenConsole.log(
     `<span class="console-highlights">Demogoblin</span> feasted upon <span class="console-highlights">${topCard.name}</span>, KOing them.`,
   );
@@ -1502,6 +1510,7 @@ async function doppelgangerFeast() {
 
   playerDeck.pop();
   koPile.push(topCard);
+  playSFX("feast");
   onscreenConsole.log(
     `<span class="console-highlights">Doppelganger</span> feasted upon <span class="console-highlights">${topCard.name}</span>, KOing them.`,
   );
@@ -1525,6 +1534,7 @@ async function shriekFeast() {
 
   playerDeck.pop();
   koPile.push(topCard);
+  playSFX("feast");
   onscreenConsole.log(
     `<span class="console-highlights">Shriek</span> feasted upon <span class="console-highlights">${topCard.name}</span>, KOing them.`,
   );
@@ -2493,7 +2503,7 @@ async function vultureAmbush() {
           if (darkPortalSpaces[i]) {
             const darkPortalOverlay = document.createElement("div");
             darkPortalOverlay.className = "dark-portal-overlay";
-            darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+            darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
             cardContainer.appendChild(darkPortalOverlay);
           }
 
@@ -2545,7 +2555,7 @@ async function vultureAmbush() {
           if (darkPortalSpaces[i]) {
             const darkPortalOverlay = document.createElement("div");
             darkPortalOverlay.className = "dark-portal-overlay";
-            darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+            darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
             cardContainer.appendChild(darkPortalOverlay);
           }
         }
@@ -3396,7 +3406,7 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
 
@@ -3559,7 +3569,7 @@ function moonKnightGoldenAnkhOfKhonshuTech() {
         if (darkPortalSpaces[i]) {
           const darkPortalOverlay = document.createElement("div");
           darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Other/DarkPortal.webp" alt="Dark Portal" class="dark-portal-image">`;
+          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
           cardContainer.appendChild(darkPortalOverlay);
         }
       }
@@ -5048,6 +5058,7 @@ async function carnageMasterStrike() {
 
   playerDeck.pop();
   koPile.push(topCardPlayerDeck);
+  playSFX("feast");
   onscreenConsole.log(
     `<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`,
   );
@@ -5079,6 +5090,7 @@ async function carnageDroolingJaws() {
 
   playerDeck.pop();
   koPile.push(topCardPlayerDeck);
+  playSFX("feast");
   onscreenConsole.log(
     `You are the only player to choose. <span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`,
   );
@@ -5102,6 +5114,7 @@ async function carnageEndlessHunger(isRecursiveCall = false) {
   const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
   playerDeck.pop();
   koPile.push(topCardPlayerDeck);
+  playSFX("feast");
 
   // Single consolidated log message
   if (isRecursiveCall) {
@@ -5141,6 +5154,7 @@ async function carnageFeedMe() {
 
   playerDeck.pop();
   koPile.push(topCardPlayerDeck);
+  playSFX("feast");
   onscreenConsole.log(
     `<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`,
   );
@@ -5171,6 +5185,7 @@ async function carnageOmNomNom() {
 
   playerDeck.pop();
   koPile.push(topCardPlayerDeck);
+  playSFX("feast");
   onscreenConsole.log(
     `<span class="console-highlights">Carnage</span> feasts on the top card of your deck. <span class="console-highlights">${topCardPlayerDeck.name}</span> has been KO'd.`,
   );
