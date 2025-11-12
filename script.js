@@ -5768,12 +5768,14 @@ function showPopup(type, drawnCard, confirmCallback) {
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Bystander to Mastermind") {
+    playSFX("capture");
     popupTitle.innerText = `Bystander`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `No Villains in the city. <span class="console-highlights">${drawnCard.name}</span> will be captured by <span class="console-highlights">${mastermind.name}</span>.`;
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Bystander to Villain") {
+    playSFX("capture");
     popupTitle.innerText = `Bystander`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> will be captured by the Villain closest to the Villain deck.`;
@@ -5787,7 +5789,7 @@ function showPopup(type, drawnCard, confirmCallback) {
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "Villain Ambush") {
-    playSFX("villain-entry");
+    playSFX("ambush");
     popupTitle.innerText = `Ambush`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> enters the city with an ambush!`;
@@ -5801,12 +5803,14 @@ function showPopup(type, drawnCard, confirmCallback) {
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "X-Cutioner Hero to Villain") {
+    playSFX("capture");
     popupTitle.innerText = `Hero`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `<span class="console-highlights">${drawnCard.name}</span> will be captured by the Villain closest to the Villain deck.`;
     popupImage.style.backgroundImage = `url("${drawnCard.image}")`;
     confirmBtn.innerText = getRandomConfirmText();
   } else if (type === "X-Cutioner Hero to Mastermind") {
+    playSFX("capture");
     popupTitle.innerText = `Hero`;
     popupImage.style.display = "block";
     popupContext.innerHTML = `No Villains in the city. <span class="console-highlights">${drawnCard.name}</span> will be captured by <span class="console-highlights">${mastermind.name}</span>.`;
@@ -11562,30 +11566,6 @@ async function confirmHQAttack(index) {
 async function instantDefeatAttack(cityIndex) {
   await defeatVillain(cityIndex, true);
 }
-
-function cosmicThreat(card, index, attackReduction, className) {
-  // temp buff
-  if (index === 0) city1TempBuff -= attackReduction;
-  else if (index === 1) city2TempBuff -= attackReduction;
-  else if (index === 2) city3TempBuff -= attackReduction;
-  else if (index === 3) city4TempBuff -= attackReduction;
-  else if (index === 4) city5TempBuff -= attackReduction;
-
-  // cosmic threat record
-  if (index === 0) city1CosmicThreat = attackReduction;
-  else if (index === 1) city2CosmicThreat = attackReduction;
-  else if (index === 2) city3CosmicThreat = attackReduction;
-  else if (index === 3) city4CosmicThreat = attackReduction;
-  else if (index === 4) city5CosmicThreat = attackReduction;
-
-  const cardCount = attackReduction / 3;
-  const cardText = cardCount === 1 ? "card" : "cards";
-  onscreenConsole.log(
-    `Cosmic Threat! You have revealed ${cardCount} <img src="Visual Assets/Icons/${className}.svg" alt="${className} Icon" class="console-card-icons"> ${cardText}. <span class="console-highlights">${card.name}</span> gets -${attackReduction} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
-  );
-  updateGameBoard();
-}
-
 // Call whenever an attack is completed
 function removeCosmicThreatBuff(cityIndex) {
   if (cityIndex === 0 && city1CosmicThreat > 0) {
@@ -15750,9 +15730,11 @@ function openSettings() {
   const AUDIO_BASE_PATH = "./Audio Assets";
 
   const SOUND_KEYS = [
+    "ambush",
     "attack",
     "bribe",
     "burrow",
+    "capture",
     "card-draw",
     "cosmic-threat",
     "escape",

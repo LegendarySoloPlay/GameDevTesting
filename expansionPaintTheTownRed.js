@@ -1353,7 +1353,6 @@ async function theCloneSagaDiscard() {
 //Keywords
 
 async function wallCrawlRecruit(card) {
-  playSFX("wall-crawl");
   return new Promise(async (resolve) => {
     const drawChoicePopup = document.querySelector(".draw-choice-popup");
     const modalOverlay = document.getElementById("modal-overlay");
@@ -1393,6 +1392,7 @@ async function wallCrawlRecruit(card) {
 
     // Set up button handlers - now they resolve with the destinationId
     confirmButton.onclick = async () => {
+      playSFX("wall-crawl");
       playerDeck.push(card);
       card.revealed = true;
       onscreenConsole.log(

@@ -548,6 +548,9 @@ async function handleCosmicThreatChoice(card, index) {
 
 function cosmicThreat(card, index, attackReduction, className) {
   playSFX("cosmic-threat");
+  // Capitalize the first character of className
+  const capitalizedClassName = className.charAt(0).toUpperCase() + className.slice(1);
+  
   // temp buff
   if (index === 0) city1TempBuff -= attackReduction;
   else if (index === 1) city2TempBuff -= attackReduction;
@@ -565,7 +568,7 @@ function cosmicThreat(card, index, attackReduction, className) {
   const cardCount = attackReduction / 3;
   const cardText = cardCount === 1 ? "card" : "cards";
   onscreenConsole.log(
-    `Cosmic Threat! You have revealed ${cardCount} <img src="Visual Assets/Icons/${className}.svg" alt="${className} Icon" class="console-card-icons"> ${cardText}. <span class="console-highlights">${card.name}</span> gets -${attackReduction} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+    `Cosmic Threat! You have revealed ${cardCount} <img src="Visual Assets/Icons/${className}.svg" alt="${capitalizedClassName} Icon" class="console-card-icons"> ${cardText}. <span class="console-highlights">${card.name}</span> gets -${attackReduction} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
   updateGameBoard();
 }
