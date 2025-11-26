@@ -1,6 +1,12 @@
 // Expansion - Guardians of the Galaxy
 // 25.11.25 20.20
 
+// Global Variables
+let shardsGainedThisTurn = 0;
+
+//Add to end turn:
+shardsGainedThisTurn = 0;
+
 // Heroes
 
 function draxTheDestroyerKnivesOfTheHunter() {
@@ -30,7 +36,28 @@ function gamoraBountyHunter() {
 }
 
 function gamoraDeadliestWomanInTheUniverse() {
+    const previousCards = cardsPlayedThisTurn.slice(0, -1);
 
+  const covertPlayed = previousCards.filter(
+    (item) => item.classes && item.classes.includes("Covert"),
+  ).length;
+  
+  if (covertPlayed > 0) {
+    onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+onscreenConsole.log(
+    `You gain 3 Shards.`,
+  );
+totalPlayerShards += 3;
+shardsGainedThisTurn += 3;
+  } else {
+    onscreenConsole.log(
+    `You gain 2 Shards.`,
+  );
+totalPlayerShards += 2;
+shardsGainedThisTurn += 2;
+    }
 }
 
 function gamoraGalacticAssassin() {
