@@ -6,11 +6,12 @@
 let shardSupply = 500;
 let totalPlayerShards = 0;
 let shardsGainedThisTurn = 0;
+let playerArtifacts = [];
 
 // Heroes
 
 function draxTheDestroyerKnivesOfTheHunter() {
-onscreenConsole.log(`You get +1 ATTACK.`);
+onscreenConsole.log(`You get +1 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 totalAttackPoints += 1;
 cumulativeAttackPoints += 1;
 }
@@ -25,7 +26,7 @@ function draxTheDestroyerTheDestroyer() {
 
 function draxTheDestroyerAvatarOfDestruction() {
 const currentAttackPoints = totalAttackPoints;
-onscreenConsole.log(`You had ${currentAttackPoints} ATTACK. It has doubled to ${totalAttackPoints + currentAttackPoints} ATTACK.`);
+onscreenConsole.log(`You had ${currentAttackPoints} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. It has doubled to ${totalAttackPoints + currentAttackPoints} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 
 totalAttackPoints += currentAttackPoints;
 cumulativeAttackPoints += currentAttackPoints;
@@ -88,7 +89,7 @@ totalAttackPoints += 10;
 cumulstiveAttackPoints += 10;
 
 onscreenConsole.log(
-    `You spent 5 Shards and gained +10 ATTACK.`,
+    `You spent 5 Shards and gained +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
   
 }
@@ -110,7 +111,7 @@ onscreenConsole.log(
   );
   
   onscreenConsole.log(
-    `You may spend Shards to get RECRUIT this turn.`,
+    `You may spend Shards to get <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn.`,
   );
   
 totalPlayerShards += 2;
@@ -136,7 +137,7 @@ onscreenConsole.log(
 
 function grootRecruitShards(hero) {
   onscreenConsole.log(
-    `<span class="console-highlights">${hero.name}</span> has a cost of ${hero.cost} COST. <span class="console-highlights">Groot - I Am Groot</span> gives you ${hero.cost} Shards.`,
+    `<span class="console-highlights">${hero.name}</span> has a cost of ${hero.cost} <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons">. <span class="console-highlights">Groot - I Am Groot</span> gives you ${hero.cost} Shards.`,
   );
   totalPlayerShards += hero.cost;
   shardsGainedThisTurn += hero.cost;
@@ -178,11 +179,38 @@ function rocketRaccoonIncomingDetector() {
 }
 
 function rocketRaccoonVengeanceIsRocket() {
+const previousCards = cardsPlayedThisTurn.slice(0, -1);
 
+  const techPlayed = previousCards.filter(
+    (item) => item.classes && item.classes.includes("Tech"),
+  ).length;
+  
+  const masterStrikeCount = koPile.filter((item) => item.name === "Master Strike").length;
+  
+  if (techPlayed > 0) {
+    onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+onscreenConsole.log(
+    `There are ${masterStrikeCount} Master Strike${masterStrikeCount === 1 ? '' : 's'} in the KO pile and/or stacked next to the Mastermind. You get +${masterStrikeCount} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+  );
+totalPlayerAttack += masterStrikeCount;
+cumulativePlayerAttack += masterStrikeCount;
+  } else {
+        onscreenConsole.log(
+    `No <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Heroes played. No effect.`,
+  );
+  return();
+    }
 }
 
 function starLordElementGuns() {
-
+onscreenConsole.log(
+    `You gain 1 Shard.`,
+  );
+totalPlayerShards += 1;
+shardsGainedThisTurn += 1;
+shardSupply -= 1;
 }
 
 function starLordLegendaryOutlaw() {
@@ -194,5 +222,10 @@ extraDraw();
 }
 
 function starLordSentientStarship() {
-
+onscreenConsole.log(
+    `You currently control ${playerArtifacts.length} Artifact${playerArtifacts.length === 1 ? '' : 's'} and gain ${playerArtifacts.length} Shard${playerArtifacts.length === 1 ? '' : 's'}.`,
+  );
+totalPlayerShards += playerArtifacts.length;
+shardsGainedThisTurn += playerArtifacts.length;
+shardSupply -= playerArtifacts.length;
 }
