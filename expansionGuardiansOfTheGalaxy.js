@@ -2,10 +2,10 @@
 // 25.11.25 20.20
 
 // Global Variables
-let shardsGainedThisTurn = 0;
 
-//Add to end turn:
-shardsGainedThisTurn = 0;
+let shardSupply = 500;
+let totalPlayerShards = 0;
+let shardsGainedThisTurn = 0;
 
 // Heroes
 
@@ -36,7 +36,7 @@ function gamoraBountyHunter() {
 }
 
 function gamoraDeadliestWomanInTheUniverse() {
-    const previousCards = cardsPlayedThisTurn.slice(0, -1);
+const previousCards = cardsPlayedThisTurn.slice(0, -1);
 
   const covertPlayed = previousCards.filter(
     (item) => item.classes && item.classes.includes("Covert"),
