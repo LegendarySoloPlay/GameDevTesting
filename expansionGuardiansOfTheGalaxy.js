@@ -17,7 +17,130 @@ cumulativeAttackPoints += 1;
 }
 
 function draxTheDestroyerInterstellarTracker() {
+return new Promise((resolve) => {
+  const previousCards = cardsPlayedThisTurn.slice(0, -1);
 
+  const instinctPlayed = previousCards.filter(
+    (item) => item.classes && item.classes.includes("Instinct"),
+  ).length;
+  
+  if (instinctPlayed > 0) {
+    onscreenConsole.log(
+    `<img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+  );
+  }
+    // Check if the player deck is empty and needs reshuffling
+    if (playerDeck.length === 0) {
+      if (playerDiscardPile.length > 0) {
+        playerDeck = shuffle(playerDiscardPile);
+        playerDiscardPile = [];
+      } else {
+        console.log("No cards available to be drawn.");
+        onscreenConsole.log("No cards available to be drawn.");
+        resolve();
+        return;
+      }
+    }
+
+    const topCardPlayerDeck = playerDeck[playerDeck.length - 1];
+
+    topCardPlayerDeck.revealed = true;
+
+    if (instinctPlayed === 0) {
+    
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `You revealed the top card of your deck: <span class="bold-spans">${topCardPlayerDeck.name}</span>. Do you wish to discard or return to deck?`,
+      "Discard",
+      "Return to Deck",
+    );
+
+    const previewArea = document.querySelector(".info-or-choice-popup-preview");
+    if (previewArea) {
+      previewArea.style.backgroundImage = `url('${topCardPlayerDeck.image}')`;
+      previewArea.style.backgroundSize = "contain";
+      previewArea.style.backgroundRepeat = "no-repeat";
+      previewArea.style.backgroundPosition = "center";
+      previewArea.style.display = "block";
+    }
+
+    confirmButton.onclick = async function () {
+      playerDeck.pop();
+      hideHeroAbilityMayPopup();
+      const { returned } =
+        await checkDiscardForInvulnerability(topCardPlayerDeck);
+      if (returned.length) {
+        playerHand.push(...returned);
+      }
+
+      console.log(`You discarded ${topCardPlayerDeck.name}.`);
+      onscreenConsole.log(
+        `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been discarded.`,
+      );
+      updateGameBoard();
+      resolve();
+    };
+
+    denyButton.onclick = function () {
+      console.log(
+        `You put ${topCardPlayerDeck.name} back on top of your deck.`,
+      );
+      onscreenConsole.log(
+        `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`,
+      );
+      updateGameBoard();
+      hideHeroAbilityMayPopup();
+      resolve();
+    };
+    
+  } else {
+    
+    const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+      `You revealed the top card of your deck: <span class="bold-spans">${topCardPlayerDeck.name}</span>. Do you wish to discard or return to deck?`,
+      "Discard",
+      "Return to Deck",
+    );
+
+    const previewArea = document.querySelector(".info-or-choice-popup-preview");
+    if (previewArea) {
+      previewArea.style.backgroundImage = `url('${topCardPlayerDeck.image}')`;
+      previewArea.style.backgroundSize = "contain";
+      previewArea.style.backgroundRepeat = "no-repeat";
+      previewArea.style.backgroundPosition = "center";
+      previewArea.style.display = "block";
+    }
+
+    confirmButton.onclick = async function () {
+      playerDeck.pop();
+      hideHeroAbilityMayPopup();
+      const { returned } =
+        await checkDiscardForInvulnerability(topCardPlayerDeck);
+      if (returned.length) {
+        playerHand.push(...returned);
+      }
+
+      console.log(`You discarded ${topCardPlayerDeck.name}.`);
+      onscreenConsole.log(
+        `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been discarded.`,
+      );
+      updateGameBoard();
+      resolve();
+    };
+
+    denyButton.onclick = function () {
+      console.log(
+        `You put ${topCardPlayerDeck.name} back on top of your deck.`,
+      );
+      onscreenConsole.log(
+        `<span class="console-highlights">${topCardPlayerDeck.name}</span> has been returned to the top of your deck.`,
+      );
+      updateGameBoard();
+      hideHeroAbilityMayPopup();
+      resolve();
+    };
+    
+    }
+  
+  });
 }
 
 function draxTheDestroyerTheDestroyer() {
