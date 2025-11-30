@@ -1375,7 +1375,313 @@ onscreenConsole.log(`You will draw an extra card at the end of this turn.`);
 }
 
 function grootPruneTheGrowths() {
+return new Promise((resolve) => {
+    onscreenConsole.log(
+      `<img src="Visual Assets/Icons/Covert.svg" alt="Covert Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+    );
 
+    // Check if there are any bystanders available
+    const hasBystanders = bystanderDeck.length > 0;
+
+    if (!hasBystanders) {
+      console.log("There are no Bystanders available to be rescued.");
+      onscreenConsole.log("There are no Bystanders available to be rescued.");
+    }
+
+    if (playerHand.length === 0 && playerDiscardPile.length === 0) {
+      console.log("No cards in hand to discard.");
+      onscreenConsole.log(`No cards available to be KO'd.`);
+      updateGameBoard();
+      resolve(false);
+      return;
+    }
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(
+      ".card-choice-popup-selectionrow1",
+    );
+    const selectionRow2 = document.querySelector(
+      ".card-choice-popup-selectionrow2",
+    );
+    const selectionRow1Label = document.querySelector(
+      ".card-choice-popup-selectionrow1label",
+    );
+    const selectionRow2Label = document.querySelector(
+      ".card-choice-popup-selectionrow2label",
+    );
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(
+      ".card-choice-popup-instructions",
+    );
+
+    // Set popup content based on bystander availability
+    titleElement.textContent = "Black Widow - Dangerous Rescue";
+    if (hasBystanders) {
+      instructionsElement.innerHTML = `Select a card to KO and rescue a <span class="bold-spans">Bystander</span>`;
+    } else {
+      instructionsElement.innerHTML = `There are no Bystanders available, but would you like to KO a card?`;
+    }
+
+    // Show both rows and labels
+    selectionRow1Label.style.display = "block";
+    selectionRow2Label.style.display = "block";
+    selectionRow2.style.display = "flex";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2-container",
+    ).style.display = "block";
+    selectionRow1Label.textContent = "Hand";
+    selectionRow2Label.textContent = "Discard Pile";
+    document.querySelector(".card-choice-popup-closebutton").style.display =
+      "none";
+
+    // Reset row heights to default
+    selectionRow1.style.height = "";
+    selectionRow2.style.height = "";
+
+    // Clear existing content
+    selectionRow1.innerHTML = "";
+    selectionRow2.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    let selectedCardImage = null;
+    let selectedLocation = null;
+    let isDragging = false;
+
+    // Create sorted copies for display only
+    const sortedDiscardPile = [...playerDiscardPile];
+    const sortedHand = [...playerHand];
+    genericCardSort(sortedDiscardPile);
+    genericCardSort(sortedHand);
+
+    // Update the confirm button state and instructions
+    function updateUI() {
+      const confirmButton = document.getElementById(
+        "card-choice-popup-confirm",
+      );
+      confirmButton.disabled = selectedCard === null;
+
+      if (selectedCard === null) {
+        if (hasBystanders) {
+          instructionsElement.innerHTML = `Select a card to KO and rescue a <span class="bold-spans">Bystander</span>`;
+        } else {
+          instructionsElement.innerHTML = `There are no Bystanders available, but would you like to KO a card?`;
+        }
+      } else {
+        if (hasBystanders) {
+          instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd to rescue a Bystander.`;
+        } else {
+          instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be KO'd.`;
+        }
+      }
+    }
+
+    const row1 = selectionRow1;
+    const row2Visible = true;
+
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.height = "40%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.top = "0";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.transform = "none";
+
+    // Initialize scroll gradient detection on the container
+    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+    // Create card element helper function
+    function createCardElement(card, location, row) {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", card.id);
+      cardElement.setAttribute("data-location", location);
+
+      // Create card image
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      // Hover effects
+      const handleHover = () => {
+        if (isDragging) return;
+
+        // Update preview
+        previewElement.innerHTML = "";
+        const previewImage = document.createElement("img");
+        previewImage.src = card.image;
+        previewImage.alt = card.name;
+        previewImage.className = "popup-card-preview-image";
+        previewElement.appendChild(previewImage);
+
+        // Only change background if no card is selected
+        if (selectedCard === null) {
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+      };
+
+      const handleHoverOut = () => {
+        if (isDragging) return;
+
+        // Only clear preview if no card is selected AND we're not hovering over another card
+        if (selectedCard === null) {
+          setTimeout(() => {
+            const isHoveringAnyCard =
+              selectionRow1.querySelector(":hover") ||
+              selectionRow2.querySelector(":hover");
+            if (!isHoveringAnyCard && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardElement.addEventListener("mouseover", handleHover);
+      cardElement.addEventListener("mouseout", handleHoverOut);
+
+      // Selection click handler
+      cardElement.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        if (selectedCard === card && selectedLocation === location) {
+          // Deselect
+          selectedCard = null;
+          selectedCardImage = null;
+          selectedLocation = null;
+          cardImage.classList.remove("selected");
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+        } else {
+          // Deselect previous
+          if (selectedCardImage) {
+            selectedCardImage.classList.remove("selected");
+          }
+
+          // Select new
+          selectedCard = card;
+          selectedCardImage = cardImage;
+          selectedLocation = location;
+          cardImage.classList.add("selected");
+
+          // Update preview
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+
+        updateUI();
+      });
+
+      cardElement.appendChild(cardImage);
+      row.appendChild(cardElement);
+    }
+
+    // Populate row1 with Hand cards (using sorted copy for display)
+    sortedHand.forEach((card) => {
+      createCardElement(card, "hand", selectionRow1);
+    });
+
+    // Populate row2 with Discard Pile cards (using sorted copy for display)
+    sortedDiscardPile.forEach((card) => {
+      createCardElement(card, "discard", selectionRow2);
+    });
+
+    // Set up drag scrolling for both rows
+    setupDragScrolling(selectionRow1);
+    setupDragScrolling(selectionRow2);
+
+    // Set up button handlers
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById(
+      "card-choice-popup-otherchoice",
+    );
+    const noThanksButton = document.getElementById(
+      "card-choice-popup-nothanks",
+    );
+
+    // Configure buttons
+    confirmButton.disabled = true;
+    confirmButton.textContent = "CONFIRM";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "block";
+    noThanksButton.textContent = "NO THANKS!";
+
+    // Confirm button handler
+    confirmButton.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedCard === null || selectedLocation === null) return;
+
+      setTimeout(async () => {
+        // Find the card in the original arrays using object reference
+        if (selectedLocation === "discard") {
+          const index = playerDiscardPile.indexOf(selectedCard);
+          if (index !== -1) playerDiscardPile.splice(index, 1);
+        } else {
+          const index = playerHand.indexOf(selectedCard);
+          if (index !== -1) playerHand.splice(index, 1);
+        }
+
+        koPile.push(selectedCard);
+
+        // Only rescue bystander if available
+        if (hasBystanders) {
+          const bystanderCard = bystanderDeck.pop();
+          victoryPile.push(bystanderCard);
+          onscreenConsole.log(
+            `<span class="console-highlights">${selectedCard.name}</span> has been KO'd. <span class="console-highlights">${bystanderCard.name}</span> rescued.`,
+          );
+          bystanderBonuses();
+          await rescueBystanderAbility(bystanderCard);
+        } else {
+          onscreenConsole.log(
+            `<span class="console-highlights">${selectedCard.name}</span> has been KO'd.`,
+          );
+        }
+
+        koBonuses();
+
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    // No Thanks button handler
+    noThanksButton.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      console.log(`No card was KO'd.`);
+      if (hasBystanders) {
+        onscreenConsole.log(
+          `You chose not to KO any cards to rescue a Bystander.`,
+        );
+      } else {
+        onscreenConsole.log(`You chose not to KO any cards.`);
+      }
+      closeCardChoicePopup();
+      resolve(false);
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
 }
 
 function grootGrootAndBranches() {
