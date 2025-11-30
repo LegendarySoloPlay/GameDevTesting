@@ -744,7 +744,7 @@ updateGameBoard();
     modalOverlay.style.display = "block";
     popup.style.display = "block";
   });
-}}
+}
 
 function gamoraDeadliestWomanInTheUniverse() {
 const previousCards = cardsPlayedThisTurn.slice(0, -1);
@@ -832,7 +832,7 @@ updateGameBoard();
 
     if (!villainsInCity && !villainsInHQ) {
       onscreenConsole.log(
-        `There are no Villains in the city or HQ to gain no <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> from Shards this turn.`,
+        `There are no Villains to gain no <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> from Shards this turn.`,
       );
       resolve(false);
       return;
@@ -967,7 +967,7 @@ updateGameBoard();
                 previewElement.style.backgroundColor = "var(--accent)";
 
                 // Update instructions and confirm button
-                instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will gain NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN.`;
+                instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will gain no <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> from Shards this turn.`;
                 document.getElementById(
                   "card-choice-city-hq-popup-confirm",
                 ).disabled = false;
@@ -1340,7 +1340,8 @@ updateGameBoard();
 onscreenConsole.log(
     `<span class="console-highlights">${mastermind.name}</span> gains no <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> from Shards this turn.`,
   );
-}}
+}});
+}
 
 function gamoraGodslayerBladeOne() {
 onscreenConsole.log(
@@ -1751,7 +1752,7 @@ shardSupply -= guardiansPlayed;
     onscreenConsole.log(
     `No <img src="Visual Assets/Icons/Guardians of the Galaxy.svg" alt="Guardians of the Galaxy Icon" class="console-card-icons"> Heroes played. No effect.`,
   );
-return();
+return;
     }
 }
 
@@ -1781,7 +1782,7 @@ cumulativePlayerAttack += masterStrikeCount;
         onscreenConsole.log(
     `No <img src="Visual Assets/Icons/Tech.svg" alt="Tech Icon" class="console-card-icons"> Heroes played. No effect.`,
   );
-  return();
+  return;
     }
 }
 
