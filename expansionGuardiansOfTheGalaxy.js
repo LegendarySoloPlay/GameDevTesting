@@ -1,6 +1,113 @@
 // Expansion - Guardians of the Galaxy
 // 25.11.25 20.20
 
+// Artifacts Popup
+
+function openArtifactsPopup() {
+  const artifactsCardsTable = document.getElementById("artifacts-cards-window-cards");
+  artifactsCardsTable.innerHTML = "";
+
+  // Close popup when clicking outside
+  const popup = document.getElementById("artifacts-cards-window");
+  
+  // Remove existing event listener to prevent duplicates
+  const clickHandler = (e) => {
+    if (e.target === popup) {
+      closeArtifactsPopup();
+    }
+  };
+  
+  // Remove previous listener if it exists, then add new one
+  popup.removeEventListener("click", clickHandler);
+  popup.addEventListener("click", clickHandler);
+
+  playerArtifacts.forEach((card) => {
+    const cardContainer = document.createElement("div");
+    cardContainer.className = "artifacts-card-container";
+
+    const imgElement = document.createElement("img");
+    imgElement.src = card.image;
+    imgElement.alt = card.name;
+    imgElement.classList.add("pile-card-image");
+
+    // Apply visual effects based on usage state
+    if (card.artifactAbilityUsed === true) {
+      imgElement.style.opacity = "0.5";
+      cardContainer.style.pointerEvents = "none"; // Note: corrected from cursorEvents
+    } else {
+      imgElement.style.opacity = "0.9";
+      
+      // Make card interactive only if not used
+      imgElement.classList.add("clickable-card", "telepathic-probe-active");
+      imgElement.style.cursor = "pointer";
+      imgElement.style.border = "3px solid rgb(198, 169, 104)"; // Fixed syntax error (semicolon to comma)
+      
+      // Create USE button (visible by default based on your requirements)
+      const useButton = document.createElement("div");
+      useButton.className = "played-cards-focus-button";
+      useButton.innerHTML = `
+        <span style="filter: drop-shadow(0vh 0vh 0.3vh black);">
+          USE
+        </span>`;
+      useButton.style.display = "block"; // Changed from "none" to show immediately
+
+      // Use button click handler
+      useButton.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        // Play sound effect
+        if (typeof playSFX === "function") {
+          playSFX("focus");
+        }
+        
+        // Check if there's a specific ability function for this card
+        // Assuming card has a property like abilityFunction or you have a mapping
+        const abilityFunction = card.unconditionalAbility;
+        
+        if (abilityFunction && typeof abilityFunction === "function") {
+          try {
+            closeArtifactsPopup();
+            // Execute the ability
+            await abilityFunction(card);
+            
+            // Mark the artifact as used for this turn
+            card.artifactAbilityUsed = true;
+            
+          } catch (error) {
+            console.error(`Error executing ability for ${card.name}:`, error);
+          }
+        } else {
+          console.error(`Ability function not found for ${card.name}`);
+          console.log('You need to define the ability function for this card.');
+        }
+      });
+
+      cardContainer.appendChild(useButton);
+    }
+
+    cardContainer.appendChild(imgElement);
+    artifactsCardsTable.appendChild(cardContainer);
+  });
+
+  // Show the popup
+  popup.style.display = "block";
+  const overlay = document.getElementById("played-cards-modal-overlay");
+  if (overlay) {
+    overlay.style.display = "block";
+  }
+}
+
+// Add necessary variables to endturn including:
+
+playerArtifacts.forEach(card => {
+    // Reset all cards except Time Gem
+    if (card.name !== "Time Gem") {
+      card.artifactAbilityUsed = false;
+    }
+  });
+  
+
 // Global Variables
 
 let shardSupply = 500;
