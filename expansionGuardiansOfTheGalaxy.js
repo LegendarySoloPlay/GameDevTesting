@@ -1,6 +1,25 @@
 // Expansion - Guardians of the Galaxy
 // 25.11.25 20.20
 
+//Theming
+
+<div id="expansion-popup-container">
+    <div id="skip-button">SKIP</div>
+    <div class="splash-container">
+      <div class="splash-content circular" id="splashContent">
+        <div class="splash-text" id="splashText">
+          <h2 class="splash-title-legendary">LEGENDARY</h2>
+          <h2 class="splash-title-expansion">GUARDIANS OF THE GALAXY</h2>
+          <p class="splash-description">The cosmos are in chaos. Intergalactic war looms and ancient powers rise.</p>
+            <p class="splash-description">Thanos threatens annhilation while the Supreme Intelligence of the Kree plots with cold logic.</p>
+          <p class="splash-description">Assemble your team, acquire Shards and harness the power of the Infinity Gems in order to survive.</p>
+          <p class="splash-description">The galaxy's fate isn't written in the stars; it's forged by your crew.</p>
+          <button id="start-expansion">I AM GROOT!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 // Artifacts Popup
 
 function openArtifactsPopup() {
