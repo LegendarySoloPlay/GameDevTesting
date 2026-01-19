@@ -1,5 +1,5 @@
 // cardAbilities.js
-//24.11.2025 17.35
+//19.01.26 20:00
 
 function koBonuses() {
   playSFX("ko");
@@ -104,8 +104,9 @@ function EmmaFrostExtraDraw() {
     const previousCards = cardsPlayedThisTurn.slice(0, -1);
     const cardsYouHave = [
       ...playerHand,
+      ...playerArtifacts,
       ...previousCards.filter(
-        (card) => !card.isCopied && !card.sidekickToDestroy,
+        (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
       ),
     ];
 
@@ -1407,8 +1408,9 @@ function DeadpoolApplyOddCostBonus() {
 function CaptainAmericaCountUniqueColorsAndAddAttack() {
   const allCards = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     ),
   ];
 
@@ -1437,8 +1439,9 @@ function CaptainAmericaCountUniqueColorsAndAddAttack() {
 function CaptainAmericaCountUniqueColorsAndAddRecruit() {
   const allCards = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     ),
   ];
 
@@ -7642,27 +7645,57 @@ function RogueCopyPowers() {
           conditionType: rogueCard.conditionType,
           condition: rogueCard.condition,
           invulnerability: rogueCard.invulnerability,
-          keywords: rogueCard.kewyords,
+          keywords: rogueCard.keywords, // Fixed typo: was "kewyords"
           image: rogueCard.image,
         };
 
-        // Copy selected hero's attributes (keeping Covert)
+        // Prepare keywords for copying - remove "Artifact" if present
+        let copiedKeywords = [];
+        if (selectedHero.keywords && Array.isArray(selectedHero.keywords)) {
+          // Filter out "Artifact" keyword
+          copiedKeywords = selectedHero.keywords.filter(keyword => 
+            keyword !== "Artifact" && keyword !== "artifact"
+          );
+        } else if (selectedHero.keywords && selectedHero.keywords !== "None") {
+          // Handle case where keywords might be a string
+          const keywordsStr = String(selectedHero.keywords);
+          if (!keywordsStr.includes("Artifact") && !keywordsStr.includes("artifact")) {
+            copiedKeywords = [keywordsStr];
+          }
+        }
+
+        // Prepare classes for copying - ensure Covert is included
+        let copiedClasses = [];
+        if (selectedHero.classes && Array.isArray(selectedHero.classes)) {
+          // Start with Covert, then add other classes (excluding Covert if already present)
+          copiedClasses = ["Covert", ...selectedHero.classes.filter(cls => 
+            cls !== "Covert" && cls !== "covert"
+          )];
+        } else if (selectedHero.classes) {
+          // Handle case where classes might be a string
+          const classesStr = String(selectedHero.classes);
+          if (classesStr.includes("Covert") || classesStr.includes("covert")) {
+            copiedClasses = ["Covert"];
+          } else {
+            copiedClasses = ["Covert", classesStr];
+          }
+        } else {
+          copiedClasses = ["Covert"];
+        }
+
+        // Copy selected hero's attributes with artifact keyword removed
         Object.assign(rogueCard, {
           name: selectedHero.name || "None",
           type: selectedHero.type || "None",
           rarity: selectedHero.rarity || "None",
           team: selectedHero.team || "None",
-          classes: selectedHero.classes
-            ? selectedHero.classes.includes("Covert")
-              ? [...selectedHero.classes]
-              : ["Covert", ...selectedHero.classes]
-            : ["Covert"],
+          classes: copiedClasses,
           color: selectedHero.color || "None",
           cost: selectedHero.cost || 0,
           attack: selectedHero.attack || 0,
           recruit: selectedHero.recruit || 0,
-          attackIcon: selectedHero.attackIcon || "None",
-          recruitIcon: selectedHero.recruitIcon || "None",
+          attackIcon: selectedHero.attackIcon || false,
+          recruitIcon: selectedHero.recruitIcon || false,
           bonusAttack: selectedHero.bonusAttack || 0,
           bonusRecruit: selectedHero.bonusRecruit || 0,
           multiplier: selectedHero.multiplier || "None",
@@ -7673,7 +7706,7 @@ function RogueCopyPowers() {
           conditionType: selectedHero.conditionType || "None",
           condition: selectedHero.condition || "None",
           invulnerability: selectedHero.invulnerability || "None",
-          keywords: selectedHero.keywords || [],
+          keywords: copiedKeywords, // Use filtered keywords (without Artifact)
           image: selectedHero.image || "None",
         });
 
@@ -7685,26 +7718,26 @@ function RogueCopyPowers() {
         );
 
         // Handle unconditional ability if it exists
-if (
-  selectedHero.unconditionalAbility &&  // Use the ORIGINAL hero's ability
-  selectedHero.unconditionalAbility !== "None"
-) {
-  const abilityFn = window[selectedHero.unconditionalAbility];
-  if (typeof abilityFn === "function") {
-    // Temporarily swap the last card to be the original hero for the ability execution
-    const originalLastCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
-    cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = selectedHero;
-    
-    await abilityFn(selectedHero);  // Pass the original hero
-    
-    // Restore the last card
-    cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = originalLastCard;
-  } else {
-    console.error(
-      `Ability function ${selectedHero.unconditionalAbility} not found`,
-    );
-  }
-}
+        if (
+          selectedHero.unconditionalAbility &&  // Use the ORIGINAL hero's ability
+          selectedHero.unconditionalAbility !== "None"
+        ) {
+          const abilityFn = window[selectedHero.unconditionalAbility];
+          if (typeof abilityFn === "function") {
+            // Temporarily swap the last card to be the original hero for the ability execution
+            const originalLastCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
+            cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = selectedHero;
+            
+            await abilityFn(selectedHero);  // Pass the original hero
+            
+            // Restore the last card
+            cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = originalLastCard;
+          } else {
+            console.error(
+              `Ability function ${selectedHero.unconditionalAbility} not found`,
+            );
+          }
+        }
 
         // Update game state
         totalAttackPoints += rogueCard.attack;
@@ -8084,6 +8117,13 @@ function StormMoveVillain() {
           plutoniumOverlay.innerHTML = `<span class="plutonium-count">${city[i].plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
           cardContainer.appendChild(plutoniumOverlay);
         }
+
+            if (city[i].shards && city[i].shards > 0) {
+      const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${city[i].shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+      cardContainer.appendChild(shardsOverlay);
+    }
       } else {
         // If no villain, add a blank card image
         const blankCardImage = document.createElement("img");
@@ -8346,15 +8386,16 @@ function add1Recruit() {
 function HenchmenKOHeroYouHave() {
   updateGameBoard();
   return new Promise((resolve) => {
-    // Get heroes from hand and played cards separately
+    // Get heroes from hand, played cards, and artifacts separately
     const handHeroes = playerHand.filter((card) => card.type === "Hero");
     const playedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
-        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy,
+        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     );
+    const artifactHeroes = playerArtifacts.filter((card) => card.type === "Hero");
 
     // Check if there are any heroes available
-    if (handHeroes.length === 0 && playedHeroes.length === 0) {
+    if (handHeroes.length === 0 && playedHeroes.length === 0 && artifactHeroes.length === 0) {
       console.log("No heroes in hand or played to KO.");
       onscreenConsole.log(
         `<span class="console-highlights">Sentinel's</span> Fight effect negated. No Heroes available to KO.`,
@@ -8394,7 +8435,7 @@ function HenchmenKOHeroYouHave() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -8410,11 +8451,12 @@ function HenchmenKOHeroYouHave() {
     previewElement.style.backgroundColor = "var(--panel-backgrounds)";
 
     let selectedCard = null;
-    let selectedLocation = null; // 'hand' or 'played'
+    let selectedLocation = null; // 'artifacts', 'hand', or 'played'
     let selectedCardImage = null;
     let isDragging = false;
 
     // Sort the arrays for display
+    genericCardSort(artifactHeroes);
     genericCardSort(handHeroes);
     genericCardSort(playedHeroes);
 
@@ -8544,7 +8586,25 @@ function HenchmenKOHeroYouHave() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand heroes
+    // Populate row1 with Artifacts first, then Hand heroes
+    if (artifactHeroes.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactHeroes.forEach((card) => {
+      createCardElement(card, "artifacts", selectionRow1);
+    });
+
+    if (handHeroes.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
     handHeroes.forEach((card) => {
       createCardElement(card, "hand", selectionRow1);
     });
@@ -8588,6 +8648,13 @@ function HenchmenKOHeroYouHave() {
           if (index !== -1) {
             playerHand.splice(index, 1);
           }
+        } else if (selectedLocation === "artifacts") {
+          const index = playerArtifacts.findIndex(
+            (card) => card.id === selectedCard.id,
+          );
+          if (index !== -1) {
+            playerArtifacts.splice(index, 1);
+          }
         } else if (selectedLocation === "played") {
           selectedCard.markedToDestroy = true;
         }
@@ -8616,7 +8683,8 @@ function HenchmenKOHeroYouHave() {
 function FightKOHeroYouHave() {
   onscreenConsole.log(`Fight! KO one of your Heroes.`);
   return new Promise((resolve, reject) => {
-    // Combine heroes from the player's hand and cards played this turn
+    // Get heroes from artifacts, hand, and played cards
+    const artifactHeroes = playerArtifacts.filter((card) => card.type === "Hero");
     const handHeroes = playerHand.filter((card) => card.type === "Hero");
     const playedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
@@ -8625,10 +8693,8 @@ function FightKOHeroYouHave() {
         card.sidekickToDestroy !== true,
     );
 
-    const combinedCards = [...handHeroes, ...playedHeroes];
-
-    // Check if there are any heroes in the combined list
-    if (combinedCards.length === 0) {
+    // Check if there are any heroes available
+    if (artifactHeroes.length === 0 && handHeroes.length === 0 && playedHeroes.length === 0) {
       onscreenConsole.log(`No Heroes available to KO.`);
       resolve(); // Resolve immediately if there are no heroes to KO
       return;
@@ -8665,7 +8731,7 @@ function FightKOHeroYouHave() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -8681,10 +8747,12 @@ function FightKOHeroYouHave() {
     previewElement.style.backgroundColor = "var(--panel-backgrounds)";
 
     let selectedCard = null;
+    let selectedLocation = null; // 'artifacts', 'hand', or 'played'
     let selectedCardImage = null;
     let isDragging = false;
 
     // Sort the arrays for display
+    genericCardSort(artifactHeroes);
     genericCardSort(handHeroes);
     genericCardSort(playedHeroes);
 
@@ -8777,9 +8845,10 @@ function FightKOHeroYouHave() {
           return;
         }
 
-        if (selectedCard === card) {
+        if (selectedCard === card && selectedLocation === location) {
           // Deselect
           selectedCard = null;
+          selectedLocation = null;
           selectedCardImage = null;
           cardImage.classList.remove("selected");
           previewElement.innerHTML = "";
@@ -8792,6 +8861,7 @@ function FightKOHeroYouHave() {
 
           // Select new
           selectedCard = card;
+          selectedLocation = location;
           selectedCardImage = cardImage;
           cardImage.classList.add("selected");
 
@@ -8812,7 +8882,25 @@ function FightKOHeroYouHave() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand heroes
+    // Populate row1 with Artifacts first, then Hand heroes (with labels)
+    if (artifactHeroes.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactHeroes.forEach((card) => {
+      createCardElement(card, "artifacts", selectionRow1);
+    });
+
+    if (handHeroes.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
     handHeroes.forEach((card) => {
       createCardElement(card, "hand", selectionRow1);
     });
@@ -8845,7 +8933,7 @@ function FightKOHeroYouHave() {
     confirmButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      if (selectedCard === null) return;
+      if (selectedCard === null || selectedLocation === null) return;
 
       setTimeout(() => {
         onscreenConsole.log(
@@ -8853,13 +8941,18 @@ function FightKOHeroYouHave() {
         );
         koBonuses();
 
-        // Remove the card from the correct array (hand or played)
-        if (playerHand.includes(selectedCard)) {
-          const handIndex = playerHand.findIndex((c) => c === selectedCard);
-          if (handIndex !== -1) {
-            playerHand.splice(handIndex, 1);
+        // Remove the card from the correct location
+        if (selectedLocation === "artifacts") {
+          const index = playerArtifacts.findIndex((c) => c.id === selectedCard.id);
+          if (index !== -1) {
+            playerArtifacts.splice(index, 1);
           }
-        } else {
+        } else if (selectedLocation === "hand") {
+          const index = playerHand.findIndex((c) => c.id === selectedCard.id);
+          if (index !== -1) {
+            playerHand.splice(index, 1);
+          }
+        } else if (selectedLocation === "played") {
           // Mark the card to be destroyed at the end of the turn
           selectedCard.markedToDestroy = true;
         }
@@ -9238,6 +9331,9 @@ function doomStrike() {
             card.classes.includes("Tech") &&
             card.isCopied !== true &&
             card.sidekickToDestroy !== true,
+        ) ||
+        playerArtifacts.some(
+          (card) => card.classes && card.classes.includes("Tech"),
         );
 
       if (!hasTech) {
@@ -9664,8 +9760,9 @@ function magnetoStrike() {
         playerHand.some((card) => card.team === "X-Men") ||
         cardsPlayedThisTurn.some(
           (card) =>
-            card.team === "X-Men" && !card.isCopied && !card.sidekickToDestroy,
-        );
+            card.team === "X-Men" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+        ) ||
+        playerArtifacts.some((card) => card.team === "X-Men");
 
       if (!hasXMen) {
         onscreenConsole.log(
@@ -10326,6 +10423,7 @@ function RedSkullKOHandHero() {
 function revealStrengthOrWound() {
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -10437,8 +10535,9 @@ async function LokiRevealStrengthOrWound() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     ),
   ];
 
@@ -10630,6 +10729,7 @@ async function EscapeRevealTechOrWound() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -10699,6 +10799,7 @@ async function EscapeRevealTechOrWound() {
 function revealRangeOrWound() {
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -11622,6 +11723,13 @@ function addCardOverlays(cardContainer, card, index, location = 'city') {
     cardContainer.appendChild(plutoniumOverlay);
   }
 
+      if (card.shards && card.shards > 0) {
+      const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${card.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+      cardContainer.appendChild(shardsOverlay);
+    }
+
   // Add location attack overlays if applicable (only for city)
   if (location === 'city') {
     const locationAttacks = [
@@ -11759,6 +11867,13 @@ function addMastermindOverlays(cardContainer, mastermind, isPopup = true) {
     plutoniumOverlay.innerHTML = `<span class="plutonium-count">${mastermind.plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
     cardContainer.appendChild(plutoniumOverlay);
   }
+
+      if (mastermind.shards && mastermind.shards > 0) {
+      const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${mastermind.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+      cardContainer.appendChild(shardsOverlay);
+    }
 }
 
 function KO1To4FromDiscard() {
@@ -12966,10 +13081,11 @@ async function MagnetoRevealXMenOrWound() {
 
   const cardsYouHave = [
     ...playerHand, // Include all cards in hand (unchanged)
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -13039,6 +13155,7 @@ async function MagnetoRevealXMenOrWound() {
 function revealXMenOrWound() {
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -13137,10 +13254,11 @@ async function FightRevealXMenOrWound() {
 async function XMenToBystanders() {
   const cardsYouHave = [
     ...playerHand, // Include all cards in hand (unchanged)
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -13173,6 +13291,7 @@ async function AvengersToBystanders() {
   );
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -13208,8 +13327,17 @@ function XMen7thDraw() {
       location: "(Hand)",
     }));
 
+    const artifactCards = playerArtifacts
+      .filter((card) => card.type === "Hero") // Only include Hero artifacts
+      .map((card, index) => ({
+        ...card,
+        source: "artifacts",
+        originalIndex: index,
+        location: "(Artifacts)",
+      }));
+
     const playedCards = cardsPlayedThisTurn
-      .filter((card) => !card.isCopied && !card.sidekickToDestroy)
+      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy)
       .map((card, index) => ({
         ...card,
         source: "played",
@@ -13217,7 +13345,7 @@ function XMen7thDraw() {
         location: "(Played Cards)",
       }));
 
-    const XMenCardsYouHave = [...handCards, ...playedCards].filter(
+    const XMenCardsYouHave = [...handCards, ...artifactCards, ...playedCards].filter(
       (item) => item.team === "X-Men",
     );
 
@@ -13261,7 +13389,7 @@ function XMen7thDraw() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -13284,12 +13412,16 @@ function XMen7thDraw() {
     const handXMenCards = XMenCardsYouHave.filter(
       (card) => card.source === "hand",
     );
+    const artifactXMenCards = XMenCardsYouHave.filter(
+      (card) => card.source === "artifacts",
+    );
     const playedXMenCards = XMenCardsYouHave.filter(
       (card) => card.source === "played",
     );
 
     // Sort the arrays for display
     genericCardSort(handXMenCards);
+    genericCardSort(artifactXMenCards);
     genericCardSort(playedXMenCards);
 
     // Update the confirm button state and instructions
@@ -13416,7 +13548,25 @@ function XMen7thDraw() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand X-Men cards
+    // Populate row1 with Artifacts first, then Hand X-Men cards (with labels)
+    if (artifactXMenCards.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactXMenCards.forEach((card) => {
+      createCardElement(card, selectionRow1);
+    });
+
+    if (handXMenCards.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
     handXMenCards.forEach((card) => {
       createCardElement(card, selectionRow1);
     });
@@ -13459,9 +13609,10 @@ function XMen7thDraw() {
         // Mark the original card to be destroyed later using the tracked source and index
         if (selectedCard.source === "hand") {
           playerHand[selectedCard.originalIndex].markedToDrawNextTurn = true;
+        } else if (selectedCard.source === "artifacts") {
+          playerArtifacts[selectedCard.originalIndex].markedToDrawNextTurn = true;
         } else {
-          cardsPlayedThisTurn[selectedCard.originalIndex].markedToDrawNextTurn =
-            true;
+          cardsPlayedThisTurn[selectedCard.originalIndex].markedToDrawNextTurn = true;
         }
 
         console.log(`${selectedCard.name} has been reserved for next turn.`);
@@ -14275,16 +14426,26 @@ function EscapeChooseHandHeroesToKO() {
 
 function chooseHeroesToKO() {
   return new Promise((resolve, reject) => {
-    const availableHeroes = [
-      ...playerHand.filter((card) => card && card.type === "Hero"),
-      ...cardsPlayedThisTurn.filter(
-        (card) =>
-          card &&
-          card.type === "Hero" &&
-          !card.isCopied &&
-          !card.sidekickToDestroy,
-      ),
-    ].map((card, index) => ({ ...card, uniqueId: `${card.id}-${index}` }));
+    // Get heroes from artifacts, hand, and played cards
+    const artifactHeroes = playerArtifacts
+      .filter((card) => card && card.type === "Hero")
+      .map((card, index) => ({ ...card, uniqueId: `${card.id}-artifacts-${index}`, source: "artifacts" }));
+    
+    const handHeroes = playerHand
+      .filter((card) => card && card.type === "Hero")
+      .map((card, index) => ({ ...card, uniqueId: `${card.id}-hand-${index}`, source: "hand" }));
+    
+    const playedHeroes = cardsPlayedThisTurn
+      .filter((card) =>
+        card &&
+        card.type === "Hero" &&
+        !card.isCopied &&
+        !card.sidekickToDestroy && 
+        !card.markedToDestroy
+      )
+      .map((card, index) => ({ ...card, uniqueId: `${card.id}-played-${index}`, source: "played" }));
+
+    const availableHeroes = [...artifactHeroes, ...handHeroes, ...playedHeroes];
 
     if (availableHeroes.length === 0) {
       onscreenConsole.log("No Heroes available to KO.");
@@ -14294,15 +14455,19 @@ function chooseHeroesToKO() {
 
     if (availableHeroes.length <= 2) {
       availableHeroes.forEach((card) => {
-        const indexInCardsPlayed = cardsPlayedThisTurn.findIndex(
-          (c) => c.id === card.id,
-        );
-        const indexInHand = playerHand.findIndex((c) => c.id === card.id);
-
-        if (indexInCardsPlayed !== -1) {
-          cardsPlayedThisTurn.splice(indexInCardsPlayed, 1);
-        } else if (indexInHand !== -1) {
-          playerHand.splice(indexInHand, 1);
+        // Remove from the correct location based on source
+        if (card.source === "artifacts") {
+          const index = playerArtifacts.findIndex((c) => c.id === card.id);
+          if (index !== -1) {
+            playerArtifacts.splice(index, 1);
+          }
+        } else if (card.source === "hand") {
+          const index = playerHand.findIndex((c) => c.id === card.id);
+          if (index !== -1) {
+            playerHand.splice(index, 1);
+          }
+        } else if (card.source === "played") {
+          card.markedToDestroy = true;
         }
 
         koPile.push(card);
@@ -14347,7 +14512,7 @@ function chooseHeroesToKO() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -14365,15 +14530,8 @@ function chooseHeroesToKO() {
     let selectedHeroes = [];
     let isDragging = false;
 
-    // Separate cards by location for display
-    const handHeroes = availableHeroes.filter((card) =>
-      playerHand.some((c) => c.id === card.id),
-    );
-    const playedHeroes = availableHeroes.filter((card) =>
-      cardsPlayedThisTurn.some((c) => c.id === card.id),
-    );
-
     // Sort the arrays for display
+    genericCardSort(artifactHeroes);
     genericCardSort(handHeroes);
     genericCardSort(playedHeroes);
 
@@ -14412,11 +14570,11 @@ function chooseHeroesToKO() {
     setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
 
     // Create card element helper function
-    function createCardElement(card, location, row) {
+    function createCardElement(card, row) {
       const cardElement = document.createElement("div");
       cardElement.className = "popup-card";
       cardElement.setAttribute("data-card-id", card.uniqueId);
-      cardElement.setAttribute("data-location", location);
+      cardElement.setAttribute("data-source", card.source);
 
       // Create card image
       const cardImage = document.createElement("img");
@@ -14526,14 +14684,32 @@ function chooseHeroesToKO() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand heroes
+    // Populate row1 with Artifacts first, then Hand heroes (with labels)
+    if (artifactHeroes.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactHeroes.forEach((card) => {
+      createCardElement(card, selectionRow1);
+    });
+
+    if (handHeroes.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
     handHeroes.forEach((card) => {
-      createCardElement(card, "hand", selectionRow1);
+      createCardElement(card, selectionRow1);
     });
 
     // Populate row2 with Played Cards heroes
     playedHeroes.forEach((card) => {
-      createCardElement(card, "played", selectionRow2);
+      createCardElement(card, selectionRow2);
     });
 
     // Set up drag scrolling for both rows
@@ -14563,28 +14739,24 @@ function chooseHeroesToKO() {
 
       setTimeout(() => {
         selectedHeroes.forEach((card) => {
-          // Find the original card to ensure we have the correct reference
-          const originalCard = availableHeroes.find(
-            (c) => c.uniqueId === card.uniqueId,
-          );
-          if (!originalCard) return;
-
-          const indexInCardsPlayed = cardsPlayedThisTurn.findIndex(
-            (c) => c.id === originalCard.id,
-          );
-          const indexInHand = playerHand.findIndex(
-            (c) => c.id === originalCard.id,
-          );
-
-          if (indexInCardsPlayed !== -1) {
-            originalCard.markedToDestroy = true;
-          } else if (indexInHand !== -1) {
-            playerHand.splice(indexInHand, 1);
+          // Remove from the correct location based on source
+          if (card.source === "artifacts") {
+            const index = playerArtifacts.findIndex((c) => c.id === card.id);
+            if (index !== -1) {
+              playerArtifacts.splice(index, 1);
+            }
+          } else if (card.source === "hand") {
+            const index = playerHand.findIndex((c) => c.id === card.id);
+            if (index !== -1) {
+              playerHand.splice(index, 1);
+            }
+          } else if (card.source === "played") {
+            card.markedToDestroy = true;
           }
 
-          koPile.push(originalCard);
+          koPile.push(card);
           onscreenConsole.log(
-            `<span class="console-highlights">${originalCard.name}</span> has been KO'd.`,
+            `<span class="console-highlights">${card.name}</span> has been KO'd.`,
           );
           koBonuses();
         });
@@ -15049,6 +15221,13 @@ async function AmbushRightHeroSkrull() {
     `<span class="console-highlights">Skrull Shapeshifters</span> has captured <span class="console-highlights">${hero.name}</span>. This Villain now has ${hero.cost} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. Fight this Villain to gain the captured Hero.`,
   );
 
+    if (hero.shards && hero.shards > 0) {
+      playSFX("shards");
+            shardSupply += hero.shards;
+            hero.shards = 0;
+            onscreenConsole.log(`The Shard <span class="console-highlights">${hero.name}</span> had in the HQ has been returned to the supply.`);
+  }
+
   // Replace the rightmost HQ space with the top card from the hero deck, if available
   hq[hqIndex] = heroDeck.length > 0 ? heroDeck.pop() : null;
 
@@ -15124,6 +15303,14 @@ function captureHeroBySkrullQueen(hero) {
   onscreenConsole.log(
     `<span class="console-highlights">Skrull Queen Veranke</span> has captured <span class="console-highlights">${hero.name}</span>. This Villain now has ${hero.cost} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">. Fight this Villain to gain the captured Hero.`,
   );
+
+          
+  if (hero.shards && hero.shards > 0) {
+    playSFX("shards");
+            shardSupply += hero.shards;
+            hero.shards = 0;
+            onscreenConsole.log(`The Shard <span class="console-highlights">${hero.name}</span> had in the HQ has been returned to the supply.`);
+  }
 
   // Update the game board to reflect the changes
   updateGameBoard();
@@ -15913,6 +16100,15 @@ function KOAllSHIELD() {
     }
   }
 
+    for (let i = playerArtifacts.length - 1; i >= 0; i--) {
+    if (playerArtifacts[i].team === "S.H.I.E.L.D." && playerArtifacts[i].type === "Hero") {
+      // Move the card to the KO pile
+      koPile.push(playerArtifacts.splice(i, 1)[0]);
+      shieldKOCounter++; // Increment the counter
+      koBonuses();
+    }
+  }
+
   // KO S.H.I.E.L.D. cards from cards played this turn
   for (let i = cardsPlayedThisTurn.length - 1; i >= 0; i--) {
     if (
@@ -15968,13 +16164,23 @@ function strengthHeroesNumberToKO() {
     'Fight! For each of your <img src="Visual Assets/Icons/Strength.svg" alt="Strength Icon" class="console-card-icons"> Heroes, KO one of your Heroes.',
   );
   return new Promise((resolve, reject) => {
-    // Get references to the actual card objects from the game arrays
-    const availableHeroes = [...cardsPlayedThisTurn, ...playerHand].filter(
+    // Get available heroes from artifacts, hand, and played cards
+    const availableArtifactHeroes = playerArtifacts.filter(
+      (card) => card && card.type === "Hero"
+    );
+    
+    const availableHandHeroes = playerHand.filter(
+      (card) => card && card.type === "Hero"
+    );
+    
+    const availablePlayedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
         card &&
         card.type === "Hero" &&
-        (card.fromHand || (!card.isCopied && !card.sidekickToDestroy)),
+        (card.fromHand || (!card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy)),
     );
+
+    const availableHeroes = [...availableArtifactHeroes, ...availableHandHeroes, ...availablePlayedHeroes];
 
     if (availableHeroes.length === 0) {
       onscreenConsole.log("No Heroes available to KO.");
@@ -15982,11 +16188,20 @@ function strengthHeroesNumberToKO() {
       return;
     }
 
-    // Find all Strength Heroes
-    const strengthHeroes = [...cardsPlayedThisTurn, ...playerHand].filter(
-      (card) => card && card.classes && card.classes.includes("Strength"),
+    // Find all Strength Heroes from all locations
+    const artifactStrengthHeroes = playerArtifacts.filter(
+      (card) => card && card.classes && card.classes.includes("Strength")
+    );
+    
+    const handStrengthHeroes = playerHand.filter(
+      (card) => card && card.classes && card.classes.includes("Strength")
+    );
+    
+    const playedStrengthHeroes = cardsPlayedThisTurn.filter(
+      (card) => card && card.classes && card.classes.includes("Strength")
     );
 
+    const strengthHeroes = [...artifactStrengthHeroes, ...handStrengthHeroes, ...playedStrengthHeroes];
     const numberToKO = strengthHeroes.length;
 
     if (numberToKO === 0) {
@@ -16003,19 +16218,22 @@ function strengthHeroesNumberToKO() {
 
     if (availableHeroes.length <= numberToKO) {
       availableHeroes.forEach((card) => {
-        // More robust card finding using unique identifier
-        const indexInCardsPlayed = cardsPlayedThisTurn.findIndex(
-          (c) => c.id === card.id && c.name === card.name,
-        );
-        const indexInHand = playerHand.findIndex(
-          (c) => c.id === card.id && c.name === card.name,
-        );
-
-        if (indexInCardsPlayed !== -1) {
+        // Remove from the correct location
+        if (playerArtifacts.includes(card)) {
+          const index = playerArtifacts.findIndex((c) => c.id === card.id && c.name === card.name);
+          if (index !== -1) {
+            playerArtifacts.splice(index, 1);
+            koPile.push(card);
+          }
+        } else if (playerHand.includes(card)) {
+          const index = playerHand.findIndex((c) => c.id === card.id && c.name === card.name);
+          if (index !== -1) {
+            playerHand.splice(index, 1);
+            koPile.push(card);
+          }
+        } else if (cardsPlayedThisTurn.includes(card)) {
           card.markedToDestroy = true;
-        } else if (indexInHand !== -1) {
-          const koedCard = playerHand.splice(indexInHand, 1)[0];
-          koPile.push(koedCard);
+          koPile.push(card);
         }
 
         onscreenConsole.log(
@@ -16059,7 +16277,7 @@ function strengthHeroesNumberToKO() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -16077,17 +16295,10 @@ function strengthHeroesNumberToKO() {
     let selectedHeroes = [];
     let isDragging = false;
 
-    // Separate cards by location for display
-    const handHeroes = availableHeroes.filter((card) =>
-      playerHand.some((c) => c.id === card.id),
-    );
-    const playedHeroes = availableHeroes.filter((card) =>
-      cardsPlayedThisTurn.some((c) => c.id === card.id),
-    );
-
     // Sort the arrays for display
-    genericCardSort(handHeroes);
-    genericCardSort(playedHeroes);
+    genericCardSort(availableArtifactHeroes);
+    genericCardSort(availableHandHeroes);
+    genericCardSort(availablePlayedHeroes);
 
     // Update the confirm button state and instructions
     function updateUI() {
@@ -16248,13 +16459,31 @@ function strengthHeroesNumberToKO() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand heroes
-    handHeroes.forEach((card) => {
+    // Populate row1 with Artifacts first, then Hand heroes (with labels)
+    if (availableArtifactHeroes.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    availableArtifactHeroes.forEach((card) => {
+      createCardElement(card, "artifacts", selectionRow1);
+    });
+
+    if (availableHandHeroes.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
+    availableHandHeroes.forEach((card) => {
       createCardElement(card, "hand", selectionRow1);
     });
 
     // Populate row2 with Played Cards heroes
-    playedHeroes.forEach((card) => {
+    availablePlayedHeroes.forEach((card) => {
       createCardElement(card, "played", selectionRow2);
     });
 
@@ -16285,23 +16514,22 @@ function strengthHeroesNumberToKO() {
 
       setTimeout(() => {
         selectedHeroes.forEach((card) => {
-          // More robust card finding using multiple properties
-          const indexInCardsPlayed = cardsPlayedThisTurn.findIndex(
-            (c) => c.id === card.id && c.name === card.name,
-          );
-          const indexInHand = playerHand.findIndex(
-            (c) => c.id === card.id && c.name === card.name,
-          );
-
-          if (indexInCardsPlayed !== -1) {
-            const koedCard = cardsPlayedThisTurn.splice(
-              indexInCardsPlayed,
-              1,
-            )[0];
-            koPile.push(koedCard);
-          } else if (indexInHand !== -1) {
-            const koedCard = playerHand.splice(indexInHand, 1)[0];
-            koPile.push(koedCard);
+          // Remove from the correct location
+          if (playerArtifacts.includes(card)) {
+            const index = playerArtifacts.findIndex((c) => c.id === card.id && c.name === card.name);
+            if (index !== -1) {
+              playerArtifacts.splice(index, 1);
+              koPile.push(card);
+            }
+          } else if (playerHand.includes(card)) {
+            const index = playerHand.findIndex((c) => c.id === card.id && c.name === card.name);
+            if (index !== -1) {
+              playerHand.splice(index, 1);
+              koPile.push(card);
+            }
+          } else if (cardsPlayedThisTurn.includes(card)) {
+            card.markedToDestroy = true;
+            koPile.push(card);
           }
 
           onscreenConsole.log(

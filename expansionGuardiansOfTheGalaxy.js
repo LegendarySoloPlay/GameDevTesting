@@ -1,26 +1,28 @@
 // Expansion - Guardians of the Galaxy
-// 25.11.25 20.20
+//19.01.26 20:00
 
-//Theming
+// Global Variables
 
-<div id="expansion-popup-container">
-    <div id="skip-button">SKIP</div>
-    <div class="splash-container">
-      <div class="splash-content circular" id="splashContent">
-        <div class="splash-text" id="splashText">
-          <h2 class="splash-title-legendary">LEGENDARY</h2>
-          <h2 class="splash-title-expansion">GUARDIANS OF THE GALAXY</h2>
-          <p class="splash-description">The cosmos are in chaos. Intergalactic war looms and ancient powers rise.</p>
-            <p class="splash-description">Thanos threatens annhilation while the Supreme Intelligence of the Kree plots with cold logic.</p>
-          <p class="splash-description">Assemble your team, acquire Shards and harness the power of the Infinity Gems in order to survive.</p>
-          <p class="splash-description">The galaxy's fate isn't written in the stars; it's forged by your crew.</p>
-          <button id="start-expansion">I AM GROOT!</button>
-        </div>
-      </div>
-    </div>
-  </div>
+let shardSupply = 500;
+let totalPlayerShards = 0;
+let shardsGainedThisTurn = 0;
+let playerArtifacts = [];
+let rocketRacoonShardBonus = false;
+let grootRecruitBonus = false;
+let shardsForRecruitEnabled = false;
+let gamoraGodslayerOne = false;
+let gamoraGodslayerTwo = false;
+let realityGemVillainDraw = false;
+let boundSouls = [];
+let negaBombDeck = [];
+let kreeConquests = 0;
+let skrullConquests = 0;
 
-// Artifacts Popup
+// Keywords and Other
+
+document
+  .getElementById("player-artifact-zone")
+  .addEventListener("click", openArtifactsPopup);
 
 function openArtifactsPopup() {
   const artifactsCardsTable = document.getElementById("artifacts-cards-window-cards");
@@ -52,55 +54,68 @@ function openArtifactsPopup() {
     // Apply visual effects based on usage state
     if (card.artifactAbilityUsed === true) {
       imgElement.style.opacity = "0.5";
-      cardContainer.style.pointerEvents = "none"; // Note: corrected from cursorEvents
     } else {
       imgElement.style.opacity = "0.9";
       
       // Make card interactive only if not used
       imgElement.classList.add("clickable-card", "telepathic-probe-active");
-      imgElement.style.cursor = "pointer";
-      imgElement.style.border = "3px solid rgb(198, 169, 104)"; // Fixed syntax error (semicolon to comma)
+      imgElement.style.cursor = "default";
+      imgElement.style.border = "3px solid rgb(92 60 159)"; // Fixed syntax error (semicolon to comma)
       
       // Create USE button (visible by default based on your requirements)
       const useButton = document.createElement("div");
-      useButton.className = "played-cards-focus-button";
+      useButton.className = "artifacts-use-button";
       useButton.innerHTML = `
         <span style="filter: drop-shadow(0vh 0vh 0.3vh black);">
           USE
         </span>`;
-      useButton.style.display = "block"; // Changed from "none" to show immediately
+      useButton.style.display = "flex"; // Changed from "none" to show immediately
 
-      // Use button click handler
-      useButton.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        
-        // Play sound effect
-        if (typeof playSFX === "function") {
-          playSFX("focus");
-        }
-        
-        // Check if there's a specific ability function for this card
-        // Assuming card has a property like abilityFunction or you have a mapping
-        const abilityFunction = card.unconditionalAbility;
-        
-        if (abilityFunction && typeof abilityFunction === "function") {
-          try {
-            closeArtifactsPopup();
-            // Execute the ability
-            await abilityFunction(card);
-            
-            // Mark the artifact as used for this turn
-            card.artifactAbilityUsed = true;
-            
-          } catch (error) {
-            console.error(`Error executing ability for ${card.name}:`, error);
-          }
-        } else {
-          console.error(`Ability function not found for ${card.name}`);
-          console.log('You need to define the ability function for this card.');
-        }
-      });
+      // In your click handler, update to this:
+useButton.addEventListener("click", async (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+  
+  if (typeof playSFX === "function") {
+    playSFX("focus");
+  }
+  
+  const abilityFunctionName = card.unconditionalAbility;
+  
+  // Check if it's a function reference
+  if (typeof abilityFunctionName === "function") {
+    // It's already a function
+    try {
+      closeArtifactsPopup();
+      await abilityFunctionName(card);
+      card.artifactAbilityUsed = true;
+    } catch (error) {
+      console.error(`Error executing ability for ${card.name}:`, error);
+    }
+  } 
+  // Check if it's a string that should map to a function
+  else if (typeof abilityFunctionName === "string") {
+    // Try to find the function in the global scope or your game's namespace
+    const abilityFunction = window[abilityFunctionName] || 
+                          abilityFunctions[abilityFunctionName]; // Using Option 1's lookup
+    
+    if (abilityFunction && typeof abilityFunction === "function") {
+      try {
+        closeArtifactsPopup();
+        await abilityFunction(card);
+        card.artifactAbilityUsed = true;
+        updateGameBoard();
+      } catch (error) {
+        console.error(`Error executing ability for ${card.name}:`, error);
+      }
+    } else {
+      console.error(`Ability function "${abilityFunctionName}" not found for ${card.name}`);
+      console.log(`Define a function named ${abilityFunctionName} or add it to abilityFunctions lookup`);
+    }
+  } else {
+    console.error(`Invalid ability type for ${card.name}:`, abilityFunctionName);
+  }
+});
 
       cardContainer.appendChild(useButton);
     }
@@ -117,33 +132,2522 @@ function openArtifactsPopup() {
   }
 }
 
-// Add necessary variables to endturn including:
+// Function to close the Played Cards popup
+function closeArtifactsPopup() {
+  document.getElementById("artifacts-cards-window").style.display = "none";
+  document.getElementById("played-cards-modal-overlay").style.display = "none";
+}
 
-playerArtifacts.forEach(card => {
-    // Reset all cards except Time Gem
-    if (card.name !== "Time Gem") {
-      card.artifactAbilityUsed = false;
+async function playedArtifact(card) {
+  const cardIndex = playerHand.indexOf(card);
+  if (cardIndex > -1) {
+    playerHand.splice(cardIndex, 1);
+  }
+  card.artifactAbilityUsed = true;
+  playerArtifacts.push(card);
+  playSFX("artifact");
+  const secondCopy = card;
+  secondCopy.markedToDestroy = true;
+  cardsPlayedThisTurn.push(secondCopy);
+
+  // Update points
+  totalAttackPoints += card.attack || 0;
+  totalRecruitPoints += card.recruit || 0;
+  cumulativeAttackPoints += card.attack || 0;
+  cumulativeRecruitPoints += card.recruit || 0;
+
+  updateGameBoard();
+
+  try {
+    // Unconditional
+    if (card.unconditionalAbility && card.unconditionalAbility !== "None") {
+      const abilityFunction = window[card.unconditionalAbility];
+      if (typeof abilityFunction === "function") {
+        await Promise.resolve(abilityFunction(card));
+      } else {
+        console.error(
+          `Unconditional ability function ${card.unconditionalAbility} not found`,
+        );
+      }
     }
+
+    // Conditional
+    if (card.conditionalAbility && card.conditionalAbility !== "None") {
+      const { conditionType, condition } = card;
+      if (isConditionMet(conditionType, condition)) {
+        if (autoSuperpowers) {
+          const conditionalAbilityFunction = window[card.conditionalAbility];
+          if (typeof conditionalAbilityFunction === "function") {
+            await Promise.resolve(conditionalAbilityFunction(card));
+          } else {
+            console.error(
+              `Conditional ability function ${card.conditionalAbility} not found`,
+            );
+          }
+        } else {
+          await new Promise((abilityResolve) => {
+            const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+              `DO YOU WISH TO ACTIVATE <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ability?`,
+              "Yes",
+              "No",
+            );
+
+            document.querySelector(
+              ".info-or-choice-popup-preview",
+            ).style.backgroundImage = `url('${card.image}')`;
+
+            confirmButton.onclick = async () => {
+              try {
+                hideHeroAbilityMayPopup();
+                const fn = window[card.conditionalAbility];
+                if (typeof fn === "function") {
+                  await Promise.resolve(fn(card));
+                } else {
+                  console.error(
+                    `Conditional ability function ${card.conditionalAbility} not found`,
+                  );
+                }
+              } catch (error) {
+                console.error(error);
+              } finally {
+                abilityResolve();
+              }
+            };
+
+            denyButton.onclick = () => {
+              onscreenConsole.log(
+                `You have chosen not to activate <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ability.`,
+              );
+              hideHeroAbilityMayPopup();
+              abilityResolve();
+            };
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error processing card abilities:", error);
+  }
+}
+
+function toggleArtifactsDeck() {
+  const playerHand = document.getElementById('player-card-zone');
+  const artifactDeck = document.getElementById('player-artifact-zone');
+  const artifactDeckLabel = document.getElementById('player-artifact-label');
+  const reserveAttackLabel = document.getElementById('reserveAttackPointDisplay');
+  const artifactDeckImage = document.getElementById('artifact-deck-image');
+
+  if (playerArtifacts && playerArtifacts.length > 0) {
+artifactDeck.style.display = 'block';
+artifactDeckLabel.style.display = 'block';
+playerHand.style.gridColumn = 'span 4';
+reserveAttackLabel.style.gridColumn = 'span 1';
+
+        artifactDeckImage.src =
+        playerArtifacts[playerArtifacts.length - 1].image;
+        artifactDeckImage.style.display = "flex";
+        artifactDeckImage.classList.remove("card-image-back");
+        artifactDeckImage.classList.add("revealed-deck-card-image");
+  } else {
+artifactDeck.style.display = 'none';
+artifactDeckLabel.style.display = 'none';
+playerHand.style.gridColumn = 'span 5';
+reserveAttackLabel.style.gridColumn = 'span 2';
+
+        artifactDeckImage.src =
+        "Visual Assets/CardBack.webp";
+        artifactDeckImage.style.display = "none";
+        artifactDeckImage.classList.add("card-image-back");
+        artifactDeckImage.classList.remove("revealed-deck-card-image");
+  }
+}
+
+document
+  .getElementById("player-shard-counter")
+  .addEventListener("click", shardsToAttack);
+
+function shardsToAttack() {
+  return new Promise(async (resolve) => {
+    // If recruit mode is enabled, first ask which resource they want
+    if (shardsForRecruitEnabled) {
+      const choice = await new Promise((choiceResolve) => {
+        const popup = document.querySelector(".info-or-choice-popup");
+        const modalOverlay = document.getElementById("modal-overlay");
+        const titleEl = document.querySelector(".info-or-choice-popup-title");
+        const instrEl = document.querySelector(
+          ".info-or-choice-popup-instructions",
+        );
+        const previewEl = document.querySelector(".info-or-choice-popup-preview");
+        const confirmBtn = document.getElementById("info-or-choice-popup-confirm");
+        const otherBtn = document.getElementById(
+          "info-or-choice-popup-otherchoice",
+        );
+        const noThanksBtn = document.getElementById(
+          "info-or-choice-popup-nothanks",
+        );
+        const closeBtn = document.querySelector(
+          ".info-or-choice-popup-closebutton",
+        );
+        closeBtn.style.display = "none";
+        const minimizeBtn = document.querySelector(
+          ".info-or-choice-popup-minimizebutton",
+        );
+
+        // Set popup content
+        titleEl.textContent = "SHARDS";
+        instrEl.innerHTML = `Would you like to spend Shards for <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> or <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">?`;
+
+        // Set shard preview
+        if (previewEl) {
+          previewEl.style.backgroundImage = `url('Visual Assets/Icons/Shards.svg')`;
+          previewEl.style.backgroundColor = `transparent`;
+          previewEl.style.border = `none`;
+          previewEl.style.backgroundSize = "contain";
+          previewEl.style.backgroundRepeat = "no-repeat";
+          previewEl.style.backgroundPosition = "center";
+        }
+
+        // Configure buttons
+        confirmBtn.textContent = "ATTACK";
+        otherBtn.textContent = "RECRUIT";
+        noThanksBtn.textContent = "CANCEL";
+
+        // Show all buttons
+        confirmBtn.style.display = "inline-block";
+        otherBtn.style.display = "inline-block";
+        noThanksBtn.style.display = "inline-block";
+
+        // Button handlers
+        confirmBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeInfoChoicePopup();
+          choiceResolve("attack");
+        };
+
+        otherBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeInfoChoicePopup();
+          choiceResolve("recruit");
+        };
+
+        noThanksBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeInfoChoicePopup();
+          choiceResolve("cancel");
+        };
+
+        // Show popup
+        modalOverlay.style.display = "block";
+        popup.style.display = "block";
+      });
+
+      // If user cancelled or chose recruit, resolve early
+      if (choice === "cancel") {
+        resolve();
+        return;
+      }
+
+if (choice === "recruit") {
+  // Call the recruit version
+  await shardsToRecruit();
+  resolve();
+  return;
+}
+      // If attack was chosen, continue to the quantity selection
+    }
+
+    // Now proceed with the original quantity selection logic
+    const popup = document.querySelector(".info-or-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const titleEl = document.querySelector(".info-or-choice-popup-title");
+    const instrEl = document.querySelector(
+      ".info-or-choice-popup-instructions",
+    );
+    const previewEl = document.querySelector(".info-or-choice-popup-preview");
+    const confirmBtn = document.getElementById("info-or-choice-popup-confirm");
+    const otherBtn = document.getElementById(
+      "info-or-choice-popup-otherchoice",
+    );
+    const noThanksBtn = document.getElementById(
+      "info-or-choice-popup-nothanks",
+    );
+    const closeBtn = document.querySelector(
+      ".info-or-choice-popup-closebutton",
+    );
+    closeBtn.style.display = "none";
+    const minimizeBtn = document.querySelector(
+      ".info-or-choice-popup-minimizebutton",
+    );
+
+    // Set popup content
+    titleEl.textContent = "SHARDS";
+    instrEl.innerHTML = `You can spend a Shard to get +1 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?`;
+
+    // Set card preview background
+    if (previewEl) {
+      previewEl.style.backgroundImage = `url('Visual Assets/Icons/Shards.svg')`;
+      previewEl.style.backgroundColor = `transparent`;
+      previewEl.style.border = `none`;
+      previewEl.style.backgroundSize = "contain";
+      previewEl.style.backgroundRepeat = "no-repeat";
+      previewEl.style.backgroundPosition = "center";
+    }
+
+    // PRESET TO MAXIMUM QUANTITY
+    let chosenQty = totalPlayerShards;
+
+    // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
+    noThanksBtn.textContent = "+";
+    otherBtn.textContent = "CONFIRM";
+    confirmBtn.textContent = "-";
+
+    // Show all buttons
+    confirmBtn.style.display = "inline-block";
+    otherBtn.style.display = "inline-block";
+    noThanksBtn.style.display = "inline-block";
+
+    function updateQuantityText() {
+      const plural = chosenQty === 1 ? "Shard" : "Shards";
+      instrEl.innerHTML =
+        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+    }
+
+    // Button handlers
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty > 0) {
+        chosenQty -= 1;
+        updateQuantityText();
+      }
+    };
+
+    noThanksBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty < totalPlayerShards) {
+        chosenQty += 1;
+        updateQuantityText();
+      }
+    };
+
+    otherBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      closeInfoChoicePopup();
+      // Close popup
+      popup.style.display = "none";
+      modalOverlay.style.display = "none";
+
+      // Exchange shards
+      totalPlayerShards -= chosenQty;
+      shardSupply += chosenQty;
+      onscreenConsole.log(`You spent ${chosenQty} Shard${chosenQty === 1 ? '' : 's'} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`);
+      totalAttackPoints += chosenQty;
+      cumulativeAttackPoints += chosenQty;
+
+      // Reset button texts for future use
+      noThanksBtn.textContent = "NO THANKS!";
+      otherBtn.textContent = "OTHER";
+      confirmBtn.textContent = "CONFIRM";
+
+      // Show all buttons
+      confirmBtn.style.display = "inline-block";
+      otherBtn.style.display = "none";
+      noThanksBtn.style.display = "none";
+      
+      resolve();
+      updateGameBoard();
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    popup.style.display = "block";
+    updateQuantityText();
   });
+}
+
+function shardsToRecruit() {
+  return new Promise((resolve) => {
+    const popup = document.querySelector(".info-or-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const titleEl = document.querySelector(".info-or-choice-popup-title");
+    const instrEl = document.querySelector(
+      ".info-or-choice-popup-instructions",
+    );
+    const previewEl = document.querySelector(".info-or-choice-popup-preview");
+    const confirmBtn = document.getElementById("info-or-choice-popup-confirm");
+    const otherBtn = document.getElementById(
+      "info-or-choice-popup-otherchoice",
+    );
+    const noThanksBtn = document.getElementById(
+      "info-or-choice-popup-nothanks",
+    );
+    const closeBtn = document.querySelector(
+      ".info-or-choice-popup-closebutton",
+    );
+    closeBtn.style.display = "none";
+
+    // Set popup content
+    titleEl.textContent = "SHARDS";
+    instrEl.innerHTML = `You can spend a Shard to get +1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?`;
+
+    // Set shard preview
+    if (previewEl) {
+      previewEl.style.backgroundImage = `url('Visual Assets/Icons/Shards.svg')`;
+      previewEl.style.backgroundColor = `transparent`;
+      previewEl.style.border = `none`;
+      previewEl.style.backgroundSize = "contain";
+      previewEl.style.backgroundRepeat = "no-repeat";
+      previewEl.style.backgroundPosition = "center";
+    }
+
+    // PRESET TO MAXIMUM QUANTITY
+    let chosenQty = totalPlayerShards;
+
+    // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
+    noThanksBtn.textContent = "+";
+    otherBtn.textContent = "CONFIRM";
+    confirmBtn.textContent = "-";
+
+    // Show all buttons
+    confirmBtn.style.display = "inline-block";
+    otherBtn.style.display = "inline-block";
+    noThanksBtn.style.display = "inline-block";
+
+    function updateQuantityText() {
+      const plural = chosenQty === 1 ? "Shard" : "Shards";
+      instrEl.innerHTML =
+        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
+    }
+
+    // Button handlers
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty > 0) {
+        chosenQty -= 1;
+        updateQuantityText();
+      }
+    };
+
+    noThanksBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (chosenQty < totalPlayerShards) {
+        chosenQty += 1;
+        updateQuantityText();
+      }
+    };
+
+    otherBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      closeInfoChoicePopup();
+      // Close popup
+      popup.style.display = "none";
+      modalOverlay.style.display = "none";
+
+      // Exchange shards
+      totalPlayerShards -= chosenQty;
+      shardSupply += chosenQty;
+      totalRecruitPoints += chosenQty; // Add to recruit instead of attack
+      cumulativeRecruitPoints += chosenQty;
+      
+      onscreenConsole.log(`You spent ${chosenQty} Shard${chosenQty === 1 ? '' : 's'} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`);
+
+      // Reset button texts
+      noThanksBtn.textContent = "NO THANKS!";
+      otherBtn.textContent = "OTHER";
+      confirmBtn.textContent = "CONFIRM";
+
+      // Show all buttons
+      confirmBtn.style.display = "inline-block";
+      otherBtn.style.display = "none";
+      noThanksBtn.style.display = "none";
+      
+      resolve();
+      updateGameBoard();
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    popup.style.display = "block";
+    updateQuantityText();
+  });
+}
+
+
+
+// Schemes
+
+async function forgeTheInfinityGauntlet() {
+const gemsInPlay = playerArtifacts.filter((card) => card.team === "Infinity Gems").length;
+const gemsInDiscard = playerDiscardPile.filter((card) => card.team === "Infinity Gems").length;
+
+if (gemsInPlay === 0 && gemsInDiscard === 0) {
+onscreenConsole.log(`You have no Infinity Gems in play or in your discard pile.`);
+
+if (city.filter((card) => card && card.team === "Infinity Gems").length === 0) {
+  onscreenConsole.log(`There are no Infinity Gems in the city to gain a Shard.`);
+} else {
+  onscreenConsole.log(`Each Infinity Gem in the city gains a Shard.`);
+  for (let i = 0; i < city.length; i++) {
+  const card = city[i];
+  if (card && card.team === "Infinity Gems" && shardSupply > 0) {
+
+      if (typeof card.shards === 'undefined') {
+    card.shards = 0;
+  }
+  playSFX("shards");
+    card.shards += 1;
+    shardSupply -= 1;
+  }
+}
+}
+return;
+}
+
+if (gemsInPlay > 0 && gemsInDiscard > 0) {
+  await forgeTheInfinityGauntletBoth();
+} else {
+  await forgeTheInfinityGauntletSingle();
+}
+
+onscreenConsole.log(`Each Infinity Gem in the city gains a Shard.`);
+  for (let i = 0; i < city.length; i++) {
+  const card = city[i];
+  if (card && card.team === "Infinity Gems" && shardSupply > 0) {
+      if (typeof card.shards === 'undefined') {
+    card.shards = 0;
+  }
+  playSFX("shards");
+    card.shards += 1;
+    shardSupply -= 1;
+  }
+
+}
+}
+
+async function forgeTheInfinityGauntletSingle() {
+  return new Promise((resolve) => {
+    
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(
+      ".card-choice-popup-selectionrow1",
+    );
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(
+      ".card-choice-popup-instructions",
+    );
+
+    // Set popup content
+    titleElement.textContent = "SCHEME TWIST";
+    instructionsElement.innerHTML =
+      `Select an Infinity Gem you control or from your discard pile to enter the city.`;
+
+    // Hide row labels and row2
+    document.querySelector(
+      ".card-choice-popup-selectionrow1label",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2label",
+    ).style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display =
+      "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2-container",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.height = "50%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.top = "28%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display =
+      "none";
+
+    // Clear existing content
+    selectionRow1.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    let selectedCardImage = null;
+    let isDragging = false;
+
+    // Initialize scroll gradient detection
+    const row1 = selectionRow1;
+    const row2Visible = false;
+    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+const gemsInPlay = playerArtifacts.filter((card) => card.team === "Infinity Gems");
+const gemsInDiscard = playerDiscardPile.filter((card) => card.team === "Infinity Gems");
+
+// Based on your description, gems will be in one location or the other, not both
+let gemsSourceArray;
+let displayCards;
+
+if (gemsInPlay.length > 0) {
+    gemsSourceArray = playerArtifacts;  // Gems are in play
+    displayCards = [...gemsInPlay];
+} else {
+    gemsSourceArray = playerDiscardPile; // Gems are in discard
+    displayCards = [...gemsInDiscard];
+}
+
+genericCardSort(displayCards);
+
+    // Create card elements for each eligible card
+    displayCards.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", String(card.id));
+
+      // Create card image
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      // Hover effects
+      const handleHover = () => {
+        if (isDragging) return;
+
+        // Update preview - but only if no card is selected
+        if (selectedCard === null) {
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+      };
+
+      const handleHoverOut = () => {
+        if (isDragging) return;
+
+        // Only clear preview if no card is selected AND we're not hovering over another card
+        if (selectedCard === null) {
+          setTimeout(() => {
+            if (!selectionRow1.querySelector(":hover") && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardElement.addEventListener("mouseover", handleHover);
+      cardElement.addEventListener("mouseout", handleHoverOut);
+
+      // Selection click handler
+      cardElement.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        const cardId = cardElement.getAttribute("data-card-id");
+
+        if (selectedCard && String(selectedCard.id) === cardId) {
+          // Deselect current card
+          selectedCard = null;
+          cardImage.classList.remove("selected");
+          selectedCardImage = null;
+
+          // Clear preview and reset to hover state
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML =
+          `Select an Infinity Gem you control or from your discard pile to enter the city.`;
+          document.getElementById("card-choice-popup-confirm").disabled = true;
+        } else {
+          // Deselect previous card if any
+          if (selectedCardImage) {
+            selectedCardImage.classList.remove("selected");
+          }
+
+          // Select new card
+          selectedCard = card;
+          selectedCardImage = cardImage;
+          cardImage.classList.add("selected");
+
+          // Update preview with selected card
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will enter the city.`;
+          document.getElementById("card-choice-popup-confirm").disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    if (displayCards.length > 20) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.add("three-row"); // Add a special class for 3-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "75%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "40%";
+      selectionRow1.style.gap = "0.3vw";
+    } else if (displayCards.length > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles when in multi-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else if (displayCards.length > 5) {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "42%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles for normal mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "28%";
+    }
+
+    // Drag scrolling functionality
+    setupDragScrolling(selectionRow1);
+
+    // Set up button handlers
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById(
+      "card-choice-popup-otherchoice",
+    );
+    const noThanksButton = document.getElementById(
+      "card-choice-popup-nothanks",
+    );
+
+    // Disable confirm initially and hide unnecessary buttons
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Confirm";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    // Confirm button handler
+confirmButton.onclick = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    if (selectedCard === null) {
+        closeCardChoicePopup();
+        return;
+    }
+    
+    // Close popup before proceeding
+    closeCardChoicePopup();
+    
+    setTimeout(async () => {
+        // Find the selected gem in the correct source array
+        const cardIndex = gemsSourceArray.findIndex(
+            (c) => c && c.id === selectedCard.id
+        );
+        
+        if (cardIndex !== -1) {
+            // Remove the gem from wherever it was (play or discard)
+            const chosenGem = gemsSourceArray.splice(cardIndex, 1)[0];
+            
+            chosenGem.type = "Villain";
+            // Add it to the villain deck (entering the city)
+            villainDeck.push(chosenGem);
+            
+            // Update villain display
+            await drawVillainCard();
+            
+            console.log(`${chosenGem.name} entered the city from ${gemsSourceArray === playerArtifacts ? 'play' : 'discard'}`);
+        } else {
+            console.error("Selected gem not found in source array");
+            onscreenConsole.log("Error: Selected gem could not be found.");
+        }
+        
+        resolve();
+    }, 100);
+};
+  });
+}
+
+async function forgeTheInfinityGauntletBoth() {
+return new Promise((resolve) => {
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(
+      ".card-choice-popup-selectionrow1",
+    );
+    const selectionRow2 = document.querySelector(
+      ".card-choice-popup-selectionrow2",
+    );
+    const selectionRow1Label = document.querySelector(
+      ".card-choice-popup-selectionrow1label",
+    );
+    const selectionRow2Label = document.querySelector(
+      ".card-choice-popup-selectionrow2label",
+    );
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(
+      ".card-choice-popup-instructions",
+    );
+
+    // Set popup content
+    titleElement.textContent = "SCHEME TWIST";
+    instructionsElement.innerHTML =
+      `Select an Infinity Gem you control or from your discard pile to enter the city.`;
+
+    // Show both rows and labels
+    selectionRow1Label.style.display = "block";
+    selectionRow2Label.style.display = "block";
+    selectionRow2.style.display = "flex";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2-container",
+    ).style.display = "block";
+    selectionRow1Label.textContent = "In Play";
+    selectionRow2Label.textContent = "Discard Pile";
+    document.querySelector(".card-choice-popup-closebutton").style.display =
+      "none";
+
+    // Reset container styles to default
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.height = "40%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.top = "0";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.transform = "none";
+
+    // Clear existing content
+    selectionRow1.innerHTML = "";
+    selectionRow2.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    let selectedLocation = null; // 'hand' or 'played'
+    let selectedCardImage = null;
+    let isDragging = false;
+
+    // Initialize scroll gradient detection
+    const row1 = selectionRow1;
+    const row2Visible = true;
+    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+    // Create copies for display only and sort
+    const displayArtifactCards = playerArtifacts.filter((card) => card.team === "Infinity Gems");
+    const displayDiscardCards = playerDiscardPile.filter((card) => card.team === "Infinity Gems");
+    genericCardSort(displayArtifactCards);
+    genericCardSort(displayDiscardCards);
+
+    // Update the confirm button state and instructions
+    function updateUI() {
+      const confirmButton = document.getElementById(
+        "card-choice-popup-confirm",
+      );
+      confirmButton.disabled = selectedCard === null;
+
+      if (selectedCard === null) {
+        instructionsElement.innerHTML =
+          `Select an Infinity Gem you control or from your discard pile to enter the city.`;
+      } else {
+        instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will enter the city.`;
+      }
+    }
+
+    // Create card element helper function
+    function createCardElement(card, location, row) {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", String(card.id));
+      cardElement.setAttribute("data-location", location);
+
+      // Create card image
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      // Hover effects
+      const handleHover = () => {
+        if (isDragging) return;
+
+        // Update preview - but only if no card is selected
+        if (selectedCard === null) {
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+      };
+
+      const handleHoverOut = () => {
+        if (isDragging) return;
+
+        // Only clear preview if no card is selected AND we're not hovering over another card
+        if (selectedCard === null) {
+          setTimeout(() => {
+            const isHoveringAnyCard =
+              selectionRow1.querySelector(":hover") ||
+              selectionRow2.querySelector(":hover");
+            if (!isHoveringAnyCard && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardElement.addEventListener("mouseover", handleHover);
+      cardElement.addEventListener("mouseout", handleHoverOut);
+
+      // Selection click handler
+      cardElement.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        if (selectedCard && selectedCard.id === card.id && selectedLocation === location) {
+          // Deselect current card
+          selectedCard = null;
+          selectedLocation = null;
+          cardImage.classList.remove("selected");
+          selectedCardImage = null;
+
+          // Clear preview and reset to hover state
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+        } else {
+          // Deselect previous card if any
+          if (selectedCardImage) {
+            selectedCardImage.classList.remove("selected");
+          }
+
+          // Select new card
+          selectedCard = card;
+          selectedLocation = location;
+          selectedCardImage = cardImage;
+          cardImage.classList.add("selected");
+
+          // Update preview with selected card
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+
+        updateUI();
+      });
+
+      cardElement.appendChild(cardImage);
+      row.appendChild(cardElement);
+    }
+
+    // Populate row1 with Hand cards
+    displayArtifactCards.forEach((card) => {
+      createCardElement(card, "control", selectionRow1);
+    });
+
+    // Populate row2 with Played Cards
+    displayDiscardCards.forEach((card) => {
+      createCardElement(card, "discard", selectionRow2);
+    });
+
+    // Adjust row heights based on card counts
+    if (displayArtifactCards.length > 20 || displayDiscardCards.length > 20) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.add("three-row");
+      selectionRow2.classList.add("multi-row");
+      selectionRow2.classList.add("three-row");
+    } else if (displayArtifactCards.length > 10 || displayDiscardCards.length > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row");
+      selectionRow2.classList.add("multi-row");
+      selectionRow2.classList.remove("three-row");
+    } else if (displayArtifactCards.length > 5 || displayDiscardCards.length > 5) {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row");
+      selectionRow2.classList.remove("multi-row");
+      selectionRow2.classList.remove("three-row");
+    } else {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row");
+      selectionRow2.classList.remove("multi-row");
+      selectionRow2.classList.remove("three-row");
+    }
+
+    // Drag scrolling functionality for both rows
+    setupDragScrolling(selectionRow1);
+    setupDragScrolling(selectionRow2);
+
+    // Set up button handlers
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById(
+      "card-choice-popup-otherchoice",
+    );
+    const noThanksButton = document.getElementById(
+      "card-choice-popup-nothanks",
+    );
+
+    // Disable confirm initially and hide unnecessary buttons
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Confirm";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    // Confirm button handler
+    confirmButton.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedCard === null || selectedLocation === null) return;
+      closeCardChoicePopup();
+      setTimeout(async () => {
+        if (selectedLocation === "control") {
+          // Remove from hand
+          const indexInHand = playerArtifacts.findIndex(
+            (c) => c && c.id === selectedCard.id,
+          );
+          if (indexInHand !== -1) {
+            const chosenCard = playerArtifacts.splice(indexInHand, 1)[0];
+            chosenCard.type = "Villain";
+            villainDeck.push(chosenCard);
+            await drawVillainCard();
+            
+          } else {
+            console.error("Selected card not found in player hand");
+            onscreenConsole.log("Error: Selected card not found in hand.");
+          }
+        } else if (selectedLocation === "discard") {
+          // Remove from played cards
+          const indexInPlayed = playerDiscardPile.findIndex(
+            (c) => c && c.id === selectedCard.id,
+          );
+          if (indexInPlayed !== -1) {
+            const chosenCard = playerDiscardPile.splice(indexInPlayed, 1)[0];
+            chosenCard.type = "Villain";
+            villainDeck.push(chosenCard);
+            await drawVillainCard();
+          } else {
+            console.error("Selected card not found in played cards");
+            onscreenConsole.log("Error: Selected card not found in played cards.");
+          }
+        }
+
+        updateGameBoard();
+        resolve();
+      }, 100);
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+async function intergalacticKreeNegaBomb() {
+  shuffleDeck(negaBombDeck);
+
+  return new Promise((resolve) => {
+    const negaBombCard = negaBombDeck[negaBombDeck.length - 1];
+
+    setTimeout(() => {
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `THE RANDOM CARD YOU REVEALED IS <span class="console-highlights">${negaBombCard.name}</span>.`,
+        "CONTINUE",
+        "CONTINUE"
+      );
+
+      // Update title
+      document.querySelector(".info-or-choice-popup-title").innerHTML =
+        "SCHEME TWIST";
+
+      // Hide close button
+      document.querySelector(
+        ".info-or-choice-popup-closebutton",
+      ).style.display = "none";
+
+      // Use preview area for images
+      const previewArea = document.querySelector(
+        ".info-or-choice-popup-preview",
+      );
+      if (previewArea) {
+        previewArea.style.backgroundImage =
+          `url('${negaBombCard.image}')`;
+        previewArea.style.backgroundSize = "contain";
+        previewArea.style.backgroundRepeat = "no-repeat";
+        previewArea.style.backgroundPosition = "center";
+        previewArea.style.display = "block";
+      }
+
+      if (negaBombCard.name === "Scheme Twist") {
+        denyButton.style.display = "none";
+      } else {
+        confirmButton.style.display = "none";
+      }
+
+      confirmButton.onclick = async () => {
+        closeInfoChoicePopup();
+        let removedCard = negaBombDeck.splice(-1);
+        onscreenConsole.log(
+          `You revealed <span class="console-highlights">${removedCard.name}</span>. It will be KO'd. All Heroes in the HQ will be KO'd and you will gain a Wound.`,
+        );
+        koPile.push(removedCard);
+        await KOAllHeroesInHQ();
+        await drawWound();
+        resolve();
+      };
+
+      denyButton.onclick = async () => {
+        closeInfoChoicePopup();
+        let removedCard = negaBombDeck.splice(-1);
+        bystanderDeck.push(removedCard);
+        onscreenConsole.log(
+          `You revealed <span class="console-highlights">${removedCard.name}</span>. They will be rescued now.`,
+        );
+        await bystanderRescue();        
+        resolve();
+      };
+    }, 10);
+  });
+
+
+}
+
+async function theKreeSkrullWar() {
+    if (
+    schemeTwistCount < 8
+  ) {
+    for (let i = 0; i < city.length; i++) {
+    if (city[i] && (city[i].team === "Kree Starforce" || city[i].team === "Skrulls")) {
+      await handleVillainEscape(city[i]);
+      city[i] = null;
+      updateGameBoard();
+    }
+  } 
+  const kreeEscapes = escapedVillainsDeck.filter(
+    (card) => card.team === "Kree Starforce",
+  ).length;
+  const skrullEscapes = escapedVillainsDeck.filter(
+    (card) => card.team === "Skrulls",
+  ).length;
+
+  if (kreeEscapes === skrullEscapes) {
+    onscreenConsole.log("There are an equal number of Kree and Skurll in the Escape Pile. This Scheme Twist will be KO'd.");
+    const twistCard = {
+    name: "Scheme Twist",
+    type: "Scheme Twist",
+    image: "Visual Assets/Schemes/Custom Twists/theKreeSkrullWar.webp",
+  };
   
+  koPile.push(twistCard);
 
-// Global Variables
+  updateGameBoard();
+  
+} else if (kreeEscapes > skrullEscapes) {
+    onscreenConsole.log(`More Kree have escaped than Skrulls. This Twist will be stacked next to the Mastermind as a Kree Conquest.`);
+    stackedTwistNextToMastermind++;
+    kreeConquests += 1;
 
-let shardSupply = 500;
-let totalPlayerShards = 0;
-let shardsGainedThisTurn = 0;
-let playerArtifacts = [];
-let rocketRacoonShardBonus = false;
-let grootRecruitBonus = false;
-let grootRecruitShards = false;
-let shardsForRecruitEnabled = false;
-let gamoraGodslayerOne = false;
-let gamoraGodslayerTwo = false;
+} else {
+    onscreenConsole.log(`More Skrulls have escaped than Kree. This Twist will be stacked next to the Mastermind as a Skrull Conquest.`);
+    stackedTwistNextToMastermind++;
+    skrullConquests += 1;
+}
 
-//Add to master strike and ambush completion:
+   // Check escape pile - more Skrulls or Kree? Add a conquest or KO card
+  } else {
+  if (kreeConquests === skrullConquests) {
+    onscreenConsole.log("There are an equal number of Kree and Skurll Conquests. This Scheme Twist will be KO'd.");
+    const twistCard = {
+    name: "Scheme Twist",
+    type: "Scheme Twist",
+    image: "Visual Assets/Schemes/Custom Twists/theKreeSkrullWar.webp",
+  };
+  
+  koPile.push(twistCard);
+  
+} else if (kreeConquests > skrullConquests) {
+    onscreenConsole.log(`The Kree have more Conquests. This Scheme Twist is stacked as another.`);
+    stackedTwistNextToMastermind++;
+    kreeConquests += 1;
 
-if (rocketRacoonShardBonus) {
-  await rocketRaccoonIncomingDetectorDecision();
+} else {
+    onscreenConsole.log(`The Skrulls have more Conquests. This Scheme Twist is stacked as another.`);
+    stackedTwistNextToMastermind++;
+    skrullConquests += 1;
+}
+  }
+  updateGameBoard();
+}
+
+function uniteTheShards() {
+  stackedTwistNextToMastermind++;
+  const mastermind = getSelectedMastermind();
+    if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+  playSFX("shards");
+  mastermind.shards += stackedTwistNextToMastermind;
+  shardSupply -= stackedTwistNextToMastermind;
+  onscreenConsole.log(
+    `<span class="console-highlights">${mastermind.name}</span> gains ${stackedTwistNextToMastermind} Shard${stackedTwistNextToMastermind === 1 ? "" : "s"}.`,
+  );
+  updateGameBoard();
+}
+
+// Masterminds
+
+async function supremeIntelligenceOfTheKreeStrike() {
+const mastermind = getSelectedMastermind();
+  if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+  playSFX("shards");
+mastermind.shards += 1;
+shardSupply -= 1;
+onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains a Shard.`);
+
+const cardsToPlay = playerHand.filter(card => 
+    card.cost === mastermind.shards || card.cost === mastermind.shards + 1
+  );
+  
+  // Process each card with the discard check
+  for (const card of cardsToPlay) {
+    const { returned } = await checkDiscardForInvulnerability(card);
+    if (returned && returned.length) {
+      playerHand.push(...returned);
+    }
+  }
+
+}
+
+function supremeIntelligenceOfTheKreeCombinedKnowledgeOfAllKree() {
+const mastermind = getSelectedMastermind();
+const kreeVillains = escapedVillainsDeck.filter(
+      (card) => card.team === "Kree Starforce",
+    ).length + city.filter(
+      (card) => card && card.team === "Kree Starforce",
+    ).length;
+      if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+  playSFX("shards");
+mastermind.shards += kreeVillains;
+shardSupply -= kreeVillains;
+onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains ${kreeVillains} Shard${kreeVillains === 1 ? '' : 's'} for each Kree Starforce Villain card in the city and/or Escape pile.`);
+updateGameBoard();
+}
+
+function supremeIntelligenceOfTheKreeCosmicOmniscience() {
+  const mastermind = getSelectedMastermind();
+const masterStrikes = koPile.filter(
+      (card) => card.name === "Master Strike",
+    ).length;
+      if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+  playSFX("shards");
+mastermind.shards += masterStrikes;
+shardSupply -= masterStrikes;
+onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains ${masterStrikes} Shard${masterStrikes === 1 ? '' : 's'} for each Master Strike in the KO pile.`);
+updateGameBoard();
+}
+
+function supremeIntelligenceOfTheKreeCountermeasureProtocols() {
+    const mastermind = getSelectedMastermind();
+const previousTactics = victoryPile.filter(
+      (card) => card.type === "Mastermind",
+    ).length;
+      if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+  playSFX("shards");
+mastermind.shards += previousTactics;
+shardSupply -= previousTactics;
+onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains ${previousTactics} Shard${previousTactics === 1 ? '' : 's'} for each Mastermind Tactic in your Victory Pile.`);
+updateGameBoard();
+}
+
+function supremeIntelligenceOfTheKreeGuideKreeEvolution() {
+      const mastermind = getSelectedMastermind();
+  if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+  playSFX("shards");
+mastermind.shards += 1;
+shardSupply -= 1;
+
+for (let i = 0; i < city.length; i++) {
+  const card = city[i];
+  if (card && card.team === "Kree Starforce" && shardSupply > 0) {
+      if (typeof card.shards === 'undefined') {
+    card.shards = 0;
+  }
+  playSFX("shards");
+    card.shards += 1;  // Using += instead of =+ (which would be assignment)
+    shardSupply -= 1;
+  }
+}
+
+onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> and all Kree Villains in the city gain a Shard.`);
+updateGameBoard();
+}
+
+async function thanosStrike() {
+  return new Promise((resolve) => {
+    // Get eligible cards from artifacts, hand, and played cards
+    const COLOURS = new Set(["Green", "Yellow", "Black", "Blue", "Red"]);
+    
+    const eligibleArtifactCards = playerArtifacts.filter(
+      (c) => c && c.type === "Hero" && COLOURS.has(String(c.color || "").trim()),
+    );
+    
+    const eligibleHandCards = playerHand.filter(
+      (c) => c && COLOURS.has(String(c.color || "").trim()),
+    );
+    
+    const eligiblePlayedCards = cardsPlayedThisTurn.filter(
+      (c) => c && COLOURS.has(String(c.color || "").trim()) && !c.isCopied && !c.sidekickToDestroy,
+    );
+
+    if (eligibleArtifactCards.length === 0 && eligibleHandCards.length === 0 && eligiblePlayedCards.length === 0) {
+      console.log("No eligible coloured cards in artifacts, hand, or played cards (Green/Yellow/Black/Blue/Red).");
+      onscreenConsole.log(`No non-grey Heroes available for <span class="console-highlights">Thanos</span> to capture.`);
+      resolve();
+      return;
+    }
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(
+      ".card-choice-popup-selectionrow1",
+    );
+    const selectionRow2 = document.querySelector(
+      ".card-choice-popup-selectionrow2",
+    );
+    const selectionRow1Label = document.querySelector(
+      ".card-choice-popup-selectionrow1label",
+    );
+    const selectionRow2Label = document.querySelector(
+      ".card-choice-popup-selectionrow2label",
+    );
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(
+      ".card-choice-popup-instructions",
+    );
+
+    // Set popup content
+    titleElement.textContent = "MASTER STRIKE";
+    instructionsElement.innerHTML =
+      `Select a non-grey Hero for <span class="console-highlights">Thanos</span> to capture as a "Bound Soul".`;
+
+    // Show both rows and labels
+    selectionRow1Label.style.display = "block";
+    selectionRow2Label.style.display = "block";
+    selectionRow2.style.display = "flex";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2-container",
+    ).style.display = "block";
+    selectionRow1Label.textContent = "Artifacts & Hand";
+    selectionRow2Label.textContent = "Played Cards";
+    document.querySelector(".card-choice-popup-closebutton").style.display =
+      "none";
+
+    // Reset container styles to default
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.height = "40%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.top = "0";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.transform = "none";
+
+    // Clear existing content
+    selectionRow1.innerHTML = "";
+    selectionRow2.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    let selectedLocation = null; // 'artifacts', 'hand', or 'played'
+    let selectedCardImage = null;
+    let isDragging = false;
+
+    // Initialize scroll gradient detection
+    const row1 = selectionRow1;
+    const row2Visible = true;
+    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+    // Create copies for display only and sort
+    const displayArtifactCards = [...eligibleArtifactCards];
+    const displayHandCards = [...eligibleHandCards];
+    const displayPlayedCards = [...eligiblePlayedCards];
+    genericCardSort(displayArtifactCards);
+    genericCardSort(displayHandCards);
+    genericCardSort(displayPlayedCards);
+
+    // Update the confirm button state and instructions
+    function updateUI() {
+      const confirmButton = document.getElementById(
+        "card-choice-popup-confirm",
+      );
+      confirmButton.disabled = selectedCard === null;
+
+      if (selectedCard === null) {
+        instructionsElement.innerHTML =
+          `Select a non-grey Hero for <span class="console-highlights">Thanos</span> to capture as a "Bound Soul".`;
+      } else {
+        instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be placed in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> "Bound Souls" pile.`;
+      }
+    }
+
+    // Create card element helper function
+    function createCardElement(card, location, row) {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", String(card.id));
+      cardElement.setAttribute("data-location", location);
+
+      // Create card image
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      // Hover effects
+      const handleHover = () => {
+        if (isDragging) return;
+
+        // Update preview - but only if no card is selected
+        if (selectedCard === null) {
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+      };
+
+      const handleHoverOut = () => {
+        if (isDragging) return;
+
+        // Only clear preview if no card is selected AND we're not hovering over another card
+        if (selectedCard === null) {
+          setTimeout(() => {
+            const isHoveringAnyCard =
+              selectionRow1.querySelector(":hover") ||
+              selectionRow2.querySelector(":hover");
+            if (!isHoveringAnyCard && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardElement.addEventListener("mouseover", handleHover);
+      cardElement.addEventListener("mouseout", handleHoverOut);
+
+      // Selection click handler
+      cardElement.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        if (selectedCard && selectedCard.id === card.id && selectedLocation === location) {
+          // Deselect current card
+          selectedCard = null;
+          selectedLocation = null;
+          cardImage.classList.remove("selected");
+          selectedCardImage = null;
+
+          // Clear preview and reset to hover state
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+        } else {
+          // Deselect previous card if any
+          if (selectedCardImage) {
+            selectedCardImage.classList.remove("selected");
+          }
+
+          // Select new card
+          selectedCard = card;
+          selectedLocation = location;
+          selectedCardImage = cardImage;
+          cardImage.classList.add("selected");
+
+          // Update preview with selected card
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+
+        updateUI();
+      });
+
+      cardElement.appendChild(cardImage);
+      row.appendChild(cardElement);
+    }
+
+    // Populate row1 with Artifacts first, then Hand cards
+    if (displayArtifactCards.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    displayArtifactCards.forEach((card) => {
+      createCardElement(card, "artifacts", selectionRow1);
+    });
+
+    if (displayHandCards.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
+    displayHandCards.forEach((card) => {
+      createCardElement(card, "hand", selectionRow1);
+    });
+
+    // Populate row2 with Played Cards
+    displayPlayedCards.forEach((card) => {
+      createCardElement(card, "played", selectionRow2);
+    });
+
+    // Adjust row heights based on card counts
+    const row1TotalCards = displayArtifactCards.length + displayHandCards.length;
+    const row2TotalCards = displayPlayedCards.length;
+    
+    if (row1TotalCards > 20 || row2TotalCards > 20) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.add("three-row");
+      selectionRow2.classList.add("multi-row");
+      selectionRow2.classList.add("three-row");
+    } else if (row1TotalCards > 10 || row2TotalCards > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row");
+      selectionRow2.classList.add("multi-row");
+      selectionRow2.classList.remove("three-row");
+    } else if (row1TotalCards > 5 || row2TotalCards > 5) {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row");
+      selectionRow2.classList.remove("multi-row");
+      selectionRow2.classList.remove("three-row");
+    } else {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row");
+      selectionRow2.classList.remove("multi-row");
+      selectionRow2.classList.remove("three-row");
+    }
+
+    // Drag scrolling functionality for both rows
+    setupDragScrolling(selectionRow1);
+    setupDragScrolling(selectionRow2);
+
+    // Set up button handlers
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById(
+      "card-choice-popup-otherchoice",
+    );
+    const noThanksButton = document.getElementById(
+      "card-choice-popup-nothanks",
+    );
+
+    // Disable confirm initially and hide unnecessary buttons
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Confirm";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    // Confirm button handler
+    confirmButton.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedCard === null || selectedLocation === null) return;
+
+      setTimeout(async () => {
+        if (selectedLocation === "artifacts") {
+          // Remove from artifacts
+          const indexInArtifacts = playerArtifacts.findIndex(
+            (c) => c && c.id === selectedCard.id,
+          );
+          if (indexInArtifacts !== -1) {
+            const chosenCard = playerArtifacts.splice(indexInArtifacts, 1)[0];
+            boundSouls.push(chosenCard);
+            onscreenConsole.log(
+              `<span class="console-highlights">${chosenCard.name}</span> has been placed in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> "Bound Souls" pile.`,
+            );
+          } else {
+            console.error("Selected card not found in artifacts");
+            onscreenConsole.log("Error: Selected card not found in artifacts.");
+          }
+        } else if (selectedLocation === "hand") {
+          // Remove from hand
+          const indexInHand = playerHand.findIndex(
+            (c) => c && c.id === selectedCard.id,
+          );
+          if (indexInHand !== -1) {
+            const chosenCard = playerHand.splice(indexInHand, 1)[0];
+            boundSouls.push(chosenCard);
+            onscreenConsole.log(
+              `<span class="console-highlights">${chosenCard.name}</span> has been placed in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> "Bound Souls" pile.`,
+            );
+          } else {
+            console.error("Selected card not found in player hand");
+            onscreenConsole.log("Error: Selected card not found in hand.");
+          }
+        } else if (selectedLocation === "played") {
+          // Remove from played cards
+          const indexInPlayed = cardsPlayedThisTurn.findIndex(
+            (c) => c && c.id === selectedCard.id,
+          );
+          if (indexInPlayed !== -1) {
+            const chosenCard = cardsPlayedThisTurn.splice(indexInPlayed, 1)[0];
+            boundSouls.push(chosenCard);
+            onscreenConsole.log(
+              `<span class="console-highlights">${chosenCard.name}</span> has been placed in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> "Bound Souls" pile.`,
+            );
+          } else {
+            console.error("Selected card not found in played cards");
+            onscreenConsole.log("Error: Selected card not found in played cards.");
+          }
+        }
+
+        updateGameBoard();
+        closeCardChoicePopup();
+        resolve();
+      }, 100);
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+async function thanosCenturiesOfEnvy() {
+  const mastermind = getSelectedMastermind();
+
+  if (playerArtifacts.filter((card) => card.team === "Infinity Gems").length === 0) {
+    onscreenConsole.log(`You have no Infinity Gem Artifacts to discard.`);
+    return;
+  }
+
+    return new Promise((resolve) => {
+
+      const infinityGems = playerArtifacts.filter((card) => card.team === "Infinity Gems");
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(
+      ".card-choice-popup-selectionrow1",
+    );
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(
+      ".card-choice-popup-instructions",
+    );
+
+    // Set popup content
+    titleElement.textContent = "MASTERMIND TACTIC";
+    instructionsElement.innerHTML =
+      `Select an Infinity Gem Artifact you control. It will be discarded.`;
+
+    // Hide row labels and row2
+    document.querySelector(
+      ".card-choice-popup-selectionrow1label",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2label",
+    ).style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display =
+      "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2-container",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.height = "50%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.top = "28%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display =
+      "none";
+
+    // Clear existing content
+    selectionRow1.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    let selectedCardImage = null;
+    let isDragging = false;
+
+    // Initialize scroll gradient detection
+    const row1 = selectionRow1;
+    const row2Visible = false;
+    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+    // Create a copy of eligibleCards to sort for display only
+    const displayCards = [...infinityGems];
+    genericCardSort(displayCards);
+
+    // Create card elements for each eligible card
+    displayCards.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", String(card.id));
+
+      // Create card image
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      // Hover effects
+      const handleHover = () => {
+        if (isDragging) return;
+
+        // Update preview - but only if no card is selected
+        if (selectedCard === null) {
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+      };
+
+      const handleHoverOut = () => {
+        if (isDragging) return;
+
+        // Only clear preview if no card is selected AND we're not hovering over another card
+        if (selectedCard === null) {
+          setTimeout(() => {
+            if (!selectionRow1.querySelector(":hover") && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardElement.addEventListener("mouseover", handleHover);
+      cardElement.addEventListener("mouseout", handleHoverOut);
+
+      // Selection click handler
+      cardElement.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        const cardId = cardElement.getAttribute("data-card-id");
+
+        if (selectedCard && String(selectedCard.id) === cardId) {
+          // Deselect current card
+          selectedCard = null;
+          cardImage.classList.remove("selected");
+          selectedCardImage = null;
+
+          // Clear preview and reset to hover state
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML =
+            `Select an Infinity Gem Artifact you control. It will be discarded.`;
+          document.getElementById("card-choice-popup-confirm").disabled = true;
+        } else {
+          // Deselect previous card if any
+          if (selectedCardImage) {
+            selectedCardImage.classList.remove("selected");
+          }
+
+          // Select new card
+          selectedCard = card;
+          selectedCardImage = cardImage;
+          cardImage.classList.add("selected");
+
+          // Update preview with selected card
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will be discarded.`;
+          document.getElementById("card-choice-popup-confirm").disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    if (displayCards.length > 20) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.add("three-row"); // Add a special class for 3-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "75%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "40%";
+      selectionRow1.style.gap = "0.3vw";
+    } else if (displayCards.length > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles when in multi-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else if (displayCards.length > 5) {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "42%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles for normal mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "28%";
+    }
+
+    // Drag scrolling functionality
+    setupDragScrolling(selectionRow1);
+
+    // Set up button handlers
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById(
+      "card-choice-popup-otherchoice",
+    );
+    const noThanksButton = document.getElementById(
+      "card-choice-popup-nothanks",
+    );
+
+    // Disable confirm initially and hide unnecessary buttons
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Confirm";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    // Confirm button handler
+    confirmButton.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedCard === null) return;
+
+      setTimeout(async () => {
+        
+        // Find the selected card's current index in the *actual* hand
+        const indexInHand = playerArtifacts.findIndex(
+          (c) => c && c.id === selectedCard.id,
+        );
+        closeCardChoicePopup();
+        if (indexInHand !== -1) {
+          // Remove the card from the player's hand
+          const chosenCard = playerArtifacts.splice(indexInHand, 1)[0];
+          playerDiscardPile.push(chosenCard);
+          onscreenConsole.log(
+            `<span class="console-highlights">${chosenCard.name}</span> has been discarded.`,
+          );
+          updateGameBoard();
+        } else {
+          console.error("Selected card not found in player hand");
+          onscreenConsole.log("Error: Selected card not found.");
+          closeCardChoicePopup();
+        }
+        resolve();
+      }, 100);
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+
+async function thanosGodOfDeath() {
+    try {
+        const allCardsToCheck = [...playerHand, ...playerArtifacts, ...cardsPlayedThisTurn];
+        const boundSoulsNames = new Set(boundSouls.map(card => card.name));
+        
+        let matchCount = 0;
+        
+        for (const card of allCardsToCheck) {
+            if (boundSoulsNames.has(card.name)) {
+                matchCount++;
+            }
+        }
+
+        onscreenConsole.log(`You have ${matchCount} card${matchCount === 1 ? '' : 's'} with the same card name as a card in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile. You gain ${matchCount} Wound${matchCount === 1 ? '' : 's'}.`);
+
+        for (let i = 0; i < matchCount; i++) {
+            await drawWound();
+        }
+        
+        return matchCount; // Optional: return the count if useful elsewhere
+    } catch (error) {
+        console.error("Error in thanosGodOfDeath:", error);
+        onscreenConsole.log("An error occurred while processing Thanos' ability.");
+        throw error; // Re-throw if you want calling code to handle it
+    }
+}
+
+async function thanosKeeperOfSouls() {
+
+  return new Promise((resolve) => {
+    
+    if (boundSouls.length === 0) {
+      onscreenConsole.log(`There are no Heroes in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile to gain.`);
+      resolve();
+      return;
+    }
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(
+      ".card-choice-popup-selectionrow1",
+    );
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(
+      ".card-choice-popup-instructions",
+    );
+
+    // Set popup content
+    titleElement.textContent = "MASTERMIND TACTIC";
+    instructionsElement.innerHTML =
+      `Gain a Hero from <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile. Then each other player puts a non-grey Hero from their discard pile into <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
+
+    // Hide row labels and row2
+    document.querySelector(
+      ".card-choice-popup-selectionrow1label",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2label",
+    ).style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display =
+      "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2-container",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.height = "50%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.top = "28%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display =
+      "none";
+
+    // Clear existing content
+    selectionRow1.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    let selectedCardImage = null;
+    let isDragging = false;
+
+    // Initialize scroll gradient detection
+    const row1 = selectionRow1;
+    const row2Visible = false;
+    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+    // Create a copy of eligibleCards to sort for display only
+    const displayCards = [...boundSouls];
+    genericCardSort(displayCards);
+
+    // Create card elements for each eligible card
+    displayCards.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", String(card.id));
+
+      // Create card image
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      // Hover effects
+      const handleHover = () => {
+        if (isDragging) return;
+
+        // Update preview - but only if no card is selected
+        if (selectedCard === null) {
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+      };
+
+      const handleHoverOut = () => {
+        if (isDragging) return;
+
+        // Only clear preview if no card is selected AND we're not hovering over another card
+        if (selectedCard === null) {
+          setTimeout(() => {
+            if (!selectionRow1.querySelector(":hover") && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardElement.addEventListener("mouseover", handleHover);
+      cardElement.addEventListener("mouseout", handleHoverOut);
+
+      // Selection click handler
+      cardElement.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        const cardId = cardElement.getAttribute("data-card-id");
+
+        if (selectedCard && String(selectedCard.id) === cardId) {
+          // Deselect current card
+          selectedCard = null;
+          cardImage.classList.remove("selected");
+          selectedCardImage = null;
+
+          // Clear preview and reset to hover state
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML =
+          `Gain a Hero from <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile. Then each other player puts a non-grey Hero from their discard pile into <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
+          document.getElementById("card-choice-popup-confirm").disabled = true;
+        } else {
+          // Deselect previous card if any
+          if (selectedCardImage) {
+            selectedCardImage.classList.remove("selected");
+          }
+
+          // Select new card
+          selectedCard = card;
+          selectedCardImage = cardImage;
+          cardImage.classList.add("selected");
+
+          // Update preview with selected card
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will gained.`;
+          document.getElementById("card-choice-popup-confirm").disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    if (displayCards.length > 20) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.add("three-row"); // Add a special class for 3-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "75%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "40%";
+      selectionRow1.style.gap = "0.3vw";
+    } else if (displayCards.length > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles when in multi-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else if (displayCards.length > 5) {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "42%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles for normal mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "28%";
+    }
+
+    // Drag scrolling functionality
+    setupDragScrolling(selectionRow1);
+
+    // Set up button handlers
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById(
+      "card-choice-popup-otherchoice",
+    );
+    const noThanksButton = document.getElementById(
+      "card-choice-popup-nothanks",
+    );
+
+    // Disable confirm initially and hide unnecessary buttons
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Confirm";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    // Confirm button handler
+    confirmButton.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedCard === null) return;
+
+      setTimeout(async () => {
+
+        // Find the selected card's current index in the *actual* hand
+        const indexInHand = boundSouls.findIndex(
+          (c) => c && c.id === selectedCard.id,
+        );
+        if (indexInHand !== -1) {
+          // Remove the card from the player's hand
+          const chosenHero = boundSouls.splice(indexInHand, 1)[0];
+          playerDiscardPile.push(chosenHero);
+          onscreenConsole.log(
+            `<span class="console-highlights">${chosenHero.name}</span> has been gained and placed in your Discard pile.`,
+          );
+          updateGameBoard();
+
+          // Close popup before proceeding to next phase
+          closeCardChoicePopup();
+
+          // Proceed to recruitment phase
+          await thanosKeeperOfSoulsSacrifice();
+        } else {
+          console.error("Selected card not found in player hand");
+          onscreenConsole.log("Error: Selected card not found.");
+          closeCardChoicePopup();
+        }
+        resolve();
+      }, 100);
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+async function thanosKeeperOfSoulsSacrifice() {
+  return new Promise((resolve) => {
+    
+    const COLOURS = new Set(["Green", "Yellow", "Black", "Blue", "Red"]);
+    const eligibleCards = playerDiscardPile.filter(
+      (c) => c && COLOURS.has(String(c.color || "").trim()),
+    );
+
+    if (eligibleCards.length === 0) {
+      onscreenConsole.log(`No non-grey Heroes available to put in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`);
+      resolve();
+      return;
+    }
+
+    const cardchoicepopup = document.querySelector(".card-choice-popup");
+    const modalOverlay = document.getElementById("modal-overlay");
+    const selectionRow1 = document.querySelector(
+      ".card-choice-popup-selectionrow1",
+    );
+    const previewElement = document.querySelector(".card-choice-popup-preview");
+    const titleElement = document.querySelector(".card-choice-popup-title");
+    const instructionsElement = document.querySelector(
+      ".card-choice-popup-instructions",
+    );
+
+    // Set popup content
+    titleElement.textContent = "MASTERMIND TACTIC";
+    instructionsElement.innerHTML =
+      `Put a non-grey Hero from your Discard pile into <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
+
+    // Hide row labels and row2
+    document.querySelector(
+      ".card-choice-popup-selectionrow1label",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2label",
+    ).style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display =
+      "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow2-container",
+    ).style.display = "none";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.height = "50%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.top = "28%";
+    document.querySelector(
+      ".card-choice-popup-selectionrow1-container",
+    ).style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display =
+      "none";
+
+    // Clear existing content
+    selectionRow1.innerHTML = "";
+    previewElement.innerHTML = "";
+    previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+    let selectedCard = null;
+    let selectedCardImage = null;
+    let isDragging = false;
+
+    // Initialize scroll gradient detection
+    const row1 = selectionRow1;
+    const row2Visible = false;
+    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
+
+    // Create a copy of eligibleCards to sort for display only
+    const displayCards = [...eligibleCards];
+    genericCardSort(displayCards);
+
+    // Create card elements for each eligible card
+    displayCards.forEach((card) => {
+      const cardElement = document.createElement("div");
+      cardElement.className = "popup-card";
+      cardElement.setAttribute("data-card-id", String(card.id));
+
+      // Create card image
+      const cardImage = document.createElement("img");
+      cardImage.src = card.image;
+      cardImage.alt = card.name;
+      cardImage.className = "popup-card-image";
+
+      // Hover effects
+      const handleHover = () => {
+        if (isDragging) return;
+
+        // Update preview - but only if no card is selected
+        if (selectedCard === null) {
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+        }
+      };
+
+      const handleHoverOut = () => {
+        if (isDragging) return;
+
+        // Only clear preview if no card is selected AND we're not hovering over another card
+        if (selectedCard === null) {
+          setTimeout(() => {
+            if (!selectionRow1.querySelector(":hover") && !isDragging) {
+              previewElement.innerHTML = "";
+              previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+            }
+          }, 50);
+        }
+      };
+
+      cardElement.addEventListener("mouseover", handleHover);
+      cardElement.addEventListener("mouseout", handleHoverOut);
+
+      // Selection click handler
+      cardElement.addEventListener("click", (e) => {
+        if (isDragging) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+
+        const cardId = cardElement.getAttribute("data-card-id");
+
+        if (selectedCard && String(selectedCard.id) === cardId) {
+          // Deselect current card
+          selectedCard = null;
+          cardImage.classList.remove("selected");
+          selectedCardImage = null;
+
+          // Clear preview and reset to hover state
+          previewElement.innerHTML = "";
+          previewElement.style.backgroundColor = "var(--panel-backgrounds)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML =
+                `Put a non-grey Hero from your Discard pile into <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
+          document.getElementById("card-choice-popup-confirm").disabled = true;
+        } else {
+          // Deselect previous card if any
+          if (selectedCardImage) {
+            selectedCardImage.classList.remove("selected");
+          }
+
+          // Select new card
+          selectedCard = card;
+          selectedCardImage = cardImage;
+          cardImage.classList.add("selected");
+
+          // Update preview with selected card
+          previewElement.innerHTML = "";
+          const previewImage = document.createElement("img");
+          previewImage.src = card.image;
+          previewImage.alt = card.name;
+          previewImage.className = "popup-card-preview-image";
+          previewElement.appendChild(previewImage);
+          previewElement.style.backgroundColor = "var(--accent)";
+
+          // Update instructions and confirm button
+          instructionsElement.innerHTML = `Selected: <span class="console-highlights">${card.name}</span> will be put in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`;
+          document.getElementById("card-choice-popup-confirm").disabled = false;
+        }
+      });
+
+      cardElement.appendChild(cardImage);
+      selectionRow1.appendChild(cardElement);
+    });
+
+    if (displayCards.length > 20) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.add("three-row"); // Add a special class for 3-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "75%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "40%";
+      selectionRow1.style.gap = "0.3vw";
+    } else if (displayCards.length > 10) {
+      selectionRow1.classList.add("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles when in multi-row mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else if (displayCards.length > 5) {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "42%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "25%";
+    } else {
+      selectionRow1.classList.remove("multi-row");
+      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      // Reset container styles for normal mode
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.height = "50%";
+      document.querySelector(
+        ".card-choice-popup-selectionrow1-container",
+      ).style.top = "28%";
+    }
+
+    // Drag scrolling functionality
+    setupDragScrolling(selectionRow1);
+
+    // Set up button handlers
+    const confirmButton = document.getElementById("card-choice-popup-confirm");
+    const otherChoiceButton = document.getElementById(
+      "card-choice-popup-otherchoice",
+    );
+    const noThanksButton = document.getElementById(
+      "card-choice-popup-nothanks",
+    );
+
+    // Disable confirm initially and hide unnecessary buttons
+    confirmButton.disabled = true;
+    confirmButton.textContent = "Confirm";
+    otherChoiceButton.style.display = "none";
+    noThanksButton.style.display = "none";
+
+    // Confirm button handler
+    confirmButton.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (selectedCard === null) return;
+
+      setTimeout(async () => {
+
+        // Find the selected card's current index in the *actual* hand
+        const indexInHand = playerDiscardPile.findIndex(
+          (c) => c && c.id === selectedCard.id,
+        );
+        if (indexInHand !== -1) {
+          // Remove the card from the player's hand
+          const chosenHero = playerDiscardPile.splice(indexInHand, 1)[0];
+          boundSouls.push(chosenHero);
+          onscreenConsole.log(
+            `<span class="console-highlights">${chosenHero.name}</span> has been put in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`,
+          );
+          updateGameBoard();
+
+          // Close popup before proceeding to next phase
+          closeCardChoicePopup();
+
+        } else {
+          console.error("Selected card not found in player hand");
+          onscreenConsole.log("Error: Selected card not found.");
+          closeCardChoicePopup();
+        }
+        resolve();
+      }, 100);
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
+  });
+}
+
+async function thanosTheMadTitan() {
+    try {
+        const boundSoulsNames = new Set(boundSouls.map(card => card.name));
+        
+        // 1) Identify matching cards
+        const matchingCards = playerHand.filter(card => boundSoulsNames.has(card.name));
+        const matchCount = matchingCards.length;
+
+        if (matchCount === 0) {
+            onscreenConsole.log(`No cards in your hand match cards in <span class="console-highlights">Thanos</span><span class="bold-spans">'</span> Bound Souls pile.`);
+            return;
+        }
+
+        onscreenConsole.log(`You have ${matchCount} matching card${matchCount === 1 ? '' : 's'} to discard.`);
+
+        // 2) Remove ALL matching cards from hand immediately
+        // Create a snapshot of cards to process
+        const cardsToProcess = [];
+        for (let i = playerHand.length - 1; i >= 0; i--) {
+            if (boundSoulsNames.has(playerHand[i].name)) {
+                cardsToProcess.push(playerHand[i]);
+                playerHand.splice(i, 1);
+            }
+        }
+
+        // 3) Check each removed card for invulnerability
+        const returnedCards = [];
+        for (const card of cardsToProcess) {
+            const { returned } = await checkDiscardForInvulnerability(card);
+            if (returned && returned.length) returnedCards.push(...returned);
+        }
+
+        // 4) Add any invulnerable cards back to hand
+        if (returnedCards.length) {
+            playerHand.push(...returnedCards);
+        }
+    } catch (error) {
+        console.error("Error in thanosDiscardMatchingCards:", error);
+        onscreenConsole.log("An error occurred while processing Thanos' discard ability.");
+        throw error;
+    }
 }
 
 // Villains
@@ -153,6 +2657,10 @@ const shardsToGain = twistCount;
 
 onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'} for each Scheme Twist in the KO pile and/or stacked next to the Scheme.`);
 
+  if (typeof gem.shards === 'undefined') {
+    gem.shards = 0;
+  }
+playSFX("shards");
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -166,12 +2674,16 @@ updateGameBoard();
 }
 
 function powerGemAmbush(gem) {
-const shardsToGain = koPile.filter((card) => card.type === "Master Strike").length + 
+const shardsToGain = koPile.filter((card) => card && card.type === "Master Strike").length + 
                                      koPile.filter((card) => card.name === "Mysterio Mastermind Tactic").length + 
                                      victoryPile.filter((card) => card.name === "Mysterio Mastermind Tactic").length;
 
 onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'} for each Master Strike in the KO pile and/or stacked next to the Mastermind.`);
 
+  if (typeof gem.shards === 'undefined') {
+    gem.shards = 0;
+  }
+playSFX("shards");
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -185,30 +2697,103 @@ updateGameBoard();
 }
 
 function realityGemAmbush(gem) {
-const shardsToGain = city.filter((card) => card.team === "Infinity Gems").length + 
+const shardsToGain = city.filter((card) => card && card.team === "Infinity Gems").length + 
                                      escapedVillainsDeck.filter((card) => card.team === "Infinity Gems").length;
 
 onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'} for each Infinity Gem Villain card in the city and/or Escape pile.`);
 
+  if (typeof gem.shards === 'undefined') {
+    gem.shards = 0;
+  }
+playSFX("shards");
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
 
 function realityGemArtifact() {
+onscreenConsole.log(`Before you play a card from the Villain Deck, you may first reveal the top card of the Villain Deck. If it's not a Scheme Twist, you may put it on the bottom of the Villain Deck. If you do, gain a Shard.`);
+realityGemVillainDraw = true;
+}
 
+async function realityGemVillainChoice() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+if (villainDeck.length === 0) {
+        onscreenConsole.log("No cards available to be drawn.");
+        resolve();
+        return;
+      }
+
+const topVillainCard = villainDeck[villainDeck.length - 1];
+
+if (topVillainCard.name === "Scheme Twist") {
+  onscreenConsole.log("The top card of the Villain Deck is a Scheme Twist and cannot be put on the bottom.");
+    resolve();
+    return;
+}
+
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `THE TOP CARD OF THE VILLAIN DECK IS: <span class="console-highlights">${topVillainCard.name}</span>. Do you wish to put it on the bottom of the Villain Deck and gain a Shard?`,
+        "YES",
+        `NO THANKS!`,
+      );
+
+      // Update title
+      document.querySelector(".info-or-choice-popup-title").innerHTML =
+        "Reality Gem";
+
+      // Hide close button
+      document.querySelector(
+        ".info-or-choice-popup-closebutton",
+      ).style.display = "none";
+
+      // Use preview area for images
+      const previewArea = document.querySelector(
+        ".info-or-choice-popup-preview",
+      );
+      if (previewArea) {
+        previewArea.style.backgroundImage = `url('${topVillainCard.image}')`;
+        previewArea.style.backgroundSize = "contain";
+        previewArea.style.backgroundRepeat = "no-repeat";
+        previewArea.style.backgroundPosition = "center";
+        previewArea.style.display = "block";
+      }
+
+     confirmButton.onclick = async function () {
+          closeInfoChoicePopup();
+          villainDeck.unshift(villainDeck.pop());
+          onscreenConsole.log(`<span class="console-highlights">${topVillainCard.name}</span> has been put on the bottom of the Villain Deck. You gain a Shard.`);
+          totalPlayerShards += 1;
+          shardsGainedThisTurn += 1;
+          shardSupply -= 1;
+          resolve();
+          updateGameBoard();
+      };
+
+      denyButton.onclick = async function () {
+          closeInfoChoicePopup();
+          onscreenConsole.log(`You chose to leave <span class="console-highlights">${topVillainCard.name}</span> on top of the Villain Decl. Drawing now...`);
+          resolve();
+      };
+    }, 10);
+  });
 }
 
 function soulGemAmbush(gem) {
-const shardsToGain = city.filter((card) => card.type === "Villain").length;
+const shardsToGain = city.filter((card) => card && card.type === "Villain").length;
 
 onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'} for each Villain in the city.`);
 
+  if (typeof gem.shards === 'undefined') {
+    gem.shards = 0;
+  }
+playSFX("shards");
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
 
 function soulGemArtifact() {
-const soulGem = playerArtifacts.find(card => card.name === "Soul Gem");
+const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
 onscreenConsole.log(`You gain +${soulGem.shards} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 totalAttackPoints += soulGem.shards || 0;
 cumulativeAttackPoints += soulGem.shards || 0;
@@ -216,10 +2801,14 @@ updateGameBoard();
 }
 
 function spaceGemAmbush(gem) {
-const shardsToGain = citySize - city.filter((card) => card.type === "Villain").length;
+const shardsToGain = citySize - city.filter((card) => card && card.type === "Villain").length;
 
 onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'} for each empty space in the city.`);
 
+  if (typeof gem.shards === 'undefined') {
+    gem.shards = 0;
+  }
+playSFX("shards");
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -773,6 +3362,10 @@ const shardsToGain = topVillainCard.victoryPoints || 0;
 
 onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> forces you to play another card from the Villain Deck. You gain ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'}, equal to that card's printed Victory Points.`);
 
+  if (typeof gem.shards === 'undefined') {
+    gem.shards = 0;
+  }
+playSFX("shards");
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 
@@ -1113,6 +3706,10 @@ async function demonDruidAmbush() {
       // Give 2 shards to the selected villain
       const selectedCard = city[selectedCityIndex];
       if (selectedCard) {
+          if (typeof selectedCard.shards === 'undefined') {
+    selectedCard.shards = 0;
+  }
+  playSFX("shards");
         selectedCard.shards = (selectedCard.shards || 0) + 2;
         onscreenConsole.log(
           `<span class="console-highlights">${selectedCard.name}</span> gains 2 Shards.`,
@@ -1137,6 +3734,10 @@ function drMinervaAmbush() {
   for (let i = 0; i < city.length; i++) {
   const card = city[i];
   if (card && card.team === "Kree Starforce" && shardSupply > 0) {
+      if (typeof card.shards === 'undefined') {
+    card.shards = 0;
+  }
+  playSFX("shards");
     card.shards += 1;  // Using += instead of =+ (which would be assignment)
     shardSupply -= 1;
   }
@@ -1178,7 +3779,7 @@ if (playerDeck.length === 0) {
         ".info-or-choice-popup-preview",
       );
       if (previewArea) {
-        previewArea.style.backgroundImage = `url('Visual Assets/Villains/GotG_KorathThePursuer.webp')`;
+        previewArea.style.backgroundImage = `url('Visual Assets/Villains/GotG_KreeStarforce_KorathThePursuer.webp')`;
         previewArea.style.backgroundSize = "contain";
         previewArea.style.backgroundRepeat = "no-repeat";
         previewArea.style.backgroundPosition = "center";
@@ -1187,7 +3788,11 @@ if (playerDeck.length === 0) {
 
      confirmButton.onclick = async function () {
           closeInfoChoicePopup();
-          extarDraw();
+          extraDraw();
+            if (typeof korath.shards === 'undefined') {
+    korath.shards = 0;
+  }
+  playSFX("shards");
           korath.shards += 1;
           shardSupply -= 1;
           onscreenConsole.log(`<span class="console-highlights">Korath the Pursuer</span> gains a Shard.`);
@@ -1233,6 +3838,10 @@ onscreenConsole.log(`Fight! <span class="console-highlights">Shatterax</span> gi
 for (let i = 0; i < hq.length; i++) {
   const card = hq[i];
   if (card && card.type === "Hero" && shardSupply > 0) {
+      if (typeof card.shards === 'undefined') {
+    card.shards = 0;
+  }
+  playSFX("shards");
     card.shards += 1;
     shardSupply -= 1;
   }
@@ -1243,6 +3852,10 @@ updateGameBoard();
 function supremorAmbush(supremor) {
   const mastermind = getSelectedMastermind();
   onscreenConsole.log(`Ambush! <span class="console-highlights">Supremor</span> and <span class="console-highlights">${mastermind.name}</span> each gain a Shard.`);
+    if (typeof supremor.shards === 'undefined') {
+    supremor.shards = 0;
+  }
+  playSFX("shards");
   supremor.shards += 1;
   mastermind.shards += 1;
   shardSupply -= 2;
@@ -1963,12 +4576,20 @@ updateGameBoard();
 
       if (selectedCityIndex !== null) {
         // Assign the shard to the selected city villain
+          if (typeof city[selectedCityIndex].shards === 'undefined') {
+    city[selectedCityIndex].shards = 0;
+  }
+  playSFX("shards");
         city[selectedCityIndex].shards += 1;
         onscreenConsole.log(
           `<span class="console-highlights">${city[selectedCityIndex].name}</span> gained a Shard.`,
         );
       } else if (selectedHQIndex !== null) {
         // Assign the shard to the selected HQ villain
+                  if (typeof hq[selectedHQIndex].shards === 'undefined') {
+    hq[selectedHQIndex].shards = 0;
+  }
+  playSFX("shards");
         hq[selectedHQIndex].shards += 1;
         onscreenConsole.log(
           `<span class="console-highlights">${hq[selectedHQIndex].name}</span> gained a Shard.`,
@@ -2682,7 +5303,7 @@ async function gamoraGodslayerBlade() {
 }
 
 function grootSurvivingSprig() {
-nextTurnDrawCount += 1;
+nextTurnsDraw += 1;
 onscreenConsole.log(`You will draw an extra card at the end of this turn.`);
 }
 
@@ -3655,7 +6276,7 @@ function starLordLegendaryOutlaw() {
   });
 }
 
-function starLordImplacedMemoryChip() {
+function starLordImplantedMemoryChip() {
 extraDraw();
 }
 
@@ -3667,3 +6288,292 @@ totalPlayerShards += playerArtifacts.length;
 shardsGainedThisTurn += playerArtifacts.length;
 shardSupply -= playerArtifacts.length;
 }
+
+//Expansion Splash
+
+function initCosmicBackground() {
+  const canvas = document.getElementById("mycanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Stars configuration
+  const stars = [];
+  const shootingStars = [];
+  let animationId;
+  let frame = 0;
+
+  function initCosmicElements() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Clear existing arrays
+    stars.length = 0;
+    shootingStars.length = 0;
+
+    // Create stars - more stars for larger screens
+    const starCount = Math.min(300, Math.floor((canvas.width * canvas.height) / 5000));
+    for (let i = 0; i < starCount; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2.5,
+        twinkle: Math.random() * 0.03 + 0.005,
+        opacity: Math.random() * 0.7 + 0.3,
+        speed: Math.random() * 0.3 + 0.1
+      });
+    }
+
+    // Create shooting stars
+    for (let i = 0; i < 4; i++) {
+      shootingStars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * 50, // Start near top
+        speed: 15 + Math.random() * 20,
+        length: 40 + Math.random() * 60,
+        active: false,
+        trail: [],
+        angle: Math.PI / 4 + (Math.random() * Math.PI / 6 - Math.PI / 12) // ~45° angle with slight variation
+      });
+    }
+  }
+
+  // Animation loop
+  function draw() {
+    frame++;
+    
+    // Clear canvas with cosmic background color
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#0a0e17");
+    gradient.addColorStop(0.5, "#1a1f2c");
+    gradient.addColorStop(1, "#0a0e17");
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Add nebula-like effect
+    const nebulaGradient = ctx.createRadialGradient(
+      canvas.width * 0.7,
+      canvas.height * 0.3,
+      0,
+      canvas.width * 0.7,
+      canvas.height * 0.3,
+      Math.max(canvas.width, canvas.height) * 0.8
+    );
+    nebulaGradient.addColorStop(0, "rgba(120, 80, 200, 0.15)");
+    nebulaGradient.addColorStop(1, "rgba(26, 31, 44, 0)");
+    
+    ctx.fillStyle = nebulaGradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Animate stars
+    stars.forEach((star) => {
+      // Twinkle effect using sine wave
+      const opacity = Math.sin(frame * star.twinkle) * 0.3 + star.opacity;
+      
+      // Add subtle movement to some stars
+      star.x += Math.sin(frame * 0.01 + star.x) * 0.05;
+      star.y += Math.cos(frame * 0.01 + star.y) * 0.05;
+      
+      // Wrap stars around screen
+      if (star.x < 0) star.x = canvas.width;
+      if (star.x > canvas.width) star.x = 0;
+      if (star.y < 0) star.y = canvas.height;
+      if (star.y > canvas.height) star.y = 0;
+      
+      // Draw star
+      ctx.fillStyle = `rgba(229, 222, 255, ${opacity})`;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Add glow to larger stars
+      if (star.size > 1.2) {
+        const glow = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 3);
+        glow.addColorStop(0, `rgba(229, 222, 255, ${opacity * 0.3})`);
+        glow.addColorStop(1, "rgba(229, 222, 255, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // Animate shooting stars
+    shootingStars.forEach((star) => {
+      // Randomly activate shooting stars (lower chance)
+      if (!star.active && Math.random() < 0.003) {
+        star.active = true;
+        star.x = Math.random() * canvas.width * 0.8 + canvas.width * 0.2;
+        star.y = -20; // Start just above the screen
+        star.trail = [];
+        star.angle = Math.PI / 4 + (Math.random() * Math.PI / 6 - Math.PI / 12); // ~45° angle
+      }
+
+      if (star.active) {
+        // Calculate movement based on angle (top-right to bottom-left)
+        const moveX = Math.cos(star.angle) * star.speed;
+        const moveY = Math.sin(star.angle) * star.speed;
+        
+        // Update position
+        star.x += moveX;
+        star.y += moveY;
+        
+        // Create trail effect
+        star.trail.push({x: star.x, y: star.y});
+        if (star.trail.length > 20) {
+          star.trail.shift();
+        }
+        
+        // Draw trail with fading gradient
+        for (let i = 0; i < star.trail.length; i++) {
+          const point = star.trail[i];
+          const trailOpacity = i / star.trail.length;
+          const trailLength = star.trail.length;
+          
+          // Draw gradient trail segments
+          if (i > 0) {
+            const prevPoint = star.trail[i-1];
+            
+            // Create gradient for each segment
+            const segmentGradient = ctx.createLinearGradient(
+              prevPoint.x, prevPoint.y,
+              point.x, point.y
+            );
+            
+            const startOpacity = (i-1) / trailLength * 0.7;
+            const endOpacity = i / trailLength * 0.7;
+            
+            segmentGradient.addColorStop(0, `rgba(255, 113, 154, ${startOpacity})`);
+            segmentGradient.addColorStop(1, `rgba(255, 113, 154, ${endOpacity})`);
+            
+            ctx.strokeStyle = segmentGradient;
+            ctx.lineWidth = 2 * trailOpacity;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(prevPoint.x, prevPoint.y);
+            ctx.lineTo(point.x, point.y);
+            ctx.stroke();
+          }
+        }
+        
+        // Draw main shooting star line
+        const endX = star.x - Math.cos(star.angle) * star.length;
+        const endY = star.y - Math.sin(star.angle) * star.length;
+        
+        const lineGradient = ctx.createLinearGradient(star.x, star.y, endX, endY);
+        lineGradient.addColorStop(0, "rgba(255, 255, 255, 0.9)");
+        lineGradient.addColorStop(0.5, "rgba(255, 200, 200, 0.7)");
+        lineGradient.addColorStop(1, "rgba(255, 113, 154, 0.2)");
+        
+        ctx.strokeStyle = lineGradient;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(star.x, star.y);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+        
+        // Glow at head
+        const headGlow = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, 8);
+        headGlow.addColorStop(0, "rgba(255, 255, 255, 0.9)");
+        headGlow.addColorStop(0.5, "rgba(255, 200, 200, 0.4)");
+        headGlow.addColorStop(1, "rgba(255, 113, 154, 0)");
+        ctx.fillStyle = headGlow;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Small bright core
+        ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Deactivate if off screen
+        if (star.x < -100 || star.x > canvas.width + 100 || 
+            star.y < -100 || star.y > canvas.height + 100) {
+          star.active = false;
+          star.trail = [];
+        }
+      }
+    });
+
+    animationId = requestAnimationFrame(draw);
+  }
+
+  function handleResize() {
+    cancelAnimationFrame(animationId);
+    initCosmicElements();
+    draw();
+  }
+
+  // Debounced resize handler
+  let resizeTimeout;
+  function debouncedResize() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(handleResize, 250);
+  }
+
+  // Initialize and start animation
+  initCosmicElements();
+  draw();
+  window.addEventListener("resize", debouncedResize);
+}
+
+function initSplash() {
+  const splashContent = document.getElementById("splashContent");
+  const splashText = document.getElementById("splashText");
+  const backgroundElement = document.getElementById(
+    "background-for-expansion-popup",
+  );
+  const popupContainer = document.getElementById("expansion-popup-container");
+
+  // Initialize cosmic background instead of cityscape
+  initCosmicBackground();
+
+  // Start as a circle
+  setTimeout(() => {
+    // Calculate size based on screen dimensions
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const size = Math.min(screenWidth, screenHeight) * 0.3;
+
+    splashContent.style.width = size + "px";
+    splashContent.style.height = size + "px";
+    splashContent.classList.add("visible");
+
+    // After 4 seconds, transform to rectangle
+    setTimeout(() => {
+      splashContent.classList.remove("circular");
+      splashContent.classList.add("rectangular");
+
+      // Set rectangle dimensions based on screen size
+      const isPortrait = window.innerHeight > window.innerWidth;
+      if (isPortrait) {
+        splashContent.style.width = "70%";
+        splashContent.style.height = "auto";
+        splashContent.style.minHeight = "40%";
+      } else {
+        splashContent.style.width = "70%";
+        splashContent.style.height = "auto";
+        splashContent.style.maxWidth = "600px";
+      }
+
+      // Fade in content
+      setTimeout(() => {
+        splashText.classList.add("visible");
+      }, 1000);
+    }, 4000);
+  }, 2000); // Initial delay
+}
+
+// Initialize everything when the window loads
+window.onload = function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const restartParam = urlParams.get("restart");
+
+  if (restartParam === "true") {
+    skipSplashAndIntro();
+    return;
+  }
+  initSplash();
+};

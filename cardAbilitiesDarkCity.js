@@ -1,5 +1,5 @@
 // Card Abilities for Dark City
-//24.11.2025 17.35
+//19.01.26 20:00
 
 async function angelDivingCatch(card) {
   return new Promise((resolve) => {
@@ -2827,8 +2827,9 @@ function ghostRiderPenanceStare() {
 function ironfistFocusChi() {
   const allCards = [
     ...playerHand, // Include all cards from hand
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     ),
   ];
 
@@ -2864,8 +2865,9 @@ function ironfistFocusChi() {
 function ironfistWieldTheIronFist() {
   const allCards = [
     ...playerHand, // Include all cards from hand
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     ),
   ];
 
@@ -3628,6 +3630,13 @@ function bladeStalkThePrey() {
           plutoniumOverlay.innerHTML = `<span class="plutonium-count">${city[i].plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
           cardContainer.appendChild(plutoniumOverlay);
         }
+
+      if (city[i].shards && city[i].shards > 0) {
+      const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${city[i].shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+      cardContainer.appendChild(shardsOverlay);
+    }
       } else {
         // If no villain, add a blank card image
         const blankCardImage = document.createElement("img");
@@ -6552,6 +6561,12 @@ function professorXClassDismissed() {
           );
         }
         returnHeroToDeck(selectedHQIndex);
+                  if (hero.shards && hero.shards > 0) {
+                    playSFX("shards");
+            shardSupply += hero.shards;
+            hero.shards = 0;
+            onscreenConsole.log(`The Shard <span class="console-highlights">${hero.name}</span> had in the HQ has been returned to the supply.`);
+  }
         updateGameBoard();
         closeHQCityCardChoicePopup();
         resolve();
@@ -7211,6 +7226,11 @@ async function PhalanxTechOrKOAttack() {
           card.classes.includes("Tech") &&
           card.isCopied !== true &&
           card.sidekickToDestroy !== true,
+      ) ||
+      playerArtifacts.some(
+        (card) =>
+          card.classes &&
+          card.classes.includes("Tech"),
       );
 
     if (!hasTech) {
@@ -7231,17 +7251,20 @@ async function PhalanxTechOrKOAttack() {
 function handlePhalanxNoTechRevealed() {
   updateGameBoard();
   return new Promise((resolve) => {
-    // Get Attack cards from hand and played cards separately
+    // Get Attack cards from artifacts, hand, and played cards separately
+    const artifactAttackCards = playerArtifacts.filter(
+  (card) => card.type === "Hero" && card.attackIcon === true,
+);
     const handAttackCards = playerHand.filter(
       (card) => card.attackIcon === true,
     );
     const playedAttackCards = cardsPlayedThisTurn.filter(
       (card) =>
-        card.attackIcon === true && !card.isCopied && !card.sidekickToDestroy,
+        card.attackIcon === true && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     );
 
     // Check if there are any Attack cards available
-    if (handAttackCards.length === 0 && playedAttackCards.length === 0) {
+    if (artifactAttackCards.length === 0 && handAttackCards.length === 0 && playedAttackCards.length === 0) {
       console.log("No available Heroes with Attack icons.");
       onscreenConsole.log(
         `You do not have any Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'> icon.`,
@@ -7281,7 +7304,7 @@ function handlePhalanxNoTechRevealed() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -7297,11 +7320,12 @@ function handlePhalanxNoTechRevealed() {
     previewElement.style.backgroundColor = "var(--panel-backgrounds)";
 
     let selectedCard = null;
-    let selectedLocation = null; // 'hand' or 'played'
+    let selectedLocation = null; // 'artifacts', 'hand', or 'played'
     let selectedCardImage = null;
     let isDragging = false;
 
     // Sort the arrays for display
+    genericCardSort(artifactAttackCards);
     genericCardSort(handAttackCards);
     genericCardSort(playedAttackCards);
 
@@ -7315,8 +7339,14 @@ function handlePhalanxNoTechRevealed() {
       if (selectedCard === null) {
         instructionsElement.innerHTML = `Choose one of your Heroes with a <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='card-icons'> icon to KO.`;
       } else {
-        const location =
-          selectedLocation === "hand" ? "(from Hand)" : "(from Played Cards)";
+        let location = "";
+        if (selectedLocation === "artifacts") {
+          location = "(from Artifacts)";
+        } else if (selectedLocation === "hand") {
+          location = "(from Hand)";
+        } else if (selectedLocation === "played") {
+          location = "(from Played Cards)";
+        }
         instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> ${location} will be KO'd.`;
       }
     }
@@ -7433,7 +7463,25 @@ function handlePhalanxNoTechRevealed() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand Attack cards
+    // Populate row1 with Artifacts first, then Hand Attack cards
+    if (artifactAttackCards.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactAttackCards.forEach((card) => {
+      createCardElement(card, "artifacts", selectionRow1);
+    });
+
+    if (handAttackCards.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
     handAttackCards.forEach((card) => {
       createCardElement(card, "hand", selectionRow1);
     });
@@ -7470,7 +7518,14 @@ function handlePhalanxNoTechRevealed() {
 
       setTimeout(() => {
         // Remove card from the correct location using ID lookup
-        if (selectedLocation === "hand") {
+        if (selectedLocation === "artifacts") {
+          const index = playerArtifacts.findIndex(
+            (card) => card.id === selectedCard.id,
+          );
+          if (index !== -1) {
+            playerArtifacts.splice(index, 1);
+          }
+        } else if (selectedLocation === "hand") {
           const index = playerHand.findIndex(
             (card) => card.id === selectedCard.id,
           );
@@ -7582,13 +7637,16 @@ function bystanderRadiationScientist() {
     );
     const playedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
-        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy,
+        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     );
+
+    const artifactHeroes = playerArtifacts.filter((card) => card.type === "Hero");
 
     if (
       handHeroes.length === 0 &&
       discardHeroes.length === 0 &&
-      playedHeroes.length === 0
+      playedHeroes.length === 0 &&
+      artifactHeroes.length === 0
     ) {
       onscreenConsole.log(`No Heroes available to be KO'd.`);
       updateGameBoard();
@@ -7630,7 +7688,7 @@ function bystanderRadiationScientist() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Played Cards & Hand";
+    selectionRow1Label.textContent = "Artifacts, Played Cards & Hand";
     selectionRow2Label.textContent = "Discard Pile";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -7801,6 +7859,17 @@ function bystanderRadiationScientist() {
       createCardElement(card, "played", selectionRow1);
     });
 
+    if (artifactHeroes.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactHeroes.forEach((card) => {
+      createCardElement(card, "artifacts", selectionRow1);
+    });
+
     if (handHeroes.length > 0) {
       const handLabel = document.createElement("span");
       handLabel.textContent = "Hand: ";
@@ -7855,7 +7924,10 @@ function bystanderRadiationScientist() {
             (card) => card.id === selectedCard.id,
           );
           if (index !== -1) playerHand.splice(index, 1);
-        } else if (selectedLocation === "played") {
+        } else if (selectedLocation === "artifacts") {
+          const index = playerArtifacts.findIndex((card) => card.id === selectedCard.id,);
+        if (index !== -1) playerArtifacts.splice(index, 1);
+      }   else if (selectedLocation === "played") {
           selectedCard.markedToDestroy = true;
         }
 
@@ -8312,6 +8384,7 @@ function warFight() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -8387,6 +8460,7 @@ function warEscape() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -8462,6 +8536,7 @@ function famineFight() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -8538,6 +8613,7 @@ function famineEscape() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -8753,8 +8829,11 @@ function deathFight() {
     `<span class="console-highlights">Death</span> - fight effect!`,
   );
   return new Promise((resolve, reject) => {
-    // Combine heroes from the player's hand and cards played this turn
-    // Exclude cards that are already marked for destruction
+    // Get heroes from artifacts, hand, and played cards that cost 1 or more
+    const artifactHeroes = playerArtifacts
+      .map((card, index) => ({ card, originalIndex: index, location: "artifacts" }))
+      .filter((item) => item.card.type === "Hero" && item.card.cost >= 1 && !item.card.markedToDestroy);
+    
     const handHeroes = playerHand
       .map((card, index) => ({ card, originalIndex: index, location: "hand" }))
       .filter((item) => item.card.cost >= 1 && !item.card.markedToDestroy);
@@ -8768,8 +8847,8 @@ function deathFight() {
         !item.card.markedToDestroy
       );
 
-    // Combine both arrays
-    const heroesThatCostMoreThanOne = [...handHeroes, ...playedHeroes];
+    // Combine all arrays
+    const heroesThatCostMoreThanOne = [...artifactHeroes, ...handHeroes, ...playedHeroes];
 
     // Check if there are any heroes in the combined list
     if (heroesThatCostMoreThanOne.length === 0) {
@@ -8813,7 +8892,7 @@ function deathFight() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -8841,6 +8920,7 @@ function deathFight() {
     let startX, startY, scrollLeft, startTime;
 
     // Sort the arrays for display
+    const artifactHeroesSorted = artifactHeroes.sort((a, b) => genericCardSort([a.card, b.card]));
     const handHeroesSorted = handHeroes.sort((a, b) => genericCardSort([a.card, b.card]));
     const playedHeroesSorted = playedHeroes.sort((a, b) => genericCardSort([a.card, b.card]));
 
@@ -8952,7 +9032,25 @@ function deathFight() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand heroes
+    // Populate row1 with Artifacts first, then Hand heroes (with labels)
+    if (artifactHeroesSorted.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactHeroesSorted.forEach((cardItem) => {
+      createCardElement(cardItem, selectionRow1);
+    });
+
+    if (handHeroesSorted.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
     handHeroesSorted.forEach((cardItem) => {
       createCardElement(cardItem, selectionRow1);
     });
@@ -8971,16 +9069,16 @@ function deathFight() {
     }
 
     // Adjust layout based on number of cards
-    const totalCards = heroesThatCostMoreThanOne.length;
-    const handCardsCount = handHeroesSorted.length;
-    const playedCardsCount = playedHeroesSorted.length;
+    const row1TotalCards = artifactHeroesSorted.length + handHeroesSorted.length;
+    const row2TotalCards = playedHeroesSorted.length;
+    const totalCards = row1TotalCards + row2TotalCards;
 
     if (totalCards > 20) {
       selectionRow1.classList.add("multi-row");
       selectionRow1.classList.add("three-row");
       selectionRow2.classList.add("multi-row");
       selectionRow2.classList.add("three-row");
-    } else if (totalCards > 10 || handCardsCount > 5 || playedCardsCount > 5) {
+    } else if (totalCards > 10 || row1TotalCards > 5 || row2TotalCards > 5) {
       selectionRow1.classList.add("multi-row");
       selectionRow1.classList.remove("three-row");
       selectionRow2.classList.add("multi-row");
@@ -9027,7 +9125,10 @@ function deathFight() {
         koBonuses();
 
         // Remove the card from the correct location
-        if (location === "hand") {
+        if (location === "artifacts") {
+          // Remove from playerArtifacts using the original index
+          playerArtifacts.splice(originalIndex, 1);
+        } else if (location === "hand") {
           // Remove from playerHand using the original index
           playerHand.splice(originalIndex, 1);
         } else {
@@ -10190,6 +10291,7 @@ function tombstoneEscape() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -10264,11 +10366,15 @@ function hammerheadFight() {
     `Fight! <span class="console-highlights">Hammerhead</span> forces you to KO one of your Heroes with a <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> icon.`,
   );
   return new Promise((resolve, reject) => {
-    // Combine heroes from the player's hand and cards played this turn
-    // Exclude cards that are already marked for destruction
+    // Get heroes with recruit icons from artifacts, hand, and played cards
+    const artifactHeroes = playerArtifacts.filter(
+      (card) => card.type === "Hero" && card.recruitIcon === true
+    );
+    
     const handHeroes = playerHand.filter(
       (card) => card.recruitIcon === true && !card.markedToDestroy,
     );
+    
     const playedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
         card.isCopied !== true &&
@@ -10277,8 +10383,8 @@ function hammerheadFight() {
         !card.markedToDestroy, // Exclude already marked cards
     );
 
-    // Check if there are any heroes in the combined list
-    if (handHeroes.length === 0 && playedHeroes.length === 0) {
+    // Check if there are any heroes available
+    if (artifactHeroes.length === 0 && handHeroes.length === 0 && playedHeroes.length === 0) {
       onscreenConsole.log(`No Heroes available to KO.`);
       resolve(); // Resolve immediately if there are no heroes to KO
       return;
@@ -10316,7 +10422,7 @@ function hammerheadFight() {
     document.querySelector(
       ".card-choice-popup-selectionrow2-container",
     ).style.display = "block";
-    selectionRow1Label.textContent = "Hand";
+    selectionRow1Label.textContent = "Artifacts & Hand";
     selectionRow2Label.textContent = "Played Cards";
     document.querySelector(".card-choice-popup-closebutton").style.display =
       "none";
@@ -10332,10 +10438,12 @@ function hammerheadFight() {
     previewElement.style.backgroundColor = "var(--panel-backgrounds)";
 
     let selectedCard = null;
+    let selectedLocation = null; // 'artifacts', 'hand', or 'played'
     let selectedCardImage = null;
     let isDragging = false;
 
     // Sort the arrays for display
+    genericCardSort(artifactHeroes);
     genericCardSort(handHeroes);
     genericCardSort(playedHeroes);
 
@@ -10429,9 +10537,10 @@ function hammerheadFight() {
           return;
         }
 
-        if (selectedCard === card) {
+        if (selectedCard === card && selectedLocation === location) {
           // Deselect
           selectedCard = null;
+          selectedLocation = null;
           selectedCardImage = null;
           cardImage.classList.remove("selected");
           previewElement.innerHTML = "";
@@ -10444,6 +10553,7 @@ function hammerheadFight() {
 
           // Select new
           selectedCard = card;
+          selectedLocation = location;
           selectedCardImage = cardImage;
           cardImage.classList.add("selected");
 
@@ -10464,7 +10574,25 @@ function hammerheadFight() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Hand heroes with recruit icons
+    // Populate row1 with Artifacts first, then Hand heroes with recruit icons (with labels)
+    if (artifactHeroes.length > 0) {
+      const artifactLabel = document.createElement("span");
+      artifactLabel.textContent = "Artifacts: ";
+      artifactLabel.className = "row-divider-text";
+      selectionRow1.appendChild(artifactLabel);
+    }
+
+    artifactHeroes.forEach((card) => {
+      createCardElement(card, "artifacts", selectionRow1);
+    });
+
+    if (handHeroes.length > 0) {
+      const handLabel = document.createElement("span");
+      handLabel.textContent = "Hand: ";
+      handLabel.className = "row-divider-text";
+      selectionRow1.appendChild(handLabel);
+    }
+
     handHeroes.forEach((card) => {
       createCardElement(card, "hand", selectionRow1);
     });
@@ -10498,7 +10626,7 @@ function hammerheadFight() {
     confirmButton.onclick = (e) => {
       e.stopPropagation();
       e.preventDefault();
-      if (selectedCard === null) return;
+      if (selectedCard === null || selectedLocation === null) return;
 
       setTimeout(() => {
         onscreenConsole.log(
@@ -10506,15 +10634,18 @@ function hammerheadFight() {
         );
         koBonuses();
 
-        // Remove the card from the correct array (hand or played)
-        if (playerHand.includes(selectedCard)) {
-          const handIndex = playerHand.findIndex(
-            (handCard) => handCard === selectedCard,
-          );
-          if (handIndex !== -1) {
-            playerHand.splice(handIndex, 1);
+        // Remove the card from the correct location
+        if (selectedLocation === "artifacts") {
+          const index = playerArtifacts.findIndex(card => card.id === selectedCard.id);
+          if (index !== -1) {
+            playerArtifacts.splice(index, 1);
           }
-        } else {
+        } else if (selectedLocation === "hand") {
+          const index = playerHand.findIndex(card => card.id === selectedCard.id);
+          if (index !== -1) {
+            playerHand.splice(index, 1);
+          }
+        } else if (selectedLocation === "played") {
           // Mark the card to be destroyed at the end of the turn
           selectedCard.markedToDestroy = true;
         }
@@ -10866,13 +10997,19 @@ function jigsawAmbush() {
 
 function bullseyeFight() {
   return new Promise((resolve) => {
-    // Combine cards from hand and played cards with source tracking
-    const combinedCards = [
-      ...playerHand.map((card) => ({ card, source: "hand" })),
-      ...cardsPlayedThisTurn
-        .filter((card) => !card.isCopied && !card.sidekickToDestroy)
-        .map((card) => ({ card, source: "played" })),
-    ];
+    // Combine cards from artifacts, hand, and played cards with source tracking
+    const artifactCards = playerArtifacts
+      .filter((card) => card.type === "Hero")
+      .map((card) => ({ card, source: "artifacts" }));
+    
+    const handCards = playerHand.map((card) => ({ card, source: "hand" }));
+    
+    const playedCards = cardsPlayedThisTurn
+      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy)
+      .map((card) => ({ card, source: "played" }));
+
+    // Combine all cards
+    const combinedCards = [...artifactCards, ...handCards, ...playedCards];
 
     // Filter cards with recruit and attack icons
     const recruitCards = combinedCards.filter(
@@ -10947,12 +11084,19 @@ function bullseyeFight() {
     genericCardSort(recruitCards, "card");
     genericCardSort(attackCards, "card");
 
-    // Separate by source for display
+    // Separate by source for display (Artifacts first, then Played Cards, then Hand)
+    const attackArtifactCards = attackCards.filter(
+      (item) => item.source === "artifacts",
+    );
     const attackHandCards = attackCards.filter(
       (item) => item.source === "hand",
     );
     const attackPlayedCards = attackCards.filter(
       (item) => item.source === "played",
+    );
+    
+    const recruitArtifactCards = recruitCards.filter(
+      (item) => item.source === "artifacts",
     );
     const recruitHandCards = recruitCards.filter(
       (item) => item.source === "hand",
@@ -11185,15 +11329,23 @@ function bullseyeFight() {
       row.appendChild(cardElement);
     }
 
-    // Populate row1 with Attack Heroes (Played Cards then Hand)
+    // Populate row1 with Attack Heroes (Artifacts first, then Played Cards, then Hand)
+    if (attackArtifactCards.length > 0) {
+      selectionRow1.appendChild(createSectionLabel("Artifacts"));
+      attackArtifactCards.forEach((cardItem) => {
+        createCardElement(cardItem, "attack", selectionRow1);
+      });
+    }
     if (attackPlayedCards.length > 0) {
-      selectionRow1.appendChild(createSectionLabel("Played Cards"));
+      if (attackArtifactCards.length > 0 || attackPlayedCards.length > 0) {
+        selectionRow1.appendChild(createSectionLabel("Played Cards"));
+      }
       attackPlayedCards.forEach((cardItem) => {
         createCardElement(cardItem, "attack", selectionRow1);
       });
     }
     if (attackHandCards.length > 0) {
-      if (attackPlayedCards.length > 0) {
+      if (attackArtifactCards.length > 0 || attackPlayedCards.length > 0) {
         selectionRow1.appendChild(createSectionLabel("Hand"));
       }
       attackHandCards.forEach((cardItem) => {
@@ -11201,15 +11353,23 @@ function bullseyeFight() {
       });
     }
 
-    // Populate row2 with Recruit Heroes (Played Cards then Hand)
+    // Populate row2 with Recruit Heroes (Artifacts first, then Played Cards, then Hand)
+    if (recruitArtifactCards.length > 0) {
+      selectionRow2.appendChild(createSectionLabel("Artifacts"));
+      recruitArtifactCards.forEach((cardItem) => {
+        createCardElement(cardItem, "recruit", selectionRow2);
+      });
+    }
     if (recruitPlayedCards.length > 0) {
-      selectionRow2.appendChild(createSectionLabel("Played Cards"));
+      if (recruitArtifactCards.length > 0 || recruitPlayedCards.length > 0) {
+        selectionRow2.appendChild(createSectionLabel("Played Cards"));
+      }
       recruitPlayedCards.forEach((cardItem) => {
         createCardElement(cardItem, "recruit", selectionRow2);
       });
     }
     if (recruitHandCards.length > 0) {
-      if (recruitPlayedCards.length > 0) {
+      if (recruitArtifactCards.length > 0 || recruitPlayedCards.length > 0) {
         selectionRow2.appendChild(createSectionLabel("Hand"));
       }
       recruitHandCards.forEach((cardItem) => {
@@ -11256,7 +11416,14 @@ function bullseyeFight() {
         if (selectedRecruitCard) {
           koedCards.push(selectedRecruitCard.card);
           // Remove from original location using source tracking
-          if (selectedRecruitCard.source === "hand") {
+          if (selectedRecruitCard.source === "artifacts") {
+            const index = playerArtifacts.findIndex(
+              (c) => c.id === selectedRecruitCard.card.id,
+            );
+            if (index !== -1) {
+              playerArtifacts.splice(index, 1);
+            }
+          } else if (selectedRecruitCard.source === "hand") {
             const index = playerHand.findIndex(
               (c) => c.id === selectedRecruitCard.card.id,
             );
@@ -11276,7 +11443,14 @@ function bullseyeFight() {
         if (selectedAttackCard) {
           koedCards.push(selectedAttackCard.card);
           // Remove from original location using source tracking
-          if (selectedAttackCard.source === "hand") {
+          if (selectedAttackCard.source === "artifacts") {
+            const index = playerArtifacts.findIndex(
+              (c) => c.id === selectedAttackCard.card.id,
+            );
+            if (index !== -1) {
+              playerArtifacts.splice(index, 1);
+            }
+          } else if (selectedAttackCard.source === "hand") {
             const index = playerHand.findIndex(
               (c) => c.id === selectedAttackCard.card.id,
             );
@@ -11367,10 +11541,11 @@ async function blackheartFunctions() {
 
   const cardsYouHave = [
     ...playerHand, // Include all cards in hand (unchanged)
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -11912,23 +12087,51 @@ function azazelFight() {
 // Dark City Mastermind Abilities
 
 async function apocalypseStrike() {
-  const cardsAboveOneCost = [...playerHand.filter((card) => card.cost > 0)];
+  // Get cards from hand that cost more than 1
+  const handCardsAboveOneCost = playerHand.filter((card) => card.cost > 1);
+  
+  // Get Heroes from artifacts that cost more than 1
+  const artifactHeroesAboveOneCost = playerArtifacts.filter(
+    (card) => card.type === "Hero" && card.cost > 1
+  );
+  
+  // Combine both arrays
+  const cardsAboveOneCost = [...handCardsAboveOneCost, ...artifactHeroesAboveOneCost];
+  
   if (cardsAboveOneCost.length === 0) {
     onscreenConsole.log(`No cards need to be returned to your deck.`);
     return;
   }
 
   for (const card of cardsAboveOneCost) {
-    const index = playerHand.indexOf(card);
-    if (index > -1) {
-      playerHand.splice(index, 1);
-      playerDeck.push(card);
-      onscreenConsole.log(
-        `<span class="console-highlights">${card.name}</span> costs more than 1 and has been returned to the top of your deck.`,
-      );
-      if (stingOfTheSpider) {
-        await scarletSpiderStingOfTheSpiderDrawChoice(card);
+    // Check if card is from hand or artifacts
+    const inHand = playerHand.includes(card);
+    const inArtifacts = playerArtifacts.includes(card);
+    
+    if (inHand) {
+      // Remove from hand
+      const index = playerHand.indexOf(card);
+      if (index > -1) {
+        playerHand.splice(index, 1);
       }
+    } else if (inArtifacts) {
+      // Remove from artifacts
+      const index = playerArtifacts.indexOf(card);
+      if (index > -1) {
+        playerArtifacts.splice(index, 1);
+      }
+    }
+    
+    // Add to top of deck
+    playerDeck.push(card);
+    
+    const location = inHand ? "hand" : "artifacts";
+    onscreenConsole.log(
+      `<span class="console-highlights">${card.name}</span> costs more than 1 and has been returned from ${location} to the top of your deck.`,
+    );
+    
+    if (stingOfTheSpider) {
+      await scarletSpiderStingOfTheSpiderDrawChoice(card);
     }
   }
 }
@@ -11936,8 +12139,9 @@ async function apocalypseStrike() {
 async function kingpinStrike() {
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     ),
   ];
 
@@ -12062,10 +12266,11 @@ async function mephistoStrike() {
 
   const cardsYouHave = [
     ...playerHand, // Include all cards in hand (unchanged)
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -12150,8 +12355,9 @@ async function mrSinisterStrike() {
   // 3. Check for Covert cards
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
     ),
   ];
 
@@ -12558,8 +12764,9 @@ async function stryfeStrike() {
     // Check for X-Force heroes in hand or played cards this turn
     const xForceHeroes = [
       ...playerHand,
+      ...playerArtifacts,
       ...cardsPlayedThisTurn.filter(
-        (card) => !card.isCopied && !card.sidekickToDestroy,
+        (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
       ),
     ].filter((card) => card.team === "X-Force");
 
@@ -13193,6 +13400,7 @@ async function kingpinCallAHit() {
 async function stryfeTideOfRetribution() {
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -15637,6 +15845,7 @@ async function strengthOrKOTop() {
   return new Promise((resolve) => {
     const cardsYouHave = [
       ...playerHand,
+      ...playerArtifacts,
       ...cardsPlayedThisTurn.filter(
         (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
       ),
@@ -15844,6 +16053,7 @@ async function KOAllHQBystanders() {
 
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),

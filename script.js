@@ -1,5 +1,5 @@
 // Core Mechanics
-//24.11.2025 17.35
+//19.01.26 20:00
 
 console.log("Script loaded");
 console.log(window.henchmen);
@@ -52,51 +52,52 @@ document
 document.getElementById("theme-switch").addEventListener("click", () => {
   const body = document.body;
   
-  // Change THEME to Paint the Town Red
+  // Change THEME to Guardians
   const themeButtons = document.querySelectorAll(".theme-button");
   
   // Remove selected class from all theme buttons
   themeButtons.forEach((btn) => btn.classList.remove("selected"));
   
-  // Add selected class to Paint the Town Red theme button
+  // Add selected class to Guardians theme button
   themeButtons.forEach((button) => {
-    if (button.getAttribute("data-theme") === "theme-paint-the-town-red") {
+    if (button.getAttribute("data-theme") === "theme-guardians") {
       button.classList.add("selected");
     }
   });
   
-  // Update body class to apply Paint the Town Red theme
-  body.className = "theme-paint-the-town-red";
-  updateThemeImages("theme-paint-the-town-red");
+  // Update body class to apply Guardians theme
+  body.className = "theme-guardians";
+  updateThemeImages("theme-guardians");
   
   // Save theme preference
-  localStorage.setItem("selectedTheme", "theme-paint-the-town-red");
+  localStorage.setItem("selectedTheme", "theme-guardians");
   
-  // Change FONT to PaintTheTownRed
+  // Change FONT to Guardians
   const ALL_FONT_CLASSES = [
     "font-Core",
     "font-DarkCity",
     "font-FantasticFour",
     "font-PaintTheTownRed",
+    "font-Guardians"
   ];
   
-  // Remove all known font classes, add PaintTheTownRed
+  // Remove all known font classes, add Guardians
   body.classList.remove(...ALL_FONT_CLASSES);
-  body.classList.add("font-PaintTheTownRed");
+  body.classList.add("font-Guardians");
   
-  // Update CSS variables for PaintTheTownRed
-  updateFontVariables("PaintTheTownRed");
+  // Update CSS variables for Guardians
+  updateFontVariables("Guardians");
   
   // Save font preference
-  localStorage.setItem("selectedFont", "PaintTheTownRed");
+  localStorage.setItem("selectedFont", "Guardians");
   
   // Update font selector if it exists
   const fontSelector = document.getElementById("font-selector");
   if (fontSelector) {
-    fontSelector.value = "PaintTheTownRed";
+    fontSelector.value = "Guardians";
   }
   
-  console.log("Theme and font changed to: Paint the Town Red");
+  console.log("Theme and font changed to: Guardians");
 });
 
 // Custom on-screen log function
@@ -614,6 +615,7 @@ const citySpaceLabels = [
   "The Bank",
   "The Sewers",
 ];
+let citySize = 5;
 var city1TempBuff = 0;
 var city2TempBuff = 0;
 var city3TempBuff = 0;
@@ -773,6 +775,22 @@ document.querySelectorAll(".tab-button").forEach((button) => {
     this.classList.add("active");
 
     document.querySelectorAll(".tab-content").forEach((content) => {
+      content.classList.remove("active");
+    });
+    document.getElementById(tab).classList.add("active");
+  });
+});
+
+document.querySelectorAll(".settings-tab-button").forEach((button) => {
+  button.addEventListener("click", function () {
+    const tab = this.getAttribute("data-tab");
+
+    document
+      .querySelectorAll(".settings-tab-button")
+      .forEach((btn) => btn.classList.remove("active"));
+    this.classList.add("active");
+
+    document.querySelectorAll(".settings-tab-content").forEach((content) => {
       content.classList.remove("active");
     });
     document.getElementById(tab).classList.add("active");
@@ -2547,24 +2565,47 @@ function randomizeVillainWithRequirements(scheme) {
 
   // If the scheme has a specific villain requirement, ensure it's included
   if (scheme.specificVillainRequirement) {
-    const requiredVillain = filteredCheckboxes.find(
-      (checkbox) => checkbox.value === scheme.specificVillainRequirement,
-    );
-    if (requiredVillain) {
-      // Select the required villain
-      requiredVillain.checked = true;
-      const requiredVillainGroup = villains.find(
-        (villainGroup) => villainGroup.name === requiredVillain.value,
-      );
-      selectedVillainGroups.push(requiredVillainGroup);
+    // Convert to array if it's a single string
+    const requiredVillains = Array.isArray(scheme.specificVillainRequirement)
+      ? scheme.specificVillainRequirement
+      : [scheme.specificVillainRequirement];
 
-      // Remove the required villain from the pool of available villains
+    let allRequiredVillainsFound = true;
+    const foundRequiredVillains = [];
+
+    // Check if all required villains are available
+    for (const requiredVillain of requiredVillains) {
+      const requiredCheckbox = filteredCheckboxes.find(
+        (checkbox) => checkbox.value === requiredVillain,
+      );
+      if (requiredCheckbox) {
+        foundRequiredVillains.push(requiredCheckbox);
+      } else {
+        allRequiredVillainsFound = false;
+        console.error(
+          `Required villain "${requiredVillain}" not found in the filtered list.`,
+        );
+      }
+    }
+
+    if (allRequiredVillainsFound) {
+      // Select all required villains
+      foundRequiredVillains.forEach((requiredCheckbox) => {
+        requiredCheckbox.checked = true;
+        const requiredVillainGroup = villains.find(
+          (villainGroup) => villainGroup.name === requiredCheckbox.value,
+        );
+        selectedVillainGroups.push(requiredVillainGroup);
+      });
+
+      // Remove the required villains from the pool of available villains
       const remainingCheckboxes = filteredCheckboxes.filter(
-        (checkbox) => checkbox !== requiredVillain,
+        (checkbox) => !foundRequiredVillains.includes(checkbox),
       );
 
       // Randomly select the remaining villains (if any are needed)
-      const remainingSlots = scheme.requiredVillains - 1; // Subtract 1 for the required villain
+      const requiredVillainCount = requiredVillains.length;
+      const remainingSlots = scheme.requiredVillains - requiredVillainCount;
       if (remainingSlots > 0 && remainingCheckboxes.length > 0) {
         const shuffledCheckboxes = remainingCheckboxes.sort(
           () => 0.5 - Math.random(),
@@ -2581,9 +2622,7 @@ function randomizeVillainWithRequirements(scheme) {
         });
       }
     } else {
-      console.error(
-        `Required villain "${scheme.specificVillainRequirement}" not found in the filtered list.`,
-      );
+      console.error("Not all required villains were found.");
     }
   } else {
     // If no specific villain is required, randomly select the required number of villains
@@ -2863,33 +2902,54 @@ function showConfirmChoicesPopup(
   let specificVillainRequirementMet = true;
   let specificHenchmenRequirementMet = true;
 
-  // Check specific villain requirement
+  // Check specific villain requirement (now handling arrays)
   if (scheme.specificVillainRequirement) {
-    specificVillainRequirementMet = villains.some((villain) => {
-      const normalizedVillainName = villain.trim().toLowerCase();
-      const normalizedRequirement = scheme.specificVillainRequirement
-        .trim()
-        .toLowerCase();
-      return normalizedVillainName === normalizedRequirement;
-    });
+    // Convert to array if it's a single string
+    const requiredVillains = Array.isArray(scheme.specificVillainRequirement)
+      ? scheme.specificVillainRequirement
+      : [scheme.specificVillainRequirement];
 
-    if (!specificVillainRequirementMet) {
-      villainFeedback += ` <br><span class="error-spans">You must include the ${scheme.specificVillainRequirement} villain group.</span>`;
+    // Check if all required villains are present
+    const normalizedRequiredVillains = requiredVillains.map(v => v.trim().toLowerCase());
+    const normalizedSelectedVillains = villains.map(v => v.trim().toLowerCase());
+    
+    const missingVillains = normalizedRequiredVillains.filter(
+      required => !normalizedSelectedVillains.includes(required)
+    );
+
+    if (missingVillains.length > 0) {
+      specificVillainRequirementMet = false;
+      if (missingVillains.length === 1) {
+        villainFeedback += ` <br><span class="error-spans">You must include the ${missingVillains[0]} villain group.</span>`;
+      } else {
+        const villainList = missingVillains.join(" and ");
+        villainFeedback += ` <br><span class="error-spans">You must include the ${villainList} villain groups.</span>`;
+      }
     }
   }
 
-  // Check specific henchmen requirement
+  // Check specific henchmen requirement (also updated to handle arrays)
   if (scheme.specificHenchmenRequirement) {
-    specificHenchmenRequirementMet = henchmen.some((henchman) => {
-      const normalizedHenchmanName = henchman.trim().toLowerCase();
-      const normalizedRequirement = scheme.specificHenchmenRequirement
-        .trim()
-        .toLowerCase();
-      return normalizedHenchmanName === normalizedRequirement;
-    });
+    // Convert to array if it's a single string
+    const requiredHenchmen = Array.isArray(scheme.specificHenchmenRequirement)
+      ? scheme.specificHenchmenRequirement
+      : [scheme.specificHenchmenRequirement];
 
-    if (!specificHenchmenRequirementMet) {
-      henchmenFeedback += ` <br><span class="error-spans">You must include the ${scheme.specificHenchmenRequirement} henchmen group.</span>`;
+    const normalizedRequiredHenchmen = requiredHenchmen.map(h => h.trim().toLowerCase());
+    const normalizedSelectedHenchmen = henchmen.map(h => h.trim().toLowerCase());
+    
+    const missingHenchmen = normalizedRequiredHenchmen.filter(
+      required => !normalizedSelectedHenchmen.includes(required)
+    );
+
+    if (missingHenchmen.length > 0) {
+      specificHenchmenRequirementMet = false;
+      if (missingHenchmen.length === 1) {
+        henchmenFeedback += ` <br><span class="error-spans">You must include the ${missingHenchmen[0]} henchmen group.</span>`;
+      } else {
+        const henchmenList = missingHenchmen.join(" and ");
+        henchmenFeedback += ` <br><span class="error-spans">You must include the ${henchmenList} henchmen groups.</span>`;
+      }
     }
   }
 
@@ -3253,10 +3313,6 @@ async function onBeginGame(e) {
   // (Optional) prevent double-clicks on the button that triggered this
   if (e?.currentTarget) e.currentTarget.disabled = true;
 
-  if (window.audioEngine) {
-    await window.audioEngine.begin({ musicFadeSeconds: 2.0 });
-  }
-
   if (!this || !this.disabled) {
     // Gather selections
     const selectedSchemeName = document.querySelector(
@@ -3295,6 +3351,16 @@ async function onBeginGame(e) {
     const selectedScheme = schemes.find(
       (scheme) => scheme.name === selectedSchemeName,
     );
+
+  if (window.setMusicFromScheme) {
+    // Use a version that doesn't try to play immediately
+    await window.audioEngine.setMusicFromScheme(selectedScheme, 0);
+  }
+
+  // THEN: Begin the audio engine with the correct track
+  if (window.audioEngine) {
+    await window.audioEngine.begin({ musicFadeSeconds: 2.0 });
+  }
 
     const gameSettings = {
       scheme: selectedSchemeName,
@@ -3803,6 +3869,15 @@ function generateVillainDeck(
     }
   }
 
+  if (scheme.name === "Intergalactic Kree Nega-Bomb") {
+let sixBystanders = bystanderDeck.splice(-6);
+negaBombDeck.push(...sixBystanders);
+}
+
+if (scheme.name === "Unite the Shards") {
+  shardSupply = 30;
+}
+
   const schemeImage = document.createElement("img");
   const schemePlace = document.getElementById("scheme-place");
   schemeImage.src = scheme.image;
@@ -4139,6 +4214,18 @@ const schemeTwistConfigs = {
   "Weave a Web of Lies": {
     image: "Visual Assets/Schemes/Custom Twists/weaveAWebOfLies.webp"
   },
+  "Forge the Infinity Gauntlet": {
+    image: "Visual Assets/Schemes/Custom Twists/forgeTheInfinityGauntlet.webp"
+  },
+  "Intergalactic Kree Nega-Bomb": {
+    image: "Visual Assets/Schemes/Custom Twists/intergalacticKreeNegaBomb.webp"
+  },
+  "The Kree-Skrull War": {
+    image: "Visual Assets/Schemes/Custom Twists/theKreeSkrullWar.webp"
+  },
+  "Unite the Shards": {
+    image: "Visual Assets/Schemes/Custom Twists/uniteTheShards.webp"
+  },
   "default": {
     image: "Visual Assets/Other/SchemeTwist.webp"
   }
@@ -4402,6 +4489,10 @@ let isFirstTurn = true;
 // Draw villain card(s) entry point (unchanged logic)
 // ---------------------------------
 async function drawVillainCard() {
+if (realityGemVillainDraw) {
+  await realityGemVillainChoice();
+}
+
   if (destroyedSpaces[4] === true) {
     onscreenConsole.log(
       `The city is destroyed. No more Villains can be drawn. You have until the end of this turn before defeat...`,
@@ -4504,6 +4595,9 @@ async function processRegularVillainCard(villainCard) {
         );
       } else {
         await ambushEffectFunction(villainCard);
+        if (rocketRacoonShardBonus) {
+        await rocketRaccoonIncomingDetectorDecision();
+        }
       }
     }
     addHRToTopWithInnerHTML();
@@ -4754,6 +4848,31 @@ function updateMastermindOverlay() {
     darkPortalMastermindRendered = true;
   }
 
+
+  const existingShardsOverlay =
+    mastermindCard.querySelector(".villain-shards-class");
+  if (existingShardsOverlay) existingShardsOverlay.remove();
+
+  if (mastermind.shards && mastermind.shards >= 1) {
+    const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${mastermind.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+        // Add to the card
+        mastermindCard.appendChild(shardsOverlay);
+  }
+
+   const existingBoundSoulsPile =
+    mastermindCard.querySelector(".bound-souls-pile");
+  if (existingBoundSoulsPile) existingBoundSoulsPile.remove();
+  if (boundSouls && boundSouls.length >= 1) {
+    const boundSoulsPile = document.createElement("div");
+      boundSoulsPile.classList.add("bound-souls-pile");
+      boundSoulsPile.innerHTML = `<span class="villain-shards-count">${boundSouls.length} ${boundSouls.length === 1 
+    ? 'Bound Soul' : 'Bound Souls'}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+        // Add to the card
+        mastermindCard.appendChild(boundSoulsPile);
+  }
+
   // XCutioner Heroes section
   if (mastermind.XCutionerHeroes && mastermind.XCutionerHeroes.length > 0) {
     const XCutionerOverlay = document.createElement("div");
@@ -4919,6 +5038,10 @@ function handleMasterStrike(masterStrikeCard) {
     // Then always handle the Master Strike effect
     await handleMasterStrikeEffect(masterStrikeCard);
 
+    if (rocketRacoonShardBonus) {
+  await rocketRaccoonIncomingDetectorDecision();
+}
+
     resolve();
   });
 }
@@ -5023,8 +5146,11 @@ function handleSchemeTwist(schemeTwistCard) {
   updateGameBoard();
   return new Promise(async (resolve) => {
     const selectedScheme = getSelectedScheme();
-    if (selectedScheme.name !== "Replace Earth's Leaders with Killbots") {
+    if (selectedScheme.name !== "Replace Earth's Leaders with Killbots" || selectedScheme.name !== "The Kree-Skrull War") {
       koPile.push(schemeTwistCard);
+    }
+    if (selectedScheme.name !== "Intergalactic Kree Nega-Bomb") {
+      negaBombDeck.push(schemeTwistCard);
     }
     schemeTwistCount += 1;
 
@@ -5535,6 +5661,12 @@ function showHeroSelectPopup() {
             `A Scheme Twist has forced you to return <span class="console-highlights">${hero.name}</span> to the bottom of the Hero Deck.`,
           );
         }
+                  if (hero.shards && hero.shards > 0) {
+                    playSFX("shards");
+            shardSupply += hero.shards;
+            hero.shards = 0;
+            onscreenConsole.log(`The Shard <span class="console-highlights">${hero.name}</span> had in the HQ has been returned to the supply.`);
+  }
         returnHeroToDeck(selectedHQIndex);
         updateGameBoard();
         closeHQCityCardChoicePopup();
@@ -7158,7 +7290,13 @@ function showRevealedCards() {
 }
 
 function updateGameBoard() {
-  for (let i = 0; i < hq.length; i++) {
+  if (totalPlayerShards > 0) {
+    document.getElementById('player-shard-counter').style.display = "block";
+  } else {
+    document.getElementById('player-shard-counter').style.display = "none";
+  }
+
+    for (let i = 0; i < hq.length; i++) {
     const hqCell = document.querySelector(`#hq-${i + 1}`);
     const recruitButtonContainer = document.querySelector(
       `#hq${i + 1}-recruit-button-container`,
@@ -7383,6 +7521,7 @@ if (stackedTwistNextToMastermind > 0) {
   }
 
   updateDeckCounts();
+  toggleArtifactsDeck();
   updateReserveAttackAndRecruit();
   showRevealedCards();
 
@@ -7658,11 +7797,13 @@ if (stackedTwistNextToMastermind > 0) {
       const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
       const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
       const villainShattered = city[i].shattered || 0;
+      const attackFromShards = city[i].attackFromShards || 0;
       const totalAttackModifiers =
         attackFromMastermind +
         attackFromScheme +
         attackFromOwnEffects +
         attackFromHeroEffects +
+        attackFromShards +
         currentTempBuff -
         villainShattered;
 
@@ -8091,6 +8232,15 @@ console.log(`Update Game Board, Mastermind Cosmic Threat check. ${mastermindCosm
         cardContainer.appendChild(plutoniumOverlay);
       }
 
+      // Shards overlay
+
+    if (city[i].shards && city[i].shards > 0) {
+      const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${city[i].shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+      cardContainer.appendChild(shardsOverlay);
+    }
+
       if (
         city[i].type !== "Bystander" &&
         city[i].type !== "Attached to Mastermind"
@@ -8181,9 +8331,19 @@ console.log(`Update Game Board, Mastermind Cosmic Threat check. ${mastermindCosm
       (card) => card.type === "Hero" && card.color !== "Grey",
     ).length;
 
-    // Then check Scheme end game conditions (if Mastermind conditions weren't met)
-    if (selectedSchemeEndGame) {
-      switch (selectedSchemeEndGame) {
+if (selectedSchemeEndGame) {
+  // Convert to array if it's a single string
+  const endGameConditions = Array.isArray(selectedSchemeEndGame) 
+    ? selectedSchemeEndGame 
+    : [selectedSchemeEndGame];
+
+  // Track if any condition is met
+  let conditionMet = false;
+  let defeatMessage = "";
+
+  // Check each condition
+  for (const condition of endGameConditions) {
+    switch (condition) {
         case "8BystandersCarriedAway":
           if (escapedBystanderCount >= 8) {
             finalTwist = true;
@@ -8440,13 +8600,90 @@ console.log(`Update Game Board, Mastermind Cosmic Threat check. ${mastermindCosm
           }
           break;
 
+        case "sixInfinityCityEscape":
+          if (escapedVillainsDeck.filter((item) => item.team === "Infinity Gems")
+              .length + city.filter((card) => card && card.team === "Infinity Gems").length >= 6) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `6 Infinity Gems are in the city and/or the Escape Pile. The Gauntlet is complete. ${mastermind.name} wields absolute power and the universe bows to their will.`;
+            showDefeatPopup();
+          }
+          break;
+
+          case "playerCorruptedByPower":
+          if (playerArtifacts.filter(
+              (card) => card.team === "Infinity Gems").length >= 4) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `You control 4 Infinity Gems. Corrupted by power, you complete the Gauntlet with your own hands. You betray your allies and claim the universe for yourself. Evil wins... through you.`;
+            showDefeatPopup();
+          }
+          break;
+
+          case "16NonGreyHeroesKO":
+          if (koPile.filter(
+              (card) => card.type === "Hero" && card.color !== "Grey",
+            ).length >= 16) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `At least 16 non-grey Heroes have been KO'd. The Nega-Bomb detonates, and Earth is wiped from the stars. With the Kree empire behind them, nothing can stop ${mastermind.name} now.`;
+            showDefeatPopup();
+          }
+          break;
+
+          case "4KreeConquests":
+          if (kreeConquests >= 4) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `There have been 4 Kree Conquests. The Kree Empire crushes the Skrulls and claims Earth as conquered territory, enforcing its rule through military might. Earth now lives under alien occupation.`;
+            showDefeatPopup();
+          }
+          break;
+
+          case "4SkrullConquests":
+          if (skrullConquests >= 4) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `There have been 4 Skrull Conquests. The Skrull Empire dismantles the Kree and then finishes the takeover of Earth from the inside. Leaders are replaced, resistance is redirected, and no one can tell ally from enemy anymore. Earth now lives under alien occupation.`;
+            showDefeatPopup();
+          }
+          break;
+
+          case "mastermind10Shards":
+          if (mastermind.shards >= 10) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `${mastermind.name} has collected 10 Shards. With the full power of the shards, the balance of reality collapses under ${mastermind.name}'s will.`;
+            showDefeatPopup();
+          }
+          break;
+
+          case "shardSupplyEmpty":
+          if (shardSupply <= 0) {
+            finalTwist = true;
+            document.getElementById("defeat-context").innerHTML =
+              `The supply of Shards has been exhausted. There's no stopping ${mastermind.name} now.`;
+            showDefeatPopup();
+          }
+          break;
+
         default:
           console.log(
             `Scheme End Game "${selectedSchemeEndGame}" is not yet defined.`,
           );
           break;
       }
-    } else if (!mastermindEndGame) {
+        // If condition is met, break out of loop
+    if (conditionMet) break;
+  }
+
+  // Show defeat if any condition was met
+  if (conditionMet) {
+    finalTwist = true;
+    document.getElementById("defeat-context").innerHTML = defeatMessage;
+    showDefeatPopup();
+  }
+} else if (!mastermindEndGame) {
       console.log(`Neither Scheme nor Mastermind End Game is defined.`);
     }
   }
@@ -8508,6 +8745,8 @@ console.log(`Update Game Board, Mastermind Cosmic Threat check. ${mastermindCosm
 
   document.getElementById("attack-points").innerText = totalAttackPoints;
   document.getElementById("recruit-points").innerText = totalRecruitPoints;
+  document.getElementById("shard-points").innerText = totalPlayerShards;
+
 
   updateSelectionOrder();
 
@@ -8557,12 +8796,14 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
     const attackFromScheme = card.attackFromScheme || 0;
     const attackFromOwnEffects = card.attackFromOwnEffects || 0;
     const attackFromHeroEffects = card.attackFromHeroEffects || 0;
+    const attackFromShards = card.attackFromShards || 0;
     const villainShattered = card.shattered || 0;
     const totalAttackModifiers =
       attackFromMastermind +
       attackFromScheme +
       attackFromOwnEffects +
       attackFromHeroEffects +
+      attackFromShards +
       (currentTempBuff || 0) -
       villainShattered;
 
@@ -8603,7 +8844,7 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
       const allRevealableCosmicThreatCards = [
         ...playerHand,
         ...cardsPlayedThisTurn.filter(
-          (card) => !card.isCopied && !card.sidekickToDestroy,
+          (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
         ),
       ];
 
@@ -8875,6 +9116,15 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
       cardContainer.appendChild(plutoniumOverlay);
     }
 
+    // Shards overlay
+
+    if (card.shards && card.shards > 0) {
+      const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${card.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+      cardContainer.appendChild(shardsOverlay);
+    }
+
     // Attack click handler for villains
     if (card.type !== "Bystander" && card.type !== "Attached to Mastermind") {
       const cardImage = cardContainer.querySelector(".card-image");
@@ -8912,6 +9162,7 @@ function updateVillainAttackValues(villain, i) {
   villain.attackFromScheme = 0;
   villain.attackFromOwnEffects = 0;
   villain.attackFromHeroEffects = 0;
+  villain.attackFromShards = 0;
 
   //Attack From Mastermind Effects
 
@@ -9057,6 +9308,18 @@ function updateVillainAttackValues(villain, i) {
     ).length;
     villain.attackFromOwnEffects = villainCount * 2;
   }
+
+  if (villain.name === "Captain Atlas") {
+    villain.attackFromOwnEffects = mastermind.shards || 0;
+  }
+
+  //Attack from Shards
+
+if (villain.shards && villain.shards > 0 && !villain.noShardBonus) {
+  villain.attackFromShards = villain.shards;
+} else {
+  villain.attackFromShards = 0;
+}
 }
 
 function recalculateHQVillainAttack(villainCard) {
@@ -9090,11 +9353,13 @@ function recalculateHQVillainAttack(villainCard) {
   const attackFromScheme = villainCard.attackFromScheme || 0;
   const attackFromOwnEffects = villainCard.attackFromOwnEffects || 0;
   const attackFromHeroEffects = villainCard.attackFromHeroEffects || 0;
+  const attackFromShards = villainCard.attackFromShards || 0;
   const totalAttackModifiers =
     attackFromMastermind +
     attackFromScheme +
     attackFromOwnEffects +
-    attackFromHeroEffects;
+    attackFromHeroEffects +
+    attackFromShards;
 
   let finalAttack = baseAttack + totalAttackModifiers;
 
@@ -9112,6 +9377,7 @@ function updateHQVillainAttackValues(villain) {
   villain.attackFromScheme = 0;
   villain.attackFromOwnEffects = 0;
   villain.attackFromHeroEffects = 0;
+  villain.attackFromShards = 0;
 
   //Attack From Mastermind Effects
 
@@ -9257,6 +9523,14 @@ function updateHQVillainAttackValues(villain) {
     ).length;
     villain.attackFromOwnEffects = villainCount * 2;
   }
+
+  //Attack from Shards
+
+if (villain.shards && villain.shards > 0 && !villain.noShardBonus) {
+  villain.attackFromShards = villain.shards;
+} else {
+  villain.attackFromShards = 0;
+}
 }
 
 document.getElementById("play-all-button").addEventListener("click", () => {
@@ -9461,6 +9735,22 @@ function updateEvilWinsTracker() {
     case "Weave a Web of Lies":
       evilWinsText.innerHTML = `${twistCount}/7 Twists`;
       break;
+    
+    case "Forge the Infinity Gauntlet":
+      evilWinsText.innerHTML = `${escapedVillainsDeck.filter((card) => card.team === "Infinity Gems").length + city.filter((card) => card && card.team === "Infinity Gems").length}/6 Gems in City/Escaped or ${playerArtifacts.filter((card) => card.team === "Infinity Gems").length}/4 Controlled`;
+      break;
+    
+    case "Intergalactic Kree Nega-Bomb":
+      evilWinsText.innerHTML = `${KOdHeroes + carriedOffHeroes}/16 Non Grey Heroes in KO Pile`;
+      break;
+
+    case "The Kree-Skrull War":
+      evilWinsText.innerHTML = `${kreeConquests}/4 Kree or ${skrullConquests}/4 Skrull Conquests`;
+      break;
+
+    case "Unite the Shards":
+      evilWinsText.innerHTML = `${shardSupply} ${shardSupply === 1 ? "Shard" : "Shards"} Left. Mastermind has ${mastermind.shards}/10`;
+      break;
 
     default:
       evilWinsText.innerHTML = `See Scheme`;
@@ -9528,6 +9818,8 @@ function updateSelectionOrder() {
     totalAttackPoints + currentAttackPoints;
   document.getElementById("recruit-points").innerText =
     totalRecruitPoints + currentRecruitPoints;
+  document.getElementById("shard-points").innerText =
+    totalPlayerShards;  
 }
 
 document
@@ -9697,14 +9989,19 @@ function sortPlayedCards() {
   updateGameBoard();
 }
 
-function confirmActions() {
+async function confirmActions() {
   const cardsToPlay = selectedCards.map((index) => playerHand[index]);
   cardsToPlay
     .reduce((promiseChain, card) => {
-      return promiseChain.then(() => {
+      return promiseChain.then(async () => {
         if (card.keywords && card.keywords.includes("Teleport")) {
           playOrTeleport(card);
           addHRToTopWithInnerHTML(); // HR for Teleport
+          return;
+        }
+
+        if (card.keywords && card.keywords.includes("Artifact")) {
+          await playedArtifact(card);
           return;
         }
 
@@ -10055,6 +10352,16 @@ if (card.temporaryTeleport === true) {
     }
   }
 
+   for (let i = playerArtifacts.length - 1; i >= 0; i--) {
+    const card = playerArtifacts[i];
+
+    // If the card is marked to destroy, remove it
+    if (card.markedToDrawNextTurn === true) {
+      playerArtifacts.splice(i, 1);
+      console.log(`${card.name} was destroyed (markedToDestroy).`);
+    }
+  } 
+
   selectedCards = [];
   justAddedToDiscard = [];
   cardsPlayedThisTurn = [];
@@ -10127,11 +10434,25 @@ if (card.temporaryTeleport === true) {
   moonKnightLunarCommunionKO = 0;
   stingOfTheSpider = false;
   carrionHeroFeast = false;
+  shardsGainedThisTurn = 0;
+  rocketRacoonShardBonus = false;
+  grootRecruitBonus = false;
+  shardsForRecruitEnabled = false;
+  gamoraGodslayerOne = false;
+  gamoraGodslayerTwo = false;
+  realityGemVillainDraw = false;
 
   playerHand.forEach((card) => {
     if (card.temporaryTeleport === true) {
       delete card.temporaryTeleport;
       card.keyword3 = "None";
+    }
+  });
+
+  playerArtifacts.forEach(card => {
+    // Reset all cards except Time Gem
+    if (card.name !== "Time Gem") {
+      card.artifactAbilityUsed = false;
     }
   });
 
@@ -10238,6 +10559,7 @@ function isVillainConditionMet(villainCard) {
   const { fightCondition, conditionType, condition } = villainCard;
   const cardsYouHave = [
     ...playerHand,
+    ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
       (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
     ),
@@ -10549,11 +10871,13 @@ updateVillainAttackValues(villainCard, cityIndex);
   const attackFromScheme = villainCard.attackFromScheme || 0;
   const attackFromOwnEffects = villainCard.attackFromOwnEffects || 0;
   const attackFromHeroEffects = villainCard.attackFromHeroEffects || 0;
+  const attackFromShards = villainCard.attackFromShards || 0;
   const totalAttackModifiers =
     attackFromMastermind +
     attackFromScheme +
     attackFromOwnEffects +
-    attackFromHeroEffects;
+    attackFromHeroEffects +
+    attackFromShards;
 
   let finalAttack = baseAttack + totalAttackModifiers;
 
@@ -11300,6 +11624,20 @@ async function handlePostDefeat(
   cityIndex,
   isInstantDefeat = false,
 ) {
+
+  if (villainCard.shards && villainCard.shards > 0) {
+    playSFX("shards");
+    villainCard.shards -= 1;
+    totalPlayerShards += 1;
+    shardsGainedThisTurn += 1;
+    const shardCount = villainCard.shards;
+    shardSupply += villainCard.shards;
+    villainCard.shards -= shardCount;
+        onscreenConsole.log(
+      `${villainCard.shards === 1 ? `You take <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shard.` : `You take one of <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shards and return the rest to the supply.`}`,
+    );
+  }
+
   // Handle Baby Hope first
   if (villainCard.babyHope === true) {
     delete villainCard.babyHope;
@@ -11363,39 +11701,61 @@ async function handlePostDefeat(
   const streetsFree =
     (city[1] === "" || city[1] === null) && destroyedSpaces[1] === false;
 
-  // Burrow logic
-  if (burrowingVillain) {
-    if (inStreetsNow) {
-      victoryPile.push(villainCard);
+const infinityGemVillain = villainCard.team === "Infinity Gems";
+
+// Infinity Gem logic - skip all other options
+if (infinityGemVillain) {
+  villainCard.type = "Artifact";
+  playerDiscardPile.push(villainCard);
+  onscreenConsole.log(
+    `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
+  );
+} 
+// Burrow logic
+else if (burrowingVillain) {
+  if (inStreetsNow) {
+    victoryPile.push(villainCard);
+    onscreenConsole.log(
+      `<span class="console-highlights">${villainCard.name}</span> is in the Streets and cannot burrow. They have been defeated!`,
+    );
+  } else if (streetsFree) {
+    let negate = false;
+    if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+      negate = await promptNegateFightEffectWithMrFantastic();
+    }
+    if (!negate) {
+      city[1] = villainCard;
+      playSFX("burrow");
       onscreenConsole.log(
-        `<span class="console-highlights">${villainCard.name}</span> is in the Streets and cannot burrow. They have been defeated!`,
-      );
-    } else if (streetsFree) {
-      let negate = false;
-      if (typeof promptNegateFightEffectWithMrFantastic === "function") {
-        negate = await promptNegateFightEffectWithMrFantastic();
-      }
-      if (!negate) {
-        city[1] = villainCard;
-        playSFX("burrow");
-        onscreenConsole.log(
-          `<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`,
-        );
-      }
-    } else {
-      victoryPile.push(villainCard);
-      onscreenConsole.log(
-        `The Streets are ${destroyedSpaces[1] === false ? "occupied" : "destroyed"} so <span class="console-highlights">${villainCard.name}</span> cannot burrow and has been defeated!`,
+        `<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`,
       );
     }
   } else {
-    if (!villainCard.skrulled) {
-      victoryPile.push(villainCard);
-      onscreenConsole.log(
-        `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
-      );
-    }
+    victoryPile.push(villainCard);
+    onscreenConsole.log(
+      `The Streets are ${destroyedSpaces[1] === false ? "occupied" : "destroyed"} so <span class="console-highlights">${villainCard.name}</span> cannot burrow and has been defeated!`,
+    );
   }
+} else {
+  if (!villainCard.skrulled) {
+    victoryPile.push(villainCard);
+    onscreenConsole.log(
+      `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
+    );
+  }
+}
+
+const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
+if (soulGem) {
+
+        if (typeof soulGem.shards === 'undefined') {
+    soulGem.shards = 0;
+  } 
+  playSFX("shards");
+  soulGem.shards += 1;
+  shardSupply -= 1;
+  onscreenConsole.log(`<span class="console-highlights">Soul Gem</span> gains a Shard.`);
+}
 
   if (villainCard.killbot === true) {
     bystanderBonuses();
@@ -11511,6 +11871,20 @@ async function handleHQPostDefeat(
   index,
   isInstantDefeat = false,
 ) {
+
+    if (villainCard.shards && villainCard.shards > 0) {
+      playSFX("shards");
+    villainCard.shards -= 1;
+    totalPlayerShards += 1;
+    shardsGainedThisTurn += 1;
+    const shardCount = villainCard.shards;
+    shardSupply += villainCard.shards;
+    villainCard.shards -= shardCount;
+        onscreenConsole.log(
+      `${villainCard.shards === 1 ? `You take <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shard.` : `You take one of <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shards and return the rest to the supply.`}`,
+    );
+  }
+
   // Handle Baby Hope first
   if (villainCard.babyHope === true) {
     delete villainCard.babyHope;
@@ -11567,6 +11941,14 @@ async function handleHQPostDefeat(
     villainCard.cost = 0;
   }
 
+  if (infinityGemVillain) {
+  villainCard.type = "Artifact";
+  playerDiscardPile.push(villainCard);
+  onscreenConsole.log(
+    `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
+  );
+} 
+
   const burrowingVillain =
     villainCard.keywords && villainCard.keywords.includes("Burrow");
 
@@ -11584,6 +11966,18 @@ async function handleHQPostDefeat(
       `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
     );
   }
+
+  const soulGem = playerArtifacts.find(card => card.name === "Soul Gem");
+if (soulGem) {
+
+          if (typeof soulGem.shards === 'undefined') {
+    soulGem.shards = 0;
+  } 
+  playSFX("shards");
+  soulGem.shards += 1;
+  shardSupply -= 1;
+  onscreenConsole.log(`<span class="console-highlights">Soul Gem</span> gains a Shard.`);
+}
 
   const newCard = heroDeck.length > 0 ? heroDeck.pop() : null;
   hq[index] = newCard;
@@ -12159,6 +12553,12 @@ async function showHeroKOPopup(villain) {
         koHeroInHQ(selectedHQIndex);
         updateGameBoard();
         closeHQCityCardChoicePopup();
+          if (hero.shards && hero.shards > 0) {
+            playSFX("shards");
+            shardSupply += hero.shards;
+            hero.shards = 0;
+            onscreenConsole.log(`The Shard <span class="console-highlights">${hero.name}</span> had in the HQ has been returned to the supply.`);
+  }
         resolve();
       }, 100);
     };
@@ -12616,9 +13016,39 @@ function recalculateMastermindAttack(mastermind) {
   const mastermindTempBuff = window.mastermindTempBuff || 0; // Assume mastermindTempBuff is defined globally
   const mastermindPermBuff = window.mastermindPermBuff || 0; // Assume mastermindPermBuff is defined globally
 
+if (mastermind.shards && mastermind.shards > 0 && !mastermind.noShardBonus) {
+  mastermind.attackFromShards = mastermind.shards;
+} else {
+  mastermind.attackFromShards = 0;
+}
+
+if (mastermind.name === "Thanos") {
+
+  const selectedVillains = Array.from(
+      document.querySelectorAll(
+        "#villain-selection input[type=checkbox]:checked",
+      ),
+    ).map((cb) => cb.value);
+
+ if (selectedVillains.includes("Infinity Gems")) {
+  const gemsControlled = playerArtifacts.filter(
+    (card) => card.team === "Infinity Gems"
+  ).length;
+  
+  mastermind.attackFromGems = gemsControlled * 2;
+ } else {
+  const villainsInVP = victoryPile.filter(
+    (card) => card.alwaysLeads === true,
+  ).length; 
+
+  mastermind.attackFromGems = villainsInVP * 2;
+ }
+  
+}
+
   // Start with the mastermind's base attack value
   let mastermindAttack =
-    mastermind.attack + mastermindTempBuff + mastermindPermBuff;
+    mastermind.attack + mastermindTempBuff + mastermindPermBuff + mastermind.attackFromShards - mastermind.attackFromGems;
 
   // Ensure mastermindAttack doesn't drop below 0
   if (mastermindAttack < 0) {
@@ -13198,6 +13628,20 @@ async function handleMastermindPostDefeat(
   mastermindCopy,
   mastermindAttack,
 ) {
+
+    if (mastermind.shards && mastermind.shards > 0) {
+      playSFX("shards");
+    mastermind.shards -= 1;
+    totalPlayerShards += 1;
+    shardsGainedThisTurn += 1;
+    const shardCount = mastermind.shards;
+    shardSupply += mastermind.shards;
+    mastermind.shards -= shardCount;
+        onscreenConsole.log(
+      `${mastermind.shards === 1 ? `You take <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> Shard.` : `You take one of <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> Shards and return the rest to the supply.`}`,
+    );
+  }
+
   // Handle extra bystanders
   if (rescueExtraBystanders > 0) {
     for (let i = 0; i < rescueExtraBystanders; i++) {
@@ -13508,15 +13952,31 @@ async function showDrawPopup() {
         break;
 
       case "Invade the Daily Bugle News HQ":
-        winText.innerHTML = `The villains have been driven out of the newsroom, but ${mastermind.name} escaped with enough influence to sway the headlines from the shadows.`;
+        drawText.innerHTML = `The villains have been driven out of the newsroom, but ${mastermind.name} escaped with enough influence to sway the headlines from the shadows.`;
         break;
 
       case "Splice Humans with Spider DNA":
-        winText.innerHTML = `The genetic splicing has been halted, but ${mastermind.name} escaped with research that could fuel their next plot.`;
+        drawText.innerHTML = `The genetic splicing has been halted, but ${mastermind.name} escaped with research that could fuel their next plot.`;
         break;
 
       case "Weave a Web of Lies":
-        winText.innerHTML = `You've forced ${mastermind.name} to retreat, but they continue to weave their web of lies from the shadows.`;
+        drawText.innerHTML = `You've forced ${mastermind.name} to retreat, but they continue to weave their web of lies from the shadows.`;
+        break;
+
+      case "Forge the Infinity Gauntlet":
+        drawText.innerHTML = `The Infinity Gems have been torn from ${mastermind.name}'s grasp and scattered beyond reach, but ${mastermind.name} escaped to pursue a different path to power.`;
+        break;
+
+      case "Intergalactic Kree Nega-Bomb":
+        drawText.innerHTML = `The Nega-Bomb has been contained, but ${mastermind.name} escaped in the chaos, leaving the heroes battered and the planet shaken.`;
+        break;
+
+      case "The Kree-Skrull War":
+        drawText.innerHTML = `The war has been broken before either side could claim dominance, but ${mastermind.name} escaped as the Kree and Skrulls retreated to regroup.`;
+        break;
+
+      case "Unite the Shards":
+        drawText.innerHTML = `Most of the Shards have been destroyed or scattered beyond recovery, but unfortunately, ${mastermind.name} managed to get away with a handful of them.`;
         break;
 
       default:
@@ -13926,6 +14386,22 @@ async function showWinPopup() {
         winText.innerHTML = `You've stopped ${mastermind.name} from weaving their web of lies. The truth is exposed, and the people see through their deception. Excellent work!`;
         break;
 
+      case "Forge the Infinity Gauntlet":
+        winText.innerHTML = `You've stopped ${mastermind.name} from assembling the Infinity Gauntlet. The Infinity Gems are scattered and secured before their power can be unified. Excellent work!`;
+        break;
+
+      case "Intergalactic Kree Nega-Bomb":
+        winText.innerHTML = `You've stopped ${mastermind.name} from detonating the Kree Nega-Bomb. The device is neutralized, and Earth is spared annihilation. Excellent work!`;
+        break;
+
+      case "The Kree-Skrull War":
+        winText.innerHTML = `You've stopped ${mastermind.name} from turning the Kree-Skrull War into a full-scale conquest. The fighting is halted, and Earth is spared from becoming a battleground. Excellent work!`;
+        break;
+
+      case "Unite the Shards":
+        winText.innerHTML = `You've stopped ${mastermind.name} from uniting the Shards. Their power has been sealed away forever. Excellent work!`;
+        break;
+
       default:
         winText.innerHTML = `You have defeated the Mastermind and prevented their nefarious scheme! Excellent work!`;
         break;
@@ -14019,6 +14495,7 @@ function countTechCards() {
   const allCards = [
     ...playerDiscardPile, // Discard pile
     ...playerHand, // Hand
+    ...playerArtifacts,
     ...cardsPlayedThisTurn, // Cards played this turn
     ...playerDeck, // Deck
   ];
@@ -14192,6 +14669,7 @@ const excludedZoomClasses = [
   "keywords",
   "console-log",
   "attack-overlay",
+  "villain-shards-overlay"
 ];
 
 // Combine all card lists into a single array
@@ -15596,6 +16074,14 @@ async function recruitHeroConfirmed(hero, hqIndex) {
     );
   }
 
+  if (hero.shards && hero.shards > 0) {
+    playSFX("shards");
+    totalPlayerShards += hero.shards;
+    shardsGainedThisTurn += hero.shards;
+    hero.shards = 0;
+    onscreenConsole.log(`You gain the Shard <span class="console-highlights">${hero.name}</span> had in the HQ.`);
+  }
+
   destinationElement = document.getElementById(destinationId);
   if (!destinationElement) {
     destinationElement = document.body;
@@ -15827,44 +16313,84 @@ function addHRToTopWithInnerHTML() {
 }
 
 function openSettings() {
+  console.log("🎵 Opening settings popup");
+  
+  // Show the popup first
   document.getElementById("settings-popup").style.display = "block";
   document.getElementById("modal-overlay").style.display = "block";
+  
+  // Sync UI settings
+  syncUIFromEngine();
+  
+  // Update the music selector to show current track
+  if (window.audioEngine) {
+    const musicSelector = document.getElementById('music-selector');
+    if (musicSelector) {
+      musicSelector.value = window.audioEngine.currentMusicTrack;
+      console.log("🎵 Set dropdown to current track:", window.audioEngine.currentMusicTrack);
+    }
+  }
+  
+  // Now attach the music selector event listener (only if not already attached)
+  setTimeout(() => {
+    const musicSelector = document.getElementById('music-selector');
+    console.log("🎵 Music selector in popup:", musicSelector);
+    
+    if (musicSelector && !musicSelector._listenerAttached) {
+      musicSelector.addEventListener('change', function(e) {
+        console.log("🎵 DROPDOWN CHANGE! Value:", this.value);
+        const trackKey = this.value;
+        if (window.audioEngine) {
+          console.log("Calling changeMusicTrack with:", trackKey);
+          window.audioEngine.changeMusicTrack(trackKey);
+        }
+      });
+      
+      musicSelector._listenerAttached = true;
+      console.log("🎵 Music selector event listener attached");
+    } else if (musicSelector) {
+      console.log("🎵 Music selector listener already attached");
+    } else {
+      console.error("🎵 Music selector not found in popup");
+    }
+  }, 100);
 }
 
-// ==== AUDIO ENGINE (live sliders + per-channel mutes + file:// safe) ========
+// ==== AUDIO ENGINE (with lazy loading for multiple background tracks) ========
 (() => {
   const AUDIO_BASE_PATH = "./Audio Assets";
 
   const SOUND_KEYS = [
-    "ambush",
-    "attack",
-    "bribe",
-    "burrow",
-    "capture",
-    "card-draw",
-    "cosmic-threat",
-    "escape",
-    "evil-wins",
-    "feast",
-    "focus",
-    "game-draw",
-    "good-wins",
-    "hand-dealt",
-    "investigate",
-    "ko",
-    "master-strike",
-    "phase",
-    "recruit",
-    "rescue",
-    "scheme-twist",
-    "shatter",
-    "teleport",
-    "versatile",
-    "villain-entry",
-    "wall-crawl",
-    "wound",
+    "ambush", "artifact", "attack", "bribe", "burrow", "capture", "card-draw", 
+    "cosmic-threat", "escape", "evil-wins", "feast", "focus", "game-draw", 
+    "good-wins", "hand-dealt", "investigate", "ko", "master-strike", 
+    "phase", "recruit", "rescue", "scheme-twist", "shards", "shatter", "teleport", 
+    "versatile", "villain-entry", "wall-crawl", "wound",
   ];
-  const MUSIC_KEY = "background-music";
+  
+  // Define available music tracks
+  const MUSIC_TRACKS = {
+    "background-music": "Default",
+    "Breakouts and Breaking News": "Breakouts and Breaking News", 
+    "Casualties and Executions": "Casualties and Executions",
+    "Clones and Lies": "Clones and Lies",
+    "Crime Waves and Robberies": "Crime Waves and Robberies",
+    "Dark Portals and Stolen Hope": "Dark Portals and Stolen Hope",
+    "Demonic Inferno": "Demonic Inferno",
+    "Detonations": "Detonations",
+    "Earthquakes and Floods": "Earthquakes and Floods",
+    "Force Fields and Schisms": "Force Fields and Schisms",
+    "Genetic Splicing": "Genetic Splicing",
+    "Infinity Gems and Shards": "Infinity Gems and Shards",
+    "Killbots": "Killbots",
+    "Nega-Bomb": "Nega-Bomb",
+    "Outbreaks and Plutonium": "Outbreaks and Plutonium",
+    "Skrulls, Kree and Cosmic Rays": "Skrulls, Kree and Cosmic Rays",
+    "The Cosmic Cube": "The Cosmic Cube",
+    "The Negative Zone": "The Negative Zone",
+    
+    // Add more tracks here as needed
+  };
 
   const isFileProtocol = () => location.protocol === "file:";
   const enc = (p) => encodeURI(p);
@@ -15906,6 +16432,9 @@ function openSettings() {
       this.musicMuted = localStorage.getItem("game_musicMuted") === "1";
       this.sfxMuted = localStorage.getItem("game_sfxMuted") === "1";
 
+      // Current music track (persisted)
+      this.currentMusicTrack = "background-music";
+
       // Queue
       this._sfxQueue = [];
       this._sfxPlaying = false;
@@ -15920,9 +16449,15 @@ function openSettings() {
 
       // HTMLAudio
       this.mediaEls = {};
-      this.mediaMusicEl = null;
+      this.mediaMusicEls = {}; // Store multiple music elements
+      this.currentMediaMusicEl = null;
 
-      this.loaded = false;
+      // Track loading states
+      this.loadedTracks = new Set(); // Which tracks are currently loaded
+      this.loadingTracks = new Map(); // Promises for tracks currently loading
+      
+      this.sfxLoaded = false;
+      this.defaultMusicLoaded = false;
       this.unlocked = false;
     }
 
@@ -15948,81 +16483,129 @@ function openSettings() {
       if (this.backend === "webaudio" && this.ctx) {
         const now = this.ctx.currentTime || 0;
         const effSfx = this._effSfx();
-        const effMusic = this.unlocked ? this._effMusic() : 0; // keep music at 0 pre-unlock
+        const effMusic = this.unlocked ? this._effMusic() : 0;
         if (this.sfxGain) this.sfxGain.gain.setValueAtTime(effSfx, now);
         if (this.musicGain) this.musicGain.gain.setValueAtTime(effMusic, now);
       } else {
+        // Apply to all SFX elements
         for (const [key, el] of Object.entries(this.mediaEls)) {
-          const isMusic = key === MUSIC_KEY;
-          const chVol = isMusic
-            ? this.musicMuted
-              ? 0
-              : this.musicVolume
-            : this.sfxMuted
-              ? 0
-              : this.sfxVolume;
-          el.volume = Math.max(0, Math.min(1, chVol * this.masterVolume));
+          if (SOUND_KEYS.includes(key)) {
+            const chVol = this.sfxMuted ? 0 : this.sfxVolume;
+            el.volume = Math.max(0, Math.min(1, chVol * this.masterVolume));
+          }
+        }
+        // Apply to current music element
+        if (this.currentMediaMusicEl) {
+          const chVol = this.musicMuted ? 0 : this.musicVolume;
+          this.currentMediaMusicEl.volume = Math.max(0, Math.min(1, chVol * this.masterVolume));
         }
       }
     }
 
-    // ---------- load all ----------
+    // ---------- load all (SFX + default music only) ----------
     async loadAll() {
+      // Load only SFX and default background music initially
+      const loadPromises = [
+        this.backend === "webaudio" ? this._waLoad("background-music", true) : this._htmlLoad("background-music", true),
+        ...SOUND_KEYS.map(key => 
+          this.backend === "webaudio" ? this._waLoad(key) : this._htmlLoad(key)
+        )
+      ];
+
       if (this.backend === "webaudio") {
         try {
           await this._waInit();
-          await Promise.all([
-            this._waLoad(MUSIC_KEY),
-            ...SOUND_KEYS.map((k) => this._waLoad(k)),
-          ]);
-          this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime); // silent until begin()
+          await Promise.all(loadPromises);
+          this.masterGain.gain.setValueAtTime(0, this.ctx.currentTime);
+          this.defaultMusicLoaded = true;
         } catch (e) {
           console.warn("WebAudio load failed; falling back to HTMLAudio.", e);
           this.backend = "html";
-          await this._htmlLoad(MUSIC_KEY);
-          await Promise.all(SOUND_KEYS.map((k) => this._htmlLoad(k)));
+          await Promise.all(loadPromises);
           this._setAllHtmlMuted(true);
           this._applyHtmlVolumes();
+          this.defaultMusicLoaded = true;
         }
       } else {
-        await this._htmlLoad(MUSIC_KEY);
-        await Promise.all(SOUND_KEYS.map((k) => this._htmlLoad(k)));
+        await Promise.all(loadPromises);
         this._setAllHtmlMuted(true);
         this._applyHtmlVolumes();
+        this.defaultMusicLoaded = true;
       }
 
-      // Ensure any early UI changes take effect as soon as we’re ready
+      this.sfxLoaded = true;
       this._applyEffectiveGains();
-      this.loaded = true;
+      
+      // Update music selector UI
+      this._updateMusicSelector();
+      
       window.audio = this;
       window.dispatchEvent(new Event("audio-ready"));
     }
 
-    // ---------- begin / unlock ----------
-    async begin({ musicFadeSeconds = 2.0 } = {}) {
-      if (!this.loaded || this.unlocked) return;
+    // ---------- Load a specific music track on demand ----------
+    async _ensureMusicTrackLoaded(trackKey) {
+      // If already loaded, return immediately
+      if (this.loadedTracks.has(trackKey)) {
+        return true;
+      }
 
-      if (this.backend === "webaudio") {
-        if (this.ctx.state !== "running") {
-          try {
-            await this.ctx.resume();
-          } catch (e) {
-            console.warn("AudioContext resume failed", e);
+      // If currently loading, wait for that promise
+      if (this.loadingTracks.has(trackKey)) {
+        return this.loadingTracks.get(trackKey);
+      }
+
+      // Start loading the track
+      const loadPromise = (async () => {
+        try {
+          if (this.backend === "webaudio") {
+            await this._waLoad(trackKey, true);
+          } else {
+            await this._htmlLoad(trackKey, true);
           }
+          this.loadedTracks.add(trackKey);
+          this.loadingTracks.delete(trackKey);
+          return true;
+        } catch (e) {
+          this.loadingTracks.delete(trackKey);
+          console.warn(`Failed to load music track "${trackKey}"`, e);
+          return false;
         }
-        this.unlocked = true;
+      })();
 
-        const now = this.ctx.currentTime;
-        this.masterGain.gain.setValueAtTime(1.0, now);
-        this.sfxGain.gain.setValueAtTime(this._effSfx(), now);
-        await this._waStartMusic(musicFadeSeconds);
-      } else {
-        this._setAllHtmlMuted(false);
-        this._applyHtmlVolumes();
-        this.unlocked = true;
-        await this._htmlStartMusic(musicFadeSeconds);
+      this.loadingTracks.set(trackKey, loadPromise);
+      return loadPromise;
+    }
+
+// ---------- begin / unlock ----------
+async begin({ musicFadeSeconds = 2.0 } = {}) {
+  if (!this.sfxLoaded || this.unlocked) return;
+
+  // Ensure the current music track is loaded before starting
+  console.log(`Ensuring track "${this.currentMusicTrack}" is loaded before begin()`);
+  await this._ensureMusicTrackLoaded(this.currentMusicTrack);
+
+  if (this.backend === "webaudio") {
+    if (this.ctx.state !== "running") {
+      try {
+        await this.ctx.resume();
+      } catch (e) {
+        console.warn("AudioContext resume failed", e);
       }
     }
+    this.unlocked = true;
+
+    const now = this.ctx.currentTime;
+    this.masterGain.gain.setValueAtTime(1.0, now);
+    this.sfxGain.gain.setValueAtTime(this._effSfx(), now);
+    await this._waStartMusic(this.currentMusicTrack, musicFadeSeconds);
+  } else {
+    this._setAllHtmlMuted(false);
+    this._applyHtmlVolumes();
+    this.unlocked = true;
+    await this._htmlStartMusic(this.currentMusicTrack, musicFadeSeconds);
+  }
+}
 
     // ---------- public API ----------
     setMasterVolume(v) {
@@ -16055,8 +16638,108 @@ function openSettings() {
       this._applyEffectiveGains();
     }
 
+    // NEW: Change music track with lazy loading
+async changeMusicTrack(trackKey, fadeSeconds = 1.0) {
+  console.log("=== changeMusicTrack called ===");
+  console.log(`Requested track: "${trackKey}"`);
+  console.log(`Current track: "${this.currentMusicTrack}"`);
+  console.log(`SFX loaded: ${this.sfxLoaded}, Unlocked: ${this.unlocked}`);
+  console.log(`Backend: ${this.backend}`);
+  
+  if (!this.sfxLoaded || !this.unlocked) {
+    console.log("Audio not ready - SFX loaded:", this.sfxLoaded, "Unlocked:", this.unlocked);
+    return;
+  }
+  
+  // Validate track exists in our defined tracks, fallback to default
+  if (!MUSIC_TRACKS[trackKey]) {
+    console.warn(`Music track "${trackKey}" not defined in MUSIC_TRACKS, using default`);
+    trackKey = "background-music";
+  }
+  
+  // Don't do anything if we're already playing this track
+  if (trackKey === this.currentMusicTrack) {
+    console.log(`Already playing track "${trackKey}", skipping`);
+    return;
+  }
+  
+  console.log(`Loading music track: "${trackKey}"`);
+  
+  // Ensure the track is loaded before switching
+  const loaded = await this._ensureMusicTrackLoaded(trackKey);
+  console.log(`Track "${trackKey}" loaded: ${loaded}`);
+  
+  if (!loaded) {
+    console.warn(`Failed to load track "${trackKey}", using default`);
+    trackKey = "background-music";
+    // Make sure default is loaded
+    await this._ensureMusicTrackLoaded("background-music");
+  }
+  
+  console.log(`Fading out current music and switching to: "${trackKey}"`);
+  
+  // Fade out current music
+  await this.fadeOutMusic(fadeSeconds / 2);
+  console.log("Fade out completed");
+  
+  // Update current track
+  this.currentMusicTrack = trackKey;
+  localStorage.setItem("game_currentMusicTrack", trackKey);
+  console.log(`Current track updated to: "${trackKey}"`);
+  
+  // Start new music
+  if (this.backend === "webaudio") {
+    console.log("Using WebAudio backend to start music");
+    await this._waStartMusic(trackKey, fadeSeconds / 2);
+  } else {
+    console.log("Using HTMLAudio backend to start music");
+    await this._htmlStartMusic(trackKey, fadeSeconds / 2);
+  }
+  
+  console.log("New music should be playing now");
+  
+  // Update UI
+  console.log("Music track change completed");
+}
+
+    // NEW: Set music track from scheme
+
+// NEW: Set music track from scheme - with better handling for locked audio
+async setMusicFromScheme(scheme, fadeSeconds = 2.0) {
+  console.log("=== setMusicFromScheme called ===");
+  
+  if (scheme && scheme.backingTrack) {
+    const trackKey = scheme.backingTrack;
+    console.log(`Setting music from scheme: "${trackKey}"`);
+    
+    if (MUSIC_TRACKS[trackKey]) {
+      // Always update the current track
+      this.currentMusicTrack = trackKey;
+      this._updateMusicSelector();
+      
+      // If audio is already unlocked, change track immediately
+      if (this.unlocked) {
+        console.log("Audio is unlocked, changing track immediately");
+        await this.changeMusicTrack(trackKey, fadeSeconds);
+      } else {
+        console.log("Audio is locked - track will play when begin() is called");
+        // Ensure the track is loaded so it's ready when begin() is called
+        await this._ensureMusicTrackLoaded(trackKey);
+      }
+    } else {
+      console.warn(`Track "${trackKey}" not found, using default`);
+      this.currentMusicTrack = "background-music";
+      this._updateMusicSelector();
+    }
+  } else {
+    console.warn("No scheme or backingTrack found, using default");
+    this.currentMusicTrack = "background-music";
+    this._updateMusicSelector();
+  }
+}
+
     playSFX(key) {
-      if (!this.loaded) return;
+      if (!this.sfxLoaded) return;
       if (!SOUND_KEYS.includes(key)) {
         console.warn(`SFX "${key}" not in SOUND_KEYS`);
         return;
@@ -16066,7 +16749,7 @@ function openSettings() {
     }
 
     fadeOutMusic(fadeSeconds = 2.0) {
-      if (!this.loaded || !this.unlocked) return Promise.resolve();
+      if (!this.sfxLoaded || !this.unlocked) return Promise.resolve();
 
       if (this.backend === "webaudio") {
         return this._waFadeOutMusic(fadeSeconds);
@@ -16084,11 +16767,24 @@ function openSettings() {
           this.musicSource.disconnect();
           this.musicSource = null;
         }
-      } else if (this.mediaMusicEl) {
-        this.mediaMusicEl.pause();
-        this.mediaMusicEl.currentTime = 0;
+      } else if (this.currentMediaMusicEl) {
+        this.currentMediaMusicEl.pause();
+        this.currentMediaMusicEl.currentTime = 0;
+        this.currentMediaMusicEl = null;
       }
     }
+
+    // NEW: Update music selector UI
+_updateMusicSelector() {
+  const selector = document.getElementById("music-selector");
+  if (selector) {
+    console.log(`Updating music selector from "${selector.value}" to "${this.currentMusicTrack}"`);
+    selector.value = this.currentMusicTrack;
+    console.log(`Music selector now shows: "${selector.value}"`);
+  } else {
+    console.log("Music selector not found in DOM");
+  }
+}
 
     // ---------- SFX queue ----------
     async _dequeueAndPlay() {
@@ -16127,12 +16823,12 @@ function openSettings() {
       this.masterGain.connect(this.ctx.destination);
     }
 
-    async _waLoad(key) {
+    async _waLoad(key, isMusic = false) {
       let lastErr = null;
       for (const ext of this.extCandidates) {
         try {
           const url = enc(`${AUDIO_BASE_PATH}/${key}.${ext}`);
-          const res = await fetch(url); // http/https only
+          const res = await fetch(url);
           if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
           const arr = await res.arrayBuffer();
           const buf = await this.ctx.decodeAudioData(arr);
@@ -16142,9 +16838,14 @@ function openSettings() {
           lastErr = e;
         }
       }
-      throw new Error(
-        `No decodable source for "${key}" (${this.extCandidates.join(", ")}) :: ${lastErr}`,
-      );
+      if (isMusic) {
+        console.warn(`Failed to load music track "${key}", it will not be available`);
+        throw new Error(`Music track "${key}" failed to load`);
+      } else {
+        throw new Error(
+          `No decodable source for "${key}" (${this.extCandidates.join(", ")}) :: ${lastErr}`,
+        );
+      }
     }
 
     async _waPlayOnce(key) {
@@ -16157,31 +16858,43 @@ function openSettings() {
       return buf.duration;
     }
 
-    async _waStartMusic(fadeSeconds) {
-      if (this.musicSource) {
-        try {
-          this.musicSource.stop();
-        } catch {}
-        this.musicSource.disconnect();
-        this.musicSource = null;
-      }
-      const buf = this.buffers[MUSIC_KEY];
-      if (!buf) return;
+    async _waStartMusic(trackKey, fadeSeconds) {
+  console.log(`_waStartMusic called for: "${trackKey}"`);
+  
+  if (this.musicSource) {
+    console.log("Stopping previous music source");
+    try {
+      this.musicSource.stop();
+    } catch {}
+    this.musicSource.disconnect();
+    this.musicSource = null;
+  }
+  
+  const buf = this.buffers[trackKey];
+  console.log(`Buffer for "${trackKey}":`, buf);
+  
+  if (!buf) {
+    console.warn(`Music track "${trackKey}" not loaded in buffers, using default`);
+    return this._waStartMusic("background-music", fadeSeconds);
+  }
 
-      const now = this.ctx.currentTime;
-      const src = this.ctx.createBufferSource();
-      src.buffer = buf;
-      src.loop = true;
-      src.connect(this.musicGain);
-      src.start();
+  const now = this.ctx.currentTime;
+  const src = this.ctx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  src.connect(this.musicGain);
+  src.start();
 
-      const target = this._effMusic();
-      this.musicGain.gain.cancelScheduledValues(now);
-      this.musicGain.gain.setValueAtTime(0, now);
-      this.musicGain.gain.linearRampToValueAtTime(target, now + fadeSeconds);
+  const target = this._effMusic();
+  console.log(`Starting music fade to volume: ${target}`);
+  
+  this.musicGain.gain.cancelScheduledValues(now);
+  this.musicGain.gain.setValueAtTime(0, now);
+  this.musicGain.gain.linearRampToValueAtTime(target, now + fadeSeconds);
 
-      this.musicSource = src;
-    }
+  this.musicSource = src;
+  console.log(`WebAudio music started for: "${trackKey}"`);
+}
 
     // ---------- WebAudio fade out ----------
     async _waFadeOutMusic(fadeSeconds) {
@@ -16194,21 +16907,18 @@ function openSettings() {
 
       await wait(fadeSeconds * 1000);
 
-      // Stop the source after fade completes
       try {
         this.musicSource.stop();
-      } catch (e) {
-        // Source might already be stopped - ignore
-      }
+      } catch (e) {}
       this.musicSource.disconnect();
       this.musicSource = null;
     }
 
     // ---------- HTMLAudio fade out ----------
     async _htmlFadeOutMusic(fadeSeconds) {
-      const el = this.mediaMusicEl;
-      if (!el) return;
+      if (!this.currentMediaMusicEl) return;
 
+      const el = this.currentMediaMusicEl;
       const startVolume = el.volume;
       const steps = Math.max(1, Math.floor(fadeSeconds * 30));
 
@@ -16219,15 +16929,16 @@ function openSettings() {
 
       el.pause();
       el.currentTime = 0;
+      this.currentMediaMusicEl = null;
     }
 
     // ---------- HTMLAudio (file:// safe) ----------
-    async _htmlLoad(key) {
+    async _htmlLoad(key, isMusic = false) {
       for (const ext of this.extCandidates) {
         const url = enc(`${AUDIO_BASE_PATH}/${key}.${ext}`);
         const el = new Audio();
         el.preload = "auto";
-        el.loop = key === MUSIC_KEY;
+        el.loop = isMusic;
         if (location.protocol.startsWith("http")) el.crossOrigin = "anonymous";
         el.playsInline = true;
         el.src = url;
@@ -16240,38 +16951,45 @@ function openSettings() {
               resolve(v);
             }
           };
-          el.addEventListener("canplaythrough", () => done(true), {
-            once: true,
-          });
+          el.addEventListener("canplaythrough", () => done(true), { once: true });
           el.addEventListener("loadeddata", () => done(true), { once: true });
           el.addEventListener("error", () => done(false), { once: true });
           setTimeout(() => done(el.readyState >= 2), 1500);
         });
 
         if (ok) {
-          this.mediaEls[key] = el;
-          if (key === MUSIC_KEY) this.mediaMusicEl = el;
+          if (isMusic) {
+            this.mediaMusicEls[key] = el;
+          } else {
+            this.mediaEls[key] = el;
+          }
           return;
         }
       }
-      console.warn(
-        `No playable source for "${key}" among: ${this.extCandidates.join(", ")}`,
-      );
+      if (isMusic) {
+        console.warn(`No playable source for music "${key}" among: ${this.extCandidates.join(", ")}`);
+        throw new Error(`Music track "${key}" failed to load`);
+      } else {
+        console.warn(`No playable source for "${key}" among: ${this.extCandidates.join(", ")}`);
+        throw new Error(`SFX "${key}" failed to load`);
+      }
     }
 
     _setAllHtmlMuted(muted) {
       for (const el of Object.values(this.mediaEls)) el.muted = muted;
+      for (const el of Object.values(this.mediaMusicEls)) el.muted = muted;
     }
 
     _applyHtmlVolumes() {
       for (const [key, el] of Object.entries(this.mediaEls)) {
-        const ch = key === MUSIC_KEY ? this.musicVolume : this.sfxVolume;
-        const muted = key === MUSIC_KEY ? this.musicMuted : this.sfxMuted;
-        const eff = Math.max(
-          0,
-          Math.min(1, (muted ? 0 : ch) * this.masterVolume),
-        );
+        const chVol = this.sfxMuted ? 0 : this.sfxVolume;
+        const eff = Math.max(0, Math.min(1, chVol * this.masterVolume));
         el.volume = eff;
+      }
+      if (this.currentMediaMusicEl) {
+        const chVol = this.musicMuted ? 0 : this.musicVolume;
+        const eff = Math.max(0, Math.min(1, chVol * this.masterVolume));
+        this.currentMediaMusicEl.volume = eff;
       }
     }
 
@@ -16287,41 +17005,54 @@ function openSettings() {
       } catch (e) {
         console.warn("HTMLAudio play failed", e);
       }
-      const dur =
-        isFinite(el.duration) && el.duration > 0
-          ? el.duration
-          : base.duration || 0.3;
-      el.addEventListener(
-        "ended",
-        () => {
-          try {
-            el.remove();
-          } catch {}
-        },
-        { once: true },
-      );
+      const dur = isFinite(el.duration) && el.duration > 0 ? el.duration : base.duration || 0.3;
+      el.addEventListener("ended", () => { try { el.remove(); } catch {} }, { once: true });
       return dur;
     }
 
-    async _htmlStartMusic(fadeSeconds) {
-      const el = this.mediaMusicEl;
-      if (!el) return;
-      el.currentTime = 0;
-      el.loop = true;
-      el.volume = 0;
-      try {
-        await el.play();
-      } catch (e) {
-        console.warn("Music play failed", e);
-      }
-      const target = this._effMusic();
-      const steps = Math.max(1, Math.floor(fadeSeconds * 30));
-      for (let i = 1; i <= steps; i++) {
-        el.volume = (target * i) / steps;
-        await wait(1000 / 30);
-      }
-      el.volume = target;
-    }
+    async _htmlStartMusic(trackKey, fadeSeconds) {
+  console.log(`_htmlStartMusic called for: "${trackKey}"`);
+  
+  // Stop current music if playing
+  if (this.currentMediaMusicEl) {
+    console.log("Stopping previous HTML music element");
+    this.currentMediaMusicEl.pause();
+    this.currentMediaMusicEl.currentTime = 0;
+  }
+  
+  const el = this.mediaMusicEls[trackKey];
+  console.log(`HTML element for "${trackKey}":`, el);
+  
+  if (!el) {
+    console.warn(`Music track "${trackKey}" not loaded in mediaMusicEls, using default`);
+    return this._htmlStartMusic("background-music", fadeSeconds);
+  }
+  
+  this.currentMediaMusicEl = el;
+  el.currentTime = 0;
+  el.loop = true;
+  el.volume = 0;
+  
+  console.log("Attempting to play HTML audio element");
+  try {
+    await el.play();
+    console.log("HTML audio play() successful");
+  } catch (e) {
+    console.error("HTML audio play() failed:", e);
+  }
+  
+  const target = this._effMusic();
+  console.log(`Starting HTML music fade to volume: ${target}`);
+  
+  const steps = Math.max(1, Math.floor(fadeSeconds * 30));
+  for (let i = 1; i <= steps; i++) {
+    el.volume = (target * i) / steps;
+    await wait(1000 / 30);
+  }
+  el.volume = target;
+  console.log(`HTML music started for: "${trackKey}"`);
+}
+
   }
 
   // Create and load on page load
@@ -16331,9 +17062,75 @@ function openSettings() {
   // Helpers for your game:
   window.playSFX = (key) => engine.playSFX(key);
   window.audioEngine = engine;
+  window.changeMusicTrack = (trackKey) => engine.changeMusicTrack(trackKey);
+  window.setMusicFromScheme = (scheme) => engine.setMusicFromScheme(scheme);
+  window.preloadMusicTracks = (trackKeys) => engine.preloadTracks(trackKeys);
 })();
 
 // ==== UI GLUE ================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  localStorage.removeItem("game_currentMusicTrack");
+  console.log("Cleared persisted music track from localStorage");
+});
+
+// Debug the music selector setup
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOMContentLoaded fired");
+  
+  // Try multiple ways to find the element
+  const musicSelector = document.getElementById('music-selector');
+  console.log("Found by ID:", musicSelector);
+  
+  const musicSelectorQuery = document.querySelector('#music-selector');
+  console.log("Found by querySelector:", musicSelectorQuery);
+  
+  const musicSelectors = document.querySelectorAll('#music-selector');
+  console.log("Found by querySelectorAll:", musicSelectors);
+  
+  const allSelects = document.querySelectorAll('select');
+  console.log("All select elements on page:", allSelects);
+  
+  if (musicSelector) {
+    console.log("Music selector found, adding event listener");
+    
+    // Add multiple event listeners to see what works
+    musicSelector.addEventListener('change', function(e) {
+      console.log("🎵 CHANGE EVENT FIRED! Value:", this.value);
+      console.log("Event:", e);
+      
+      const trackKey = this.value;
+      if (window.audioEngine) {
+        console.log("Calling changeMusicTrack from dropdown");
+        window.audioEngine.changeMusicTrack(trackKey);
+      }
+    });
+    
+    musicSelector.addEventListener('click', function(e) {
+      console.log("🎵 CLICK EVENT on dropdown");
+    });
+    
+    musicSelector.addEventListener('focus', function(e) {
+      console.log("🎵 FOCUS EVENT on dropdown");
+    });
+    
+    musicSelector.addEventListener('input', function(e) {
+      console.log("🎵 INPUT EVENT on dropdown, value:", this.value);
+    });
+    
+    console.log("Event listeners added to music selector");
+  } else {
+    console.error("❌ Music selector NOT FOUND by ID");
+    
+    // Let's search for it in the entire document
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(el => {
+      if (el.tagName === 'SELECT' && el.id !== 'music-selector') {
+        console.log("Found other select element:", el.id, el.className);
+      }
+    });
+  }
+});
 
 function getEng() {
   return window.audioEngine || window.audio || null;
@@ -16398,14 +17195,6 @@ window.addEventListener("DOMContentLoaded", syncUIFromEngine);
 // Sync once the engine signals it's fully ready
 window.addEventListener("audio-ready", syncUIFromEngine);
 
-// Optional helper if you programmatically open the popup
-function openSettingsPopup() {
-  syncUIFromEngine();
-  document.getElementById("settings-popup").style.display = "block";
-  const overlay = document.getElementById("modal-overlay");
-  if (overlay) overlay.style.display = "block";
-}
-
 function initFontSelector() {
   const fontSelector = document.getElementById("font-selector");
   const body = document.body;
@@ -16420,12 +17209,13 @@ function initFontSelector() {
     "font-DarkCity",
     "font-FantasticFour",
     "font-PaintTheTownRed",
+    "font-Guardians"
   ];
 
   // Normalise a selector value to an actual font key we know how to apply
   const normaliseFont = (val) => {
     if (!val || val === "default") return "Core";
-    return ["Core", "DarkCity", "FantasticFour", "PaintTheTownRed"].includes(
+    return ["Core", "DarkCity", "FantasticFour", "PaintTheTownRed", "Guardians"].includes(
       val,
     )
       ? val
@@ -16496,6 +17286,14 @@ function updateFontVariables(fontName) {
       "--letter-spacing": "var(--paintthetownred-letter-spacing)",
       "--text-transform": "var(--paintthetownred-text-transform)",
       "--title-banner-size": "var(--paintthetownred-title-banner-size)",
+    },
+    Guardians: {
+      "--heading-font": "'Guardians', Arial, sans-serif",
+      "--heading-size": "var(--guardians-heading-size)",
+      "--smaller-heading-size": "var(--guardians-smaller-heading-size)",
+      "--letter-spacing": "var(--guardians-letter-spacing)",
+      "--text-transform": "var(--guardians-text-transform)",
+      "--title-banner-size": "var(--guardians-title-banner-size)",
     },
   };
 
@@ -17028,6 +17826,16 @@ function setEndGameHeroImage(heroName, customImagePath = "") {
         "Visual Assets/Heroes/PtTR/PtTR_SpiderWoman_ArachnoPheromones.webp",
       "symbiote spider-man":
         "Visual Assets/Heroes/PtTR/PtTR_SymbioteSpiderMan_ShadowedSpider.webp",
+      "drax the destroyer":
+        "Visual Assets/Heroes/GotG/GotG_DraxTheDestroyer_AvatarOfDestruction.webp",
+      "gamora":
+        "Visual Assets/Heroes/GotG/GotG_Gamora_GodslayerBlade.webp",
+      "groot":
+        "Visual Assets/Heroes/GotG/GotG_Groot_IAmGroot.webp",
+      "rocket raccoon":
+        "Visual Assets/Heroes/GotG/GotG_RocketRaccoon_VengeanceIsRocket.webp",
+      "star-lord":
+        "Visual Assets/Heroes/GotG/GotG_StarLord_LegendaryOutlaw.webp",
     };
 
     imagePath =
@@ -17157,6 +17965,10 @@ function closeInfoChoicePopup() {
   if (title) title.textContent = "POPUP TITLE";
   if (instructions) instructions.textContent = "INSTRUCTIONS";
   if (preview) preview.innerHTML = "";
+  if (preview) preview.style.backgroundColor = `var(--accent)`;
+  if (preview) preview.style.border = `0.5vh solid var(--accent)`;
+  if (confirm) confirm.style.display = "block";
+  if (confirm) confirm.innerHTML = "CONFIRM";
   if (otherChoice) otherChoice.style.display = "none";
   if (otherChoice) otherChoice.innerHTML = "OTHER CHOICE";
   if (nothanks) nothanks.style.display = "none";
