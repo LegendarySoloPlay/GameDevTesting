@@ -25,6 +25,7 @@ document
   .addEventListener("click", openArtifactsPopup);
 
 function openArtifactsPopup() {
+  genericCardSort(playerArtifacts);
   const artifactsCardsTable = document.getElementById("artifacts-cards-window-cards");
   artifactsCardsTable.innerHTML = "";
 
