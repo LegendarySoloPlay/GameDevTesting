@@ -4853,6 +4853,10 @@ function updateMastermindOverlay() {
     mastermindCard.querySelector(".villain-shards-class");
   if (existingShardsOverlay) existingShardsOverlay.remove();
 
+  if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+
   if (mastermind.shards && mastermind.shards >= 1) {
     const shardsOverlay = document.createElement("div");
       shardsOverlay.classList.add("villain-shards-class");
@@ -8650,7 +8654,7 @@ if (selectedSchemeEndGame) {
           break;
 
           case "mastermind10Shards":
-          if (mastermind.shards >= 10) {
+          if (mastermind.shards && mastermind.shards >= 10) {
             finalTwist = true;
             document.getElementById("defeat-context").innerHTML =
               `${mastermind.name} has collected 10 Shards. With the full power of the shards, the balance of reality collapses under ${mastermind.name}'s will.`;
@@ -9749,7 +9753,7 @@ function updateEvilWinsTracker() {
       break;
 
     case "Unite the Shards":
-      evilWinsText.innerHTML = `${shardSupply} ${shardSupply === 1 ? "Shard" : "Shards"} Left. Mastermind has ${mastermind.shards}/10`;
+      evilWinsText.innerHTML = `${shardSupply} ${shardSupply === 1 ? "Shard" : "Shards"} Left. Mastermind has ${mastermind.shards || 0}/10`;
       break;
 
     default:
@@ -13021,6 +13025,9 @@ if (mastermind.shards && mastermind.shards > 0 && !mastermind.noShardBonus) {
 } else {
   mastermind.attackFromShards = 0;
 }
+  
+  // Initialize attackFromGems to 0 for all masterminds
+  mastermind.attackFromGems = 0;
 
 if (mastermind.name === "Thanos") {
 

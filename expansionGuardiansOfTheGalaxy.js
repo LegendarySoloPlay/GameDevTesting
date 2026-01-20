@@ -3857,6 +3857,10 @@ function supremorAmbush(supremor) {
   }
   playSFX("shards");
   supremor.shards += 1;
+if (typeof mastermind.shards === 'undefined') {
+    mastermind.shards = 0;
+  }
+
   mastermind.shards += 1;
   shardSupply -= 2;
   updateGameBoard();
