@@ -5153,7 +5153,7 @@ function handleSchemeTwist(schemeTwistCard) {
     if (selectedScheme.name !== "Replace Earth's Leaders with Killbots" || selectedScheme.name !== "The Kree-Skrull War") {
       koPile.push(schemeTwistCard);
     }
-    if (selectedScheme.name !== "Intergalactic Kree Nega-Bomb") {
+    if (selectedScheme.name === "Intergalactic Kree Nega-Bomb") {
       negaBombDeck.push(schemeTwistCard);
     }
     schemeTwistCount += 1;
