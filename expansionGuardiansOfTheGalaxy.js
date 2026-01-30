@@ -1,5 +1,5 @@
 // Expansion - Guardians of the Galaxy
-//30.01.26 17:00
+//30.01.26 22:30
 
 // Global Variables
 
@@ -84,7 +84,7 @@ useButton.addEventListener("click", async (e) => {
   if (typeof abilityFunctionName === "function") {
     // It's already a function
     try {
-      closeArtifactsPopup();
+      await closeArtifactsPopup();
       await abilityFunctionName(card);
       card.artifactAbilityUsed = true;
       updateGameBoard();
@@ -101,7 +101,7 @@ useButton.addEventListener("click", async (e) => {
     
     if (abilityFunction && typeof abilityFunction === "function") {
       try {
-        closeArtifactsPopup();
+        await closeArtifactsPopup();
         await abilityFunction(card);
         card.artifactAbilityUsed = true;
         updateGameBoard();
@@ -134,7 +134,7 @@ useButton.addEventListener("click", async (e) => {
 }
 
 // Function to close the Played Cards popup
-function closeArtifactsPopup() {
+async function closeArtifactsPopup() {
   document.getElementById("artifacts-cards-window").style.display = "none";
   document.getElementById("played-cards-modal-overlay").style.display = "none";
 }
@@ -1171,11 +1171,13 @@ async function intergalacticKreeNegaBomb() {
 denyButton.onclick = async () => {
   closeInfoChoicePopup();
   negaBombDeck.splice(-1, 1); // Just remove it
-  bystanderDeck.push(negaBombCard); // Use negaBombCard
+  victoryPile.push(negaBombCard);
+ bystanderBonuses();
   onscreenConsole.log(
     `You revealed <span class="console-highlights">${negaBombCard.name}</span>. They will be rescued now.`,
   );
-  await bystanderRescue();        
+    await rescueBystanderAbility(negaBombCard);
+    updateGameBoard();     
   resolve();
 };
     }, 10);
@@ -2615,7 +2617,7 @@ gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
 
-function mindGemArtifact() {
+async function mindGemArtifact() {
 onscreenConsole.log(`You get +2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`);
 
 totalRecruitPoints += 2;
@@ -2640,7 +2642,7 @@ gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
 
-function powerGemArtifact() {
+async function powerGemArtifact() {
 onscreenConsole.log(`You get +2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 
 totalAttackPoints += 2;
@@ -2664,7 +2666,7 @@ gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
 
-function realityGemArtifact() {
+async function realityGemArtifact() {
 onscreenConsole.log(`Before you play a card from the Villain Deck, you may first reveal the top card of the Villain Deck. If it's not a Scheme Twist, you may put it on the bottom of the Villain Deck. If you do, gain a Shard.`);
 realityGemVillainDraw = true;
 }
@@ -2749,7 +2751,7 @@ gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
 
-function soulGemArtifact() {
+async function soulGemArtifact() {
 const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
 onscreenConsole.log(`You gain +${soulGem.shards} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 totalAttackPoints += soulGem.shards || 0;
@@ -2772,550 +2774,555 @@ gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
 
-function spaceGemArtifact() {
-
-  if (isCityEmpty()) {
-    onscreenConsole.log(`No Villains in the city to move.`);
-    return;
-  }
-
-  // Elements for the popup and overlay
-  const popup = document.getElementById("villain-movement-popup");
-  const overlay = document.getElementById("modal-overlay");
-  const noThanksButton = document.getElementById("no-thanks-villain-movement");
-  const confirmButton = document.getElementById("confirm-villain-movement");
-  const selectionArrow = document.getElementById("selection-arrow");
-  confirmButton.disabled = true; // Disable the confirm button
-    document.getElementById("villain-movement-context").innerHTML =
-    "You may move a Villain to another city space. If another Villain is already there, swap them. If you move any Villains this way, gain a Shard.";
-
-  // Elements representing the rows in the table
-  const villainCells = {
-    bridge: document.getElementById("villain-bridge"),
-    streets: document.getElementById("villain-streets"),
-    rooftops: document.getElementById("villain-rooftops"),
-    bank: document.getElementById("villain-bank"),
-    sewers: document.getElementById("villain-sewers"),
-  };
-
-  let selectedCells = []; // To store the selected cells
-
-  function isCellDestroyed(cellElement) {
-    // Check if this cell contains a destroyed space
-    const destroyedImage = cellElement.querySelector(".destroyed-space");
-    return (
-      destroyedImage !== null &&
-      destroyedImage.src.includes("Galactus_MasterStrike.webp")
-    );
-  }
-
-  function selectCell(cellElement) {
-    // Don't allow selection of destroyed spaces (but allow Dark Portal spaces)
-    if (isCellDestroyed(cellElement)) {
-      console.log("Destroyed space selected, no action.");
+async function spaceGemArtifact() {
+  return new Promise((resolve) => {
+    if (isCityEmpty()) {
+      onscreenConsole.log(`No Villains in the city to move.`);
+      resolve(); // Resolve immediately if nothing to do
       return;
     }
 
-    const cellText = cellElement.textContent.trim();
+    // Elements for the popup and overlay
+    const popup = document.getElementById("villain-movement-popup");
+    const overlay = document.getElementById("modal-overlay");
+    const noThanksButton = document.getElementById("no-thanks-villain-movement");
+    const confirmButton = document.getElementById("confirm-villain-movement");
+    const selectionArrow = document.getElementById("selection-arrow");
+    confirmButton.disabled = true; // Disable the confirm button
+    document.getElementById("villain-movement-context").innerHTML =
+      "You may move a Villain to another city space. If another Villain is already there, swap them. If you move any Villains this way, gain a Shard.";
 
-    // The cell is considered to have a villain if it's not empty and not destroyed
-    // Dark Portal spaces can have villains, so we don't exclude them
-    const hasVillain = cellText !== "Empty" && !isCellDestroyed(cellElement);
+    // Elements representing the rows in the table
+    const villainCells = {
+      bridge: document.getElementById("villain-bridge"),
+      streets: document.getElementById("villain-streets"),
+      rooftops: document.getElementById("villain-rooftops"),
+      bank: document.getElementById("villain-bank"),
+      sewers: document.getElementById("villain-sewers"),
+    };
 
-    // 0. If the player selects an Empty cell first, nothing happens.
-    if (!hasVillain && selectedCells.length === 0) {
-      console.log("Empty cell selected first, no action.");
-      return; // Do nothing if the first selected cell is empty
+    let selectedCells = []; // To store the selected cells
+
+    function isCellDestroyed(cellElement) {
+      // Check if this cell contains a destroyed space
+      const destroyedImage = cellElement.querySelector(".destroyed-space");
+      return (
+        destroyedImage !== null &&
+        destroyedImage.src.includes("Galactus_MasterStrike.webp")
+      );
     }
 
-    // If the selected cell is already in selectedCells, deselect it and remove from the array
-    if (selectedCells.includes(cellElement)) {
-      cellElement.classList.remove("selected");
-      selectedCells = selectedCells.filter((cell) => cell !== cellElement);
+    function selectCell(cellElement) {
+      // Don't allow selection of destroyed spaces (but allow Dark Portal spaces)
+      if (isCellDestroyed(cellElement)) {
+        console.log("Destroyed space selected, no action.");
+        return;
+      }
 
-      // Check if we need to hide the arrow after deselection
-      if (selectedCells.length < 2) {
+      const cellText = cellElement.textContent.trim();
+
+      // The cell is considered to have a villain if it's not empty and not destroyed
+      // Dark Portal spaces can have villains, so we don't exclude them
+      const hasVillain = cellText !== "Empty" && !isCellDestroyed(cellElement);
+
+      // 0. If the player selects an Empty cell first, nothing happens.
+      if (!hasVillain && selectedCells.length === 0) {
+        console.log("Empty cell selected first, no action.");
+        return; // Do nothing if the first selected cell is empty
+      }
+
+      // If the selected cell is already in selectedCells, deselect it and remove from the array
+      if (selectedCells.includes(cellElement)) {
+        cellElement.classList.remove("selected");
+        selectedCells = selectedCells.filter((cell) => cell !== cellElement);
+
+        // Check if we need to hide the arrow after deselection
+        if (selectedCells.length < 2) {
+          selectionArrow.style.display = "none";
+          confirmButton.disabled = true; // Disable the confirm button
+          console.log(
+            "Deselected cell, less than two selections, disabling confirm button.",
+          );
+        }
+        return; // Exit early since we're just deselecting
+      }
+
+      // 1. If the player selects a villain, highlight it and add to selectedCells.
+      if (hasVillain && selectedCells.length === 0) {
+        cellElement.classList.add("selected");
+        selectedCells.push(cellElement);
+        console.log("First villain selected, added to selection.");
+      }
+      // 2a. If the player then selects a second villain, highlight it and add to selectedCells.
+      else if (hasVillain && selectedCells.length === 1) {
+        cellElement.classList.add("selected");
+        selectedCells.push(cellElement);
+        console.log("Second villain selected, added to selection.");
+      }
+      // 2b. If the player selects an Empty space after selecting a villain, highlight it and add to selectedCells.
+      else if (
+        !hasVillain &&
+        selectedCells.length === 1 &&
+        selectedCells[0].textContent.trim() !== "Empty"
+      ) {
+        cellElement.classList.add("selected");
+        selectedCells.push(cellElement);
+        console.log("Empty space selected after villain, added to selection.");
+      }
+
+      // 3a. If the player selects another cell (villain or empty), deselect the first choice and highlight the new one.
+      if (selectedCells.length > 2) {
+        const firstCell = selectedCells.shift(); // Remove the first selected cell
+        firstCell.classList.remove("selected"); // Remove the highlight from the first cell
+        console.log("More than two selections, deselected the first.");
+      }
+
+      // 3b. If the player selects another villain after an empty, deselect everything and highlight the new villain.
+      if (
+        selectedCells.length === 2 &&
+        selectedCells[0].textContent.trim() === "Empty"
+      ) {
+        selectedCells.forEach((cell) => cell.classList.remove("selected"));
+        selectedCells = [cellElement];
+        cellElement.classList.add("selected");
+        console.log("Selected another villain after an empty, reset selections.");
+      }
+
+      // Handle drawing the arrow based on the current selection
+      if (selectedCells.length === 2) {
+        drawArrow(selectedCells[0], selectedCells[1]);
+
+        // Enable the confirm button if valid combination is selected
+        if (
+          (selectedCells[0].textContent.trim() !== "Empty" &&
+            selectedCells[1].textContent.trim() === "Empty") ||
+          (selectedCells[0].textContent.trim() !== "Empty" &&
+            selectedCells[1].textContent.trim() !== "Empty")
+        ) {
+          confirmButton.disabled = false; // Enable the confirm button
+          console.log("Valid selection made, enabling confirm button.");
+        } else {
+          confirmButton.disabled = true; // Disable the confirm button if not valid
+          console.log("Invalid selection, disabling confirm button.");
+        }
+      } else {
         selectionArrow.style.display = "none";
         confirmButton.disabled = true; // Disable the confirm button
-        console.log(
-          "Deselected cell, less than two selections, disabling confirm button.",
-        );
+        console.log("Less than two selections, disabling confirm button.");
       }
-      return; // Exit early since we're just deselecting
     }
 
-    // 1. If the player selects a villain, highlight it and add to selectedCells.
-    if (hasVillain && selectedCells.length === 0) {
-      cellElement.classList.add("selected");
-      selectedCells.push(cellElement);
-      console.log("First villain selected, added to selection.");
-    }
-    // 2a. If the player then selects a second villain, highlight it and add to selectedCells.
-    else if (hasVillain && selectedCells.length === 1) {
-      cellElement.classList.add("selected");
-      selectedCells.push(cellElement);
-      console.log("Second villain selected, added to selection.");
-    }
-    // 2b. If the player selects an Empty space after selecting a villain, highlight it and add to selectedCells.
-    else if (
-      !hasVillain &&
-      selectedCells.length === 1 &&
-      selectedCells[0].textContent.trim() !== "Empty"
-    ) {
-      cellElement.classList.add("selected");
-      selectedCells.push(cellElement);
-      console.log("Empty space selected after villain, added to selection.");
-    }
+    function updateCityCellsInPopup() {
+      for (let i = 0; i < city.length; i++) {
+        const cityCellKey = Object.keys(villainCells)[i];
+        const cityCellElement = villainCells[cityCellKey];
+        cityCellElement.innerHTML = ""; // Clear existing content
+        cityCellElement.classList.remove("destroyed"); // Remove destroyed class if present
 
-    // 3a. If the player selects another cell (villain or empty), deselect the first choice and highlight the new one.
-    if (selectedCells.length > 2) {
-      const firstCell = selectedCells.shift(); // Remove the first selected cell
-      firstCell.classList.remove("selected"); // Remove the highlight from the first cell
-      console.log("More than two selections, deselected the first.");
-    }
+        // Check if this space is destroyed (Master Strike)
+        if (destroyedSpaces[i]) {
+          // Create a container to hold the card image and overlays
+          const cardContainer = document.createElement("div");
+          cardContainer.classList.add("card-container");
+          cityCellElement.appendChild(cardContainer);
 
-    // 3b. If the player selects another villain after an empty, deselect everything and highlight the new villain.
-    if (
-      selectedCells.length === 2 &&
-      selectedCells[0].textContent.trim() === "Empty"
-    ) {
-      selectedCells.forEach((cell) => cell.classList.remove("selected"));
-      selectedCells = [cellElement];
-      cellElement.classList.add("selected");
-      console.log("Selected another villain after an empty, reset selections.");
-    }
+          // Create destroyed space image
+          const cardImage = document.createElement("img");
+          cardImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
+          cardImage.alt = "Destroyed City Space";
+          cardImage.classList.add("destroyed-space");
+          cardContainer.appendChild(cardImage);
+          cardImage.classList.add("greyed-out");
 
-    // Handle drawing the arrow based on the current selection
-    if (selectedCells.length === 2) {
-      drawArrow(selectedCells[0], selectedCells[1]);
+          cityCellElement.classList.add("destroyed");
+          continue; // Skip the rest for destroyed spaces
+        }
 
-      // Enable the confirm button if valid combination is selected
-      if (
-        (selectedCells[0].textContent.trim() !== "Empty" &&
-          selectedCells[1].textContent.trim() === "Empty") ||
-        (selectedCells[0].textContent.trim() !== "Empty" &&
-          selectedCells[1].textContent.trim() !== "Empty")
-      ) {
-        confirmButton.disabled = false; // Enable the confirm button
-        console.log("Valid selection made, enabling confirm button.");
-      } else {
-        confirmButton.disabled = true; // Disable the confirm button if not valid
-        console.log("Invalid selection, disabling confirm button.");
-      }
-    } else {
-      selectionArrow.style.display = "none";
-      confirmButton.disabled = true; // Disable the confirm button
-      console.log("Less than two selections, disabling confirm button.");
-    }
-  }
-
-  function updateCityCellsInPopup() {
-    for (let i = 0; i < city.length; i++) {
-      const cityCellKey = Object.keys(villainCells)[i];
-      const cityCellElement = villainCells[cityCellKey];
-      cityCellElement.innerHTML = ""; // Clear existing content
-      cityCellElement.classList.remove("destroyed"); // Remove destroyed class if present
-
-      // Check if this space is destroyed (Master Strike)
-      if (destroyedSpaces[i]) {
         // Create a container to hold the card image and overlays
         const cardContainer = document.createElement("div");
         cardContainer.classList.add("card-container");
         cityCellElement.appendChild(cardContainer);
 
-        // Create destroyed space image
-        const cardImage = document.createElement("img");
-        cardImage.src = "Visual Assets/Masterminds/Galactus_MasterStrike.webp";
-        cardImage.alt = "Destroyed City Space";
-        cardImage.classList.add("destroyed-space");
-        cardContainer.appendChild(cardImage);
-        destroyedImage.classList.add("greyed-out");
+        if (city[i]) {
+          // Create an img element for the villain
+          const cardImage = document.createElement("img");
+          cardImage.src = city[i].image;
+          cardImage.classList.add("villain-movement-card-image");
+          cardContainer.appendChild(cardImage);
 
-        cityCellElement.classList.add("destroyed");
-        continue; // Skip the rest for destroyed spaces
+          // Add Dark Portal overlay if this space has a Dark Portal
+          if (darkPortalSpaces[i]) {
+            const darkPortalOverlay = document.createElement("div");
+            darkPortalOverlay.className = "dark-portal-overlay";
+            darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
+            cardContainer.appendChild(darkPortalOverlay);
+          }
+
+          // Add the bystander overlay if there are bystanders
+          if (city[i].bystander && city[i].bystander.length > 0) {
+            const bystanderOverlay = document.createElement("div");
+            bystanderOverlay.className = "bystanders-overlay";
+            let overlayText = `<span class="bystanderOverlayNumber">${city[i].bystander.length}</span>`;
+            let overlayImage = `<img src="${city[i].bystander[0].image}" alt="Captured Hero" class="villain-bystander">`;
+            bystanderOverlay.innerHTML = overlayText + overlayImage;
+            bystanderOverlay.style.whiteSpace = "pre-line";
+            cardContainer.appendChild(bystanderOverlay);
+          }
+
+          updateVillainAttackValues(city[i], i);
+
+          const attackFromMastermind = city[i].attackFromMastermind || 0;
+          const attackFromScheme = city[i].attackFromScheme || 0;
+          const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
+          const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
+          const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
+          const villainShattered = city[i].shattered || 0;
+          const totalAttackModifiers =
+            attackFromMastermind +
+            attackFromScheme +
+            attackFromOwnEffects +
+            attackFromHeroEffects +
+            currentTempBuff -
+            villainShattered;
+
+          if (totalAttackModifiers !== 0) {
+            const villainOverlayAttack = document.createElement("div");
+            villainOverlayAttack.className = "attack-overlay";
+            villainOverlayAttack.innerHTML =
+              city[i].attack + totalAttackModifiers;
+            cardContainer.appendChild(villainOverlayAttack);
+          }
+
+          if (city[i].killbot === true) {
+            const killbotOverlay = document.createElement("div");
+            killbotOverlay.className = "killbot-overlay";
+            killbotOverlay.innerHTML = "KILLBOT";
+            cardContainer.appendChild(killbotOverlay);
+          }
+
+          if (city[i].babyHope === true) {
+            const existingOverlay = cardContainer.querySelector(
+              ".villain-baby-overlay",
+            );
+            if (existingOverlay) existingOverlay.remove();
+
+            const babyOverlay = document.createElement("div");
+            babyOverlay.className = "villain-baby-overlay";
+            babyOverlay.innerHTML = `<img src="Visual Assets/Other/BabyHope.webp" alt="Baby Hope" class="villain-baby">`;
+            cardContainer.appendChild(babyOverlay);
+          }
+
+          if (city[i].overlayText) {
+            const villainOverlay = document.createElement("div");
+            villainOverlay.className = "skrull-overlay";
+            villainOverlay.innerHTML = `${city[i].overlayText}`;
+            cardContainer.appendChild(villainOverlay);
+          }
+
+          if (city[i].capturedOverlayText) {
+            const capturedVillainOverlay = document.createElement("div");
+            capturedVillainOverlay.className = "captured-overlay";
+            capturedVillainOverlay.innerHTML = `${city[i].capturedOverlayText}`;
+            cardContainer.appendChild(capturedVillainOverlay);
+          }
+
+          if (city[i].XCutionerHeroes && city[i].XCutionerHeroes.length > 0) {
+            const XCutionerOverlay = document.createElement("div");
+            XCutionerOverlay.className = "XCutioner-overlay";
+
+            let XCutionerOverlayImage = `<img src="${city[i].XCutionerHeroes[0].image}" alt="Captured Hero" class="villain-baby">`;
+            let XCutionerOverlayText = `<span class="XCutionerOverlayNumber">${city[i].XCutionerHeroes.length}</span>`;
+            const selectedScheme = schemes.find(
+              (s) =>
+                s.name ===
+                document.querySelector(
+                  "#scheme-section input[type=radio]:checked",
+                ).value,
+            );
+
+            XCutionerOverlay.innerHTML =
+              XCutionerOverlayImage + XCutionerOverlayText;
+            XCutionerOverlay.style.whiteSpace = "pre-line";
+
+            const XCutionerExpandedContainer = document.createElement("div");
+            XCutionerExpandedContainer.className = "expanded-XCutionerHeroes";
+            XCutionerExpandedContainer.style.display = "none";
+
+            city[i].XCutionerHeroes.forEach((hero) => {
+              const XCutionerHeroElement = document.createElement("span");
+              XCutionerHeroElement.className = "XCutioner-hero-name";
+              XCutionerHeroElement.textContent = hero.name;
+              XCutionerHeroElement.dataset.image = hero.image;
+
+              XCutionerHeroElement.addEventListener("mouseover", (e) => {
+                e.stopPropagation();
+                showZoomedImage(hero.image);
+                const card = cardLookup[normalizeImagePath(hero.image)];
+                if (card) updateRightPanel(card);
+              });
+
+              XCutionerHeroElement.addEventListener("mouseout", (e) => {
+                e.stopPropagation();
+                if (!activeImage) hideZoomedImage();
+              });
+
+              XCutionerHeroElement.addEventListener("click", (e) => {
+                e.stopPropagation();
+                activeImage = activeImage === hero.image ? null : hero.image;
+                showZoomedImage(activeImage || "");
+              });
+
+              XCutionerExpandedContainer.appendChild(XCutionerHeroElement);
+            });
+
+            XCutionerOverlay.addEventListener("click", (e) => {
+              e.stopPropagation();
+              XCutionerExpandedContainer.style.display =
+                XCutionerExpandedContainer.style.display === "none"
+                  ? "block"
+                  : "none";
+
+              if (XCutionerExpandedContainer.style.display === "block") {
+                setTimeout(() => {
+                  document.addEventListener(
+                    "click",
+                    (e) => {
+                      if (!XCutionerExpandedContainer.contains(e.target)) {
+                        XCutionerExpandedContainer.style.display = "none";
+                      }
+                    },
+                    { once: true },
+                  );
+                }, 50);
+              }
+            });
+
+            cardContainer.appendChild(XCutionerOverlay);
+            cardContainer.appendChild(XCutionerExpandedContainer);
+          }
+
+          if (city[i].plutoniumCaptured) {
+            const plutoniumOverlay = document.createElement("div");
+            plutoniumOverlay.innerHTML = `<span class="plutonium-count">${city[i].plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
+            cardContainer.appendChild(plutoniumOverlay);
+          }
+        } else {
+          // If no villain, add a blank card image
+          const blankCardImage = document.createElement("img");
+          blankCardImage.src = "Visual Assets/BlankCardSpace.webp";
+          blankCardImage.classList.add("villain-movement-card-image");
+          cardContainer.appendChild(blankCardImage);
+
+          // Add Dark Portal overlay if this space has a Dark Portal (even if empty)
+          if (darkPortalSpaces[i]) {
+            const darkPortalOverlay = document.createElement("div");
+            darkPortalOverlay.className = "dark-portal-overlay";
+            darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
+            cardContainer.appendChild(darkPortalOverlay);
+          }
+        }
+
+        // Add the temp buff overlay if there is a buff
+        const tempBuffVariableName = `city${i + 1}TempBuff`;
+        const currentTempBuff = window[tempBuffVariableName];
+        if (currentTempBuff !== 0) {
+          const tempBuffOverlay = document.createElement("div");
+          tempBuffOverlay.className = "temp-buff-overlay-villain-move";
+          tempBuffOverlay.innerHTML = `<p>${currentTempBuff} Attack</p>`;
+          cardContainer.appendChild(tempBuffOverlay);
+        }
+
+        // Add the perm buff overlay if there is a buff
+        const permBuffVariableName = `city${i + 1}PermBuff`;
+        const currentPermBuff = window[permBuffVariableName];
+        if (currentPermBuff !== 0) {
+          const permBuffOverlay = document.createElement("div");
+          permBuffOverlay.className = "perm-buff-overlay-villain-move";
+          permBuffOverlay.innerHTML = `<p>${currentPermBuff} Attack</p>`;
+          cardContainer.appendChild(permBuffOverlay);
+        }
+
+        // Add click event listener to each cell for selection (only if not destroyed)
+        if (!destroyedSpaces[i]) {
+          cityCellElement.onclick = () => selectCell(cityCellElement);
+        } else {
+          cityCellElement.onclick = null; // Remove click handler for destroyed spaces
+        }
+
+        // Ensure the cell has the correct class
+        cityCellElement.classList.add("city-cell");
       }
 
-      // Create a container to hold the card image and overlays
-      const cardContainer = document.createElement("div");
-      cardContainer.classList.add("card-container");
-      cityCellElement.appendChild(cardContainer);
+      // Add location attack overlays
+      const locations = [
+        { value: city1LocationAttack, id: "bridge-label" },
+        { value: city2LocationAttack, id: "streets-label" },
+        { value: city3LocationAttack, id: "rooftops-label" },
+        { value: city4LocationAttack, id: "bank-label" },
+        { value: city5LocationAttack, id: "sewers-label" },
+      ];
 
-      if (city[i]) {
-        // Create an img element for the villain
-        const cardImage = document.createElement("img");
-        cardImage.src = city[i].image;
-        cardImage.classList.add("villain-movement-card-image");
-        cardContainer.appendChild(cardImage);
-
-        // Add Dark Portal overlay if this space has a Dark Portal
-        if (darkPortalSpaces[i]) {
-          const darkPortalOverlay = document.createElement("div");
-          darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
-          cardContainer.appendChild(darkPortalOverlay);
-        }
-
-        // Add the bystander overlay if there are bystanders
-        if (city[i].bystander && city[i].bystander.length > 0) {
-          const bystanderOverlay = document.createElement("div");
-          bystanderOverlay.className = "bystanders-overlay";
-          let overlayText = `<span class="bystanderOverlayNumber">${city[i].bystander.length}</span>`;
-          let overlayImage = `<img src="${city[i].bystander[0].image}" alt="Captured Hero" class="villain-bystander">`;
-          bystanderOverlay.innerHTML = overlayText + overlayImage;
-          bystanderOverlay.style.whiteSpace = "pre-line";
-          cardContainer.appendChild(bystanderOverlay);
-        }
-
-        updateVillainAttackValues(city[i], i);
-
-        const attackFromMastermind = city[i].attackFromMastermind || 0;
-        const attackFromScheme = city[i].attackFromScheme || 0;
-        const attackFromOwnEffects = city[i].attackFromOwnEffects || 0;
-        const attackFromHeroEffects = city[i].attackFromHeroEffects || 0;
-        const currentTempBuff = window[`city${i + 1}TempBuff`] || 0;
-        const villainShattered = city[i].shattered || 0;
-        const totalAttackModifiers =
-          attackFromMastermind +
-          attackFromScheme +
-          attackFromOwnEffects +
-          attackFromHeroEffects +
-          currentTempBuff -
-          villainShattered;
-
-        if (totalAttackModifiers !== 0) {
-          const villainOverlayAttack = document.createElement("div");
-          villainOverlayAttack.className = "attack-overlay";
-          villainOverlayAttack.innerHTML =
-            city[i].attack + totalAttackModifiers;
-          cardContainer.appendChild(villainOverlayAttack);
-        }
-
-        if (city[i].killbot === true) {
-          const killbotOverlay = document.createElement("div");
-          killbotOverlay.className = "killbot-overlay";
-          killbotOverlay.innerHTML = "KILLBOT";
-          cardContainer.appendChild(killbotOverlay);
-        }
-
-        if (city[i].babyHope === true) {
-          const existingOverlay = cardContainer.querySelector(
-            ".villain-baby-overlay",
+      locations.forEach(({ value, id }) => {
+        if (value !== 0) {
+          const element = document.getElementById(id);
+          const existingOverlay = element.querySelector(
+            ".location-attack-changes",
           );
           if (existingOverlay) existingOverlay.remove();
 
-          const babyOverlay = document.createElement("div");
-          babyOverlay.className = "villain-baby-overlay";
-          babyOverlay.innerHTML = `<img src="Visual Assets/Other/BabyHope.webp" alt="Baby Hope" class="villain-baby">`;
-          cardContainer.appendChild(babyOverlay);
-        }
-
-        if (city[i].overlayText) {
-          const villainOverlay = document.createElement("div");
-          villainOverlay.className = "skrull-overlay";
-          villainOverlay.innerHTML = `${city[i].overlayText}`;
-          cardContainer.appendChild(villainOverlay);
-        }
-
-        if (city[i].capturedOverlayText) {
-          const capturedVillainOverlay = document.createElement("div");
-          capturedVillainOverlay.className = "captured-overlay";
-          capturedVillainOverlay.innerHTML = `${city[i].capturedOverlayText}`;
-          cardContainer.appendChild(capturedVillainOverlay);
-        }
-
-        if (city[i].XCutionerHeroes && city[i].XCutionerHeroes.length > 0) {
-          const XCutionerOverlay = document.createElement("div");
-          XCutionerOverlay.className = "XCutioner-overlay";
-
-          let XCutionerOverlayImage = `<img src="${city[i].XCutionerHeroes[0].image}" alt="Captured Hero" class="villain-baby">`;
-          let XCutionerOverlayText = `<span class="XCutionerOverlayNumber">${city[i].XCutionerHeroes.length}</span>`;
-          const selectedScheme = schemes.find(
-            (s) =>
-              s.name ===
-              document.querySelector(
-                "#scheme-section input[type=radio]:checked",
-              ).value,
+          const attackElement = document.createElement("div");
+          attackElement.className = "location-attack-changes";
+          attackElement.innerHTML = `<p>${value} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
+          element.appendChild(attackElement);
+        } else {
+          const element = document.getElementById(id);
+          const existingOverlay = element.querySelector(
+            ".location-attack-changes",
           );
-
-          XCutionerOverlay.innerHTML =
-            XCutionerOverlayImage + XCutionerOverlayText;
-          XCutionerOverlay.style.whiteSpace = "pre-line";
-
-          const XCutionerExpandedContainer = document.createElement("div");
-          XCutionerExpandedContainer.className = "expanded-XCutionerHeroes";
-          XCutionerExpandedContainer.style.display = "none";
-
-          city[i].XCutionerHeroes.forEach((hero) => {
-            const XCutionerHeroElement = document.createElement("span");
-            XCutionerHeroElement.className = "XCutioner-hero-name";
-            XCutionerHeroElement.textContent = hero.name;
-            XCutionerHeroElement.dataset.image = hero.image;
-
-            XCutionerHeroElement.addEventListener("mouseover", (e) => {
-              e.stopPropagation();
-              showZoomedImage(hero.image);
-              const card = cardLookup[normalizeImagePath(hero.image)];
-              if (card) updateRightPanel(card);
-            });
-
-            XCutionerHeroElement.addEventListener("mouseout", (e) => {
-              e.stopPropagation();
-              if (!activeImage) hideZoomedImage();
-            });
-
-            XCutionerHeroElement.addEventListener("click", (e) => {
-              e.stopPropagation();
-              activeImage = activeImage === hero.image ? null : hero.image;
-              showZoomedImage(activeImage || "");
-            });
-
-            XCutionerExpandedContainer.appendChild(XCutionerHeroElement);
-          });
-
-          XCutionerOverlay.addEventListener("click", (e) => {
-            e.stopPropagation();
-            XCutionerExpandedContainer.style.display =
-              XCutionerExpandedContainer.style.display === "none"
-                ? "block"
-                : "none";
-
-            if (XCutionerExpandedContainer.style.display === "block") {
-              setTimeout(() => {
-                document.addEventListener(
-                  "click",
-                  (e) => {
-                    if (!XCutionerExpandedContainer.contains(e.target)) {
-                      XCutionerExpandedContainer.style.display = "none";
-                    }
-                  },
-                  { once: true },
-                );
-              }, 50);
-            }
-          });
-
-          cardContainer.appendChild(XCutionerOverlay);
-          cardContainer.appendChild(XCutionerExpandedContainer);
+          if (existingOverlay) existingOverlay.remove();
         }
-
-        if (city[i].plutoniumCaptured) {
-          const plutoniumOverlay = document.createElement("div");
-          plutoniumOverlay.innerHTML = `<span class="plutonium-count">${city[i].plutoniumCaptured.length}</span><img src="Visual Assets/Other/Plutonium.webp" alt="Plutonium" class="captured-plutonium-image-overlay">`;
-          cardContainer.appendChild(plutoniumOverlay);
-        }
-      } else {
-        // If no villain, add a blank card image
-        const blankCardImage = document.createElement("img");
-        blankCardImage.src = "Visual Assets/BlankCardSpace.webp";
-        blankCardImage.classList.add("villain-movement-card-image");
-        cardContainer.appendChild(blankCardImage);
-
-        // Add Dark Portal overlay if this space has a Dark Portal (even if empty)
-        if (darkPortalSpaces[i]) {
-          const darkPortalOverlay = document.createElement("div");
-          darkPortalOverlay.className = "dark-portal-overlay";
-          darkPortalOverlay.innerHTML = `<img src="Visual Assets/Schemes/Custom Twists/portalsToTheDarkDimension.webp" alt="Dark Portal" class="dark-portal-image">`;
-          cardContainer.appendChild(darkPortalOverlay);
-        }
-      }
-
-      // Add the temp buff overlay if there is a buff
-      const tempBuffVariableName = `city${i + 1}TempBuff`;
-      const currentTempBuff = window[tempBuffVariableName];
-      if (currentTempBuff !== 0) {
-        const tempBuffOverlay = document.createElement("div");
-        tempBuffOverlay.className = "temp-buff-overlay-villain-move";
-        tempBuffOverlay.innerHTML = `<p>${currentTempBuff} Attack</p>`;
-        cardContainer.appendChild(tempBuffOverlay);
-      }
-
-      // Add the perm buff overlay if there is a buff
-      const permBuffVariableName = `city${i + 1}PermBuff`;
-      const currentPermBuff = window[permBuffVariableName];
-      if (currentPermBuff !== 0) {
-        const permBuffOverlay = document.createElement("div");
-        permBuffOverlay.className = "perm-buff-overlay-villain-move";
-        permBuffOverlay.innerHTML = `<p>${currentPermBuff} Attack</p>`;
-        cardContainer.appendChild(permBuffOverlay);
-      }
-
-      // Add click event listener to each cell for selection (only if not destroyed)
-      if (!destroyedSpaces[i]) {
-        cityCellElement.onclick = () => selectCell(cityCellElement);
-      } else {
-        cityCellElement.onclick = null; // Remove click handler for destroyed spaces
-      }
-
-      // Ensure the cell has the correct class
-      cityCellElement.classList.add("city-cell");
+      });
     }
 
-    // Add location attack overlays
-    const locations = [
-      { value: city1LocationAttack, id: "bridge-label" },
-      { value: city2LocationAttack, id: "streets-label" },
-      { value: city3LocationAttack, id: "rooftops-label" },
-      { value: city4LocationAttack, id: "bank-label" },
-      { value: city5LocationAttack, id: "sewers-label" },
-    ];
-
-    locations.forEach(({ value, id }) => {
-      if (value !== 0) {
-        const element = document.getElementById(id);
-        const existingOverlay = element.querySelector(
-          ".location-attack-changes",
-        );
-        if (existingOverlay) existingOverlay.remove();
-
-        const attackElement = document.createElement("div");
-        attackElement.className = "location-attack-changes";
-        attackElement.innerHTML = `<p>${value} <img src='Visual Assets/Icons/Attack.svg' alt='Attack Icon' class='console-card-icons'></p>`;
-        element.appendChild(attackElement);
-      } else {
-        const element = document.getElementById(id);
-        const existingOverlay = element.querySelector(
-          ".location-attack-changes",
-        );
-        if (existingOverlay) existingOverlay.remove();
-      }
-    });
-  }
-
-  // Function to hide the popup and overlay
-  function hidePopup() {
-    selectedCells.forEach((cell) => cell.classList.remove("selected"));
-    selectedCells = [];
-    popup.style.display = "none";
-    overlay.style.display = "none";
-    selectionArrow.style.display = "none"; // Hide the arrow when the popup is closed
-  }
-
-  function drawArrow(cell1, cell2) {
-    // Get the bounding box of the popup
-    const popupRect = document
-      .getElementById("villain-movement-popup")
-      .getBoundingClientRect();
-
-    // Get the bounding box of the selected cells
-    const rect1 = cell1.getBoundingClientRect();
-    const rect2 = cell2.getBoundingClientRect();
-
-    // Calculate the bottom center position of each cell relative to the popup
-    const posn1 = {
-      x: rect1.left - popupRect.left + rect1.width / 2,
-      y: rect1.bottom - popupRect.top, // Bottom of the cell
-    };
-    const posn2 = {
-      x: rect2.left - popupRect.left + rect2.width / 2,
-      y: rect2.bottom - popupRect.top, // Bottom of the cell
-    };
-
-    console.log("Calculated Position 1:", posn1);
-    console.log("Calculated Position 2:", posn2);
-
-    // Calculate control points for a curve that goes under the cells
-    const controlX = (posn1.x + posn2.x) / 2;
-    const controlY = Math.max(posn1.y, posn2.y) + 30; // Adjust the +50 value for more or less curve
-
-    // Create the curved path
-    const dStr =
-      `M${posn1.x},${posn1.y} ` +
-      `C${controlX},${controlY} ${controlX},${controlY} ${posn2.x},${posn2.y}`;
-
-    console.log("Path Data:", dStr);
-
-    const selectionArrow = document.getElementById("selection-arrow");
-    selectionArrow.setAttribute("d", dStr);
-    selectionArrow.style.display = "block";
-  }
-
-  // Update city cells with the current game state in the popup
-  updateCityCellsInPopup();
-
-  // Show the popup and overlay
-  popup.style.display = "block";
-  overlay.style.display = "block";
-
-  noThanksButton.onclick = () => {
-    hidePopup();
-    onscreenConsole.log(`You chose to not move any Villains.`);
-  };
-
-  confirmButton.onclick = async () => {
-    if (selectedCells.length === 2) {
-      const firstCell = selectedCells[0];
-      const secondCell = selectedCells[1];
-
-      // Find the index of the first and second cells in the city array
-      const firstIndex = Object.values(villainCells).indexOf(firstCell);
-      const secondIndex = Object.values(villainCells).indexOf(secondCell);
-
-      if (firstIndex === -1 || secondIndex === -1) {
-        console.error("Could not find the index of the selected cells.");
-        return;
-      }
-
-      // Debugging: Log the initial state before any operation
-      console.log("Initial State:");
-      console.log("First Cell:", city[firstIndex]);
-      console.log("Second Cell:", city[secondIndex]);
-
-      // Check if the second cell contains the blank card image (i.e., it's empty)
-      const secondCellImage = secondCell.querySelector("img"); // Find the image element in the second cell
-      if (
-        secondCellImage &&
-        secondCellImage.src.includes("BlankCardSpace.webp")
-      ) {
-        // Move the villain to the empty cell
-        console.log("Moving villain to empty space");
-        onscreenConsole.log(
-          `<span class="console-highlights">${city[firstIndex].name}</span> moved to an empty space.`,
-        );
-
-        city[secondIndex] = city[firstIndex]; // Move the villain to the new space
-        city[firstIndex] = null; // Clear the original space
-        playSFX("shards");
-        totalPlayerShards += 1;
-        shardsGainedThisTurn += 1;
-        shardSupply -= 1;
-      } else if (city[secondIndex] && city[firstIndex]) {
-        // Both cells have villains, perform the swap
-        console.log("Swapping villains");
-        console.log("Before Swap:", city[firstIndex], city[secondIndex]);
-        onscreenConsole.log(
-          `<span class="console-highlights">${city[firstIndex].name}</span> swapped places with <span class="console-highlights">${city[secondIndex].name}</span>.`,
-        );
-
-        // Perform the swap
-        const temp = city[secondIndex];
-        city[secondIndex] = city[firstIndex];
-        city[firstIndex] = temp;
-        playSFX("shards");
-        totalPlayerShards += 1;
-        shardsGainedThisTurn += 1;
-        shardSupply -= 1;
-
-        console.log("After Swap:", city[firstIndex], city[secondIndex]);
-      } else {
-        console.error("Cannot swap cells: one of the cells is empty.");
-        return;
-      }
-
-      // Clear selections and update the game board
+    // Function to hide the popup and overlay - MODIFIED to resolve the promise
+    function hidePopup() {
       selectedCells.forEach((cell) => cell.classList.remove("selected"));
       selectedCells = [];
-      selectionArrow.style.display = "none"; // Hide the arrow
-      confirmButton.disabled = true; // Disable the confirm button
       popup.style.display = "none";
       overlay.style.display = "none";
-      updateGameBoard(); // Update the actual game board with the new state
-
-      // Debugging: Log the final state after the operation
-      console.log("Final State:");
-      console.log("First Cell:", city[firstIndex]);
-      console.log("Second Cell:", city[secondIndex]);
+      selectionArrow.style.display = "none"; // Hide the arrow when the popup is closed
+      resolve(); // THIS IS KEY: Resolve the promise when popup is closed
     }
-  };
+
+    function drawArrow(cell1, cell2) {
+      // Get the bounding box of the popup
+      const popupRect = document
+        .getElementById("villain-movement-popup")
+        .getBoundingClientRect();
+
+      // Get the bounding box of the selected cells
+      const rect1 = cell1.getBoundingClientRect();
+      const rect2 = cell2.getBoundingClientRect();
+
+      // Calculate the bottom center position of each cell relative to the popup
+      const posn1 = {
+        x: rect1.left - popupRect.left + rect1.width / 2,
+        y: rect1.bottom - popupRect.top, // Bottom of the cell
+      };
+      const posn2 = {
+        x: rect2.left - popupRect.left + rect2.width / 2,
+        y: rect2.bottom - popupRect.top, // Bottom of the cell
+      };
+
+      console.log("Calculated Position 1:", posn1);
+      console.log("Calculated Position 2:", posn2);
+
+      // Calculate control points for a curve that goes under the cells
+      const controlX = (posn1.x + posn2.x) / 2;
+      const controlY = Math.max(posn1.y, posn2.y) + 30; // Adjust the +50 value for more or less curve
+
+      // Create the curved path
+      const dStr =
+        `M${posn1.x},${posn1.y} ` +
+        `C${controlX},${controlY} ${controlX},${controlY} ${posn2.x},${posn2.y}`;
+
+      console.log("Path Data:", dStr);
+
+      const selectionArrow = document.getElementById("selection-arrow");
+      selectionArrow.setAttribute("d", dStr);
+      selectionArrow.style.display = "block";
+    }
+
+    // Update city cells with the current game state in the popup
+    updateCityCellsInPopup();
+
+    // Show the popup and overlay
+    popup.style.display = "block";
+    overlay.style.display = "block";
+
+    noThanksButton.onclick = () => {
+      hidePopup();
+      onscreenConsole.log(`You chose to not move any Villains.`);
+    };
+
+    confirmButton.onclick = () => {
+      if (selectedCells.length === 2) {
+        const firstCell = selectedCells[0];
+        const secondCell = selectedCells[1];
+
+        // Find the index of the first and second cells in the city array
+        const firstIndex = Object.values(villainCells).indexOf(firstCell);
+        const secondIndex = Object.values(villainCells).indexOf(secondCell);
+
+        if (firstIndex === -1 || secondIndex === -1) {
+          console.error("Could not find the index of the selected cells.");
+          return;
+        }
+
+        // Debugging: Log the initial state before any operation
+        console.log("Initial State:");
+        console.log("First Cell:", city[firstIndex]);
+        console.log("Second Cell:", city[secondIndex]);
+
+        // Check if the second cell contains the blank card image (i.e., it's empty)
+        const secondCellImage = secondCell.querySelector("img"); // Find the image element in the second cell
+        if (
+          secondCellImage &&
+          secondCellImage.src.includes("BlankCardSpace.webp")
+        ) {
+          // Move the villain to the empty cell
+          console.log("Moving villain to empty space");
+          onscreenConsole.log(
+            `<span class="console-highlights">${city[firstIndex].name}</span> moved to an empty space.`,
+          );
+
+          city[secondIndex] = city[firstIndex]; // Move the villain to the new space
+          city[firstIndex] = null; // Clear the original space
+          playSFX("shards");
+          totalPlayerShards += 1;
+          shardsGainedThisTurn += 1;
+          shardSupply -= 1;
+        } else if (city[secondIndex] && city[firstIndex]) {
+          // Both cells have villains, perform the swap
+          console.log("Swapping villains");
+          console.log("Before Swap:", city[firstIndex], city[secondIndex]);
+          onscreenConsole.log(
+            `<span class="console-highlights">${city[firstIndex].name}</span> swapped places with <span class="console-highlights">${city[secondIndex].name}</span>.`,
+          );
+
+          // Perform the swap
+          const temp = city[secondIndex];
+          city[secondIndex] = city[firstIndex];
+          city[firstIndex] = temp;
+          playSFX("shards");
+          totalPlayerShards += 1;
+          shardsGainedThisTurn += 1;
+          shardSupply -= 1;
+
+          console.log("After Swap:", city[firstIndex], city[secondIndex]);
+        } else {
+          console.error("Cannot swap cells: one of the cells is empty.");
+          return;
+        }
+
+        // Clear selections and update the game board
+        selectedCells.forEach((cell) => cell.classList.remove("selected"));
+        selectedCells = [];
+        selectionArrow.style.display = "none"; // Hide the arrow
+        confirmButton.disabled = true; // Disable the confirm button
+        popup.style.display = "none";
+        overlay.style.display = "none";
+        updateGameBoard(); // Update the actual game board with the new state
+
+        // Debugging: Log the final state after the operation
+        console.log("Final State:");
+        console.log("First Cell:", city[firstIndex]);
+        console.log("Second Cell:", city[secondIndex]);
+        
+        resolve(); // Resolve the promise after everything is done
+      }
+    };
+  });
 }
 
 async function timeGemAmbush(gem) {
@@ -3338,7 +3345,7 @@ await drawVillainCard();
 
 }
 
-function timeGemArtifact() {
+async function timeGemArtifact() {
   if (timeGemUsed) {
     onscreenConsole.log(`The <span class="console-highlights">Time Gem</span> can only be used once per game.`);
     return;
@@ -3833,7 +3840,7 @@ if (typeof mastermind.shards === 'undefined') {
 
 // Heroes
 
-function draxTheDestroyerKnivesOfTheHunter() {
+async function draxTheDestroyerKnivesOfTheHunter() {
 onscreenConsole.log(`You get +1 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 totalAttackPoints += 1;
 cumulativeAttackPoints += 1;
@@ -5176,7 +5183,7 @@ onscreenConsole.log(
 }});
 }
 
-function gamoraGodslayerBladeOne() {
+async function gamoraGodslayerBladeOne() {
 onscreenConsole.log(
     `You gain 2 Shards.`,
   );
@@ -5187,7 +5194,7 @@ shardSupply -= 2;
 gamoraGodslayerOne = true;
 }
 
-function gamoraGodslayerBladeTwo() {
+async function gamoraGodslayerBladeTwo() {
 if (totalPlayerShards < 5) {
   onscreenConsole.log(
     `You don't have enough Shards.`,
@@ -5940,7 +5947,7 @@ return;
     }
 }
 
-function rocketRaccoonIncomingDetector() {
+async function rocketRaccoonIncomingDetector() {
 onscreenConsole.log(
     `Whenever a Master Strike or Villain's Ambush ability is completed, you may gain a Shard.`,
   );
@@ -6028,7 +6035,7 @@ cumulativePlayerAttack += masterStrikeCount;
     }
 }
 
-function starLordElementGuns() {
+async function starLordElementGuns() {
 onscreenConsole.log(
     `You gain 1 Shard.`,
   );
@@ -6256,11 +6263,11 @@ function starLordLegendaryOutlaw() {
   });
 }
 
-function starLordImplantedMemoryChip() {
+async function starLordImplantedMemoryChip() {
 extraDraw();
 }
 
-function starLordSentientStarship() {
+async function starLordSentientStarship() {
 onscreenConsole.log(
     `You currently control ${playerArtifacts.length} Artifact${playerArtifacts.length === 1 ? '' : 's'} and gain ${playerArtifacts.length} Shard${playerArtifacts.length === 1 ? '' : 's'}.`,
   );
