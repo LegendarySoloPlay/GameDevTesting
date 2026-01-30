@@ -393,7 +393,6 @@ if (choice === "recruit") {
     // Show popup
     modalOverlay.style.display = "block";
     popup.style.display = "block";
-    updateQuantityText();
   });
 }
 
@@ -502,7 +501,6 @@ function shardsToRecruit() {
     // Show popup
     modalOverlay.style.display = "block";
     popup.style.display = "block";
-    updateQuantityText();
   });
 }
 
