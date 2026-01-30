@@ -339,8 +339,9 @@ if (choice === "recruit") {
 
     function updateQuantityText() {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
+      const currentAttack = totalPlayerAttack;
       instrEl.innerHTML =
-        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. This will give you a total of ${totalPlayerAttack + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. This will give you a total of ${currentAttack + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
     }
 
     // Button handlers
@@ -446,8 +447,9 @@ function shardsToRecruit() {
 
     function updateQuantityText() {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
+      const currentRecruit = totalPlayerRecruit;
       instrEl.innerHTML =
-        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. This will give you a total of ${totalPlayerRecruit + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
+        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. This will give you a total of ${currentRecruit + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
     }
 
     // Button handlers
