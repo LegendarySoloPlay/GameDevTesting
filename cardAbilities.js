@@ -1,5 +1,5 @@
 // cardAbilities.js
-//19.01.26 20:00
+//30.01.26 17:00
 
 function koBonuses() {
   playSFX("ko");
@@ -3855,6 +3855,7 @@ function CyclopsOpticBlastDiscardToPlay() {
     confirmButton.disabled = true; // Initially disabled until card is selected
     otherChoiceButton.style.display = "none";
     noThanksButton.style.display = "flex";
+    noThanksButton.textContent = "Cancel";
 
     // Confirm button handler
     confirmButton.onclick = async (e) => {

@@ -1,5 +1,5 @@
 /* Styles */
-/* //19.01.26 20:00 */
+/* //30.01.26 17:00 */
 
 body {
   font-family: Arial, sans-serif;
@@ -8512,4 +8512,15 @@ div.screws:nth-of-type(4) {
     left: 2vh;
     bottom: 1vh;
     margin-bottom: 8vh;
+}
+
+.bound-souls-pile {
+      position: absolute;
+    right: 19%;
+}
+
+.bound-souls-card-back {
+      width: 65%;
+    height: 65%;
+    margin-right: -104%;
 }

@@ -1,5 +1,5 @@
 // Fantastic Four Expansion
-//19.01.26 20:00
+//30.01.26 17:00
 
 //Keywords
 
@@ -572,7 +572,7 @@ function cosmicThreat(card, index, attackReduction, className) {
   const cardCount = attackReduction / 3;
   const cardText = cardCount === 1 ? "card" : "cards";
   onscreenConsole.log(
-    `Cosmic Threat! You have revealed ${cardCount} <img src="Visual Assets/Icons/${className}.svg" alt="${capitalizedClassName} Icon" class="console-card-icons"> ${cardText}. <span class="console-highlights">${card.name}</span> gets -${attackReduction} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+    `Cosmic Threat! You have revealed ${cardCount} <img src="Visual Assets/Icons/${capitalizedClassName}.svg" alt="${capitalizedClassName} Icon" class="console-card-icons"> ${cardText}. <span class="console-highlights">${card.name}</span> gets -${attackReduction} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
   updateGameBoard();
 }
@@ -2305,7 +2305,7 @@ function moleManDigToFreedom() {
 
   if (subterraneaInVP.length === 0) {
     onscreenConsole.log(
-      `Mastermind Tactic! <span class="console-highlights">Mole Man</span> always leads your chosen Adversary group; however, there are no suitable Villain cards available in your Victory Pile.`,
+      `Mastermind Tactic! <span class="console-highlights">Mole Man</span> always leads your chosen Villain group; however, there are no suitable Villain cards available in your Victory Pile.`,
     );
     return false;
   }
@@ -2316,7 +2316,7 @@ function moleManDigToFreedom() {
     const index = victoryPile.findIndex((card) => card.id === subterranean.id);
     if (index !== -1) {
       onscreenConsole.log(
-        `<span class="console-highlights">Mole Man</span> always leads your chosen Adversary group: <span class="console-highlights">${subterranean.name}</span> was the only suitable Villain in your Victory Pile. Placing in the Escape Pile now.`,
+        `<span class="console-highlights">Mole Man</span> always leads your chosen Villain group: <span class="console-highlights">${subterranean.name}</span> was the only suitable Villain in your Victory Pile. Placing in the Escape Pile now.`,
       );
       victoryPile.splice(index, 1);
       escapedVillainsDeck.push(subterranean);
@@ -2341,7 +2341,7 @@ function moleManDigToFreedom() {
     // Set popup content
     titleElement.textContent = "TACTIC";
     instructionsElement.innerHTML =
-      '<span class="console-highlights">Mole Man</span> always leads your chosen Adversary group: select a Villain from your Victory Pile to move to the Escaped Villains pile.';
+      '<span class="console-highlights">Mole Man</span> always leads your chosen Villain group: select a Villain from your Victory Pile to move to the Escaped Villains pile.';
 
     // Hide row labels and row2
     document.querySelector(
@@ -2383,7 +2383,7 @@ function moleManDigToFreedom() {
     function updateInstructions() {
       if (selectedCard === null) {
         instructionsElement.innerHTML =
-          '<span class="console-highlights">Mole Man</span> always leads your chosen Adversary group: select a Villain from your Victory Pile to move to the Escaped Villains pile.';
+          '<span class="console-highlights">Mole Man</span> always leads your chosen Villain group: select a Villain from your Victory Pile to move to the Escaped Villains pile.';
       } else {
         instructionsElement.innerHTML = `Selected: <span class="console-highlights">${selectedCard.name}</span> will be moved to the Escaped Villains pile.`;
       }

@@ -1,5 +1,5 @@
 // Core Mechanics
-//19.01.26 20:00
+//30.01.26 17:00
 
 console.log("Script loaded");
 console.log(window.henchmen);
@@ -4872,7 +4872,7 @@ function updateMastermindOverlay() {
     const boundSoulsPile = document.createElement("div");
       boundSoulsPile.classList.add("bound-souls-pile");
       boundSoulsPile.innerHTML = `<span class="villain-shards-count">${boundSouls.length} ${boundSouls.length === 1 
-    ? 'Bound Soul' : 'Bound Souls'}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+    ? 'Bound Soul' : 'Bound Souls'}</span><img src="Visual Assets/CardBack.webp" alt="Card Back" class="bound-souls-card-back">`;
         // Add to the card
         mastermindCard.appendChild(boundSoulsPile);
   }
@@ -5372,11 +5372,11 @@ function handleVillainEscapeActions(escapedVillain) {
 }
 
 async function processVillainCard() {
-  if (villainDeck.length === 0 && !impossibleToDraw) {
-    showDrawPopup();
-    return;
-  }
 
+  if (villainDeck.length === 0) {
+    onscreenConsole.log(`No cards remain in the Villain deck. Finish your turn.`);
+  }
+  
   const villainCard = villainDeck.pop();
   if (!villainCard) return;
 
@@ -6420,6 +6420,9 @@ function updateDeckCounts() {
   const playedCardsCountNumber = document.getElementById(
     "playedCardsCountNumber",
   );
+  const artifactsCountNumber = document.getElementById(
+    "artifactsCountNumber"
+  );
   const villainDeckCountNumber = document.getElementById(
     "villainDeckCountNumber",
   );
@@ -6457,6 +6460,7 @@ masterStrikeCountNumber.innerHTML = `${koPile.filter((card) => card.type === "Ma
   shieldCountNumber.innerHTML = `${shieldDeck.length}`;
   discardCountNumber.innerHTML = `${playerDiscardPile.length}`;
   playedCardsCountNumber.innerHTML = `${cardsPlayedThisTurn.length}`;
+  artifactsCountNumber.innerHTML = `${playerArtifacts.length}`;
   villainDeckCountNumber.innerHTML = `${villainDeck.length}`;
   heroDeckCountNumber.innerHTML = `${heroDeck.length}`;
   playerDeckCountNumber.innerHTML = `${playerDeck.length}`;
@@ -7364,6 +7368,17 @@ function updateGameBoard() {
         };
         hqCell.addEventListener("click", hqCell.clickHandler);
       }
+
+const existingHQShardsOverlay =
+    cardContainer.querySelector(".villain-shards-class");
+  if (existingHQShardsOverlay) existingHQShardsOverlay.remove();
+
+          if (card.shards && card.shards > 0) {
+      const shardsOverlay = document.createElement("div");
+      shardsOverlay.classList.add("villain-shards-class");
+      shardsOverlay.innerHTML = `<span class="villain-shards-count">${card.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+      cardContainer.appendChild(shardsOverlay);
+    }
 
       // Update recruit cost icon
       if (recruitCostSpan) {
@@ -8618,6 +8633,7 @@ if (selectedSchemeEndGame) {
           if (playerArtifacts.filter(
               (card) => card.team === "Infinity Gems").length >= 4) {
             finalTwist = true;
+            document.getElementById("end-game-title").innerHTML = `YOU WIN...`;
             document.getElementById("defeat-context").innerHTML =
               `You control 4 Infinity Gems. Corrupted by power, you complete the Gauntlet with your own hands. You betray your allies and claim the universe for yourself. Evil wins... through you.`;
             showDefeatPopup();
@@ -10258,8 +10274,13 @@ async function endTurn() {
     if (gameIsOver) return;
   }
 
-  if (heroDeckHasRunOut === true && !delayEndGame) {
+  if (heroDeck.length === 0 && !delayEndGame) {
     await showDrawPopup();
+    if (gameIsOver) return;
+  }
+
+  if (villainDeck.length === 0 && !impossibleToDraw) {
+    showDrawPopup();
     if (gameIsOver) return;
   }
 
@@ -11344,7 +11365,8 @@ function createVillainCopy(villainCard) {
     captureCode: villainCard.captureCode,
     alwaysLeads: villainCard.alwaysLeads,
     goblinToHeroAttackValue: villainCard.goblinToHeroAttackValue,
-    goblinQueen: villainCard.goblinQueen
+    goblinQueen: villainCard.goblinQueen,
+    shards: villainCard.shards
   };
 }
 
@@ -11711,6 +11733,8 @@ const infinityGemVillain = villainCard.team === "Infinity Gems";
 if (infinityGemVillain) {
   villainCard.type = "Artifact";
   playerDiscardPile.push(villainCard);
+  villainCard.originalAttack = villainCard.attack;
+  villainCard.attack = 0;
   onscreenConsole.log(
     `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
   );
@@ -11945,8 +11969,12 @@ async function handleHQPostDefeat(
     villainCard.cost = 0;
   }
 
+  const infinityGemVillain = villainCard.team === "Infinity Gems";
+
   if (infinityGemVillain) {
   villainCard.type = "Artifact";
+  villainCard.originalAttack = villainCard.attack;
+  villainCard.attack = 0;
   playerDiscardPile.push(villainCard);
   onscreenConsole.log(
     `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
@@ -12659,9 +12687,6 @@ function koHeroInHQ(index) {
 
   updateGameBoard();
 
-  if (!hq[index] && heroDeck.length === 0) {
-    showDrawPopup();
-  }
 }
 
 // Helper function to properly remove a hero from HQ
@@ -14165,6 +14190,7 @@ document
   .getElementById("defeat-return-home-button")
   .addEventListener("click", () => {
     closeDefeatPopup();
+    document.getElementById("end-game-title").innerHTML = `EVIL WINS!`;
     returnHome();
   });
 
@@ -14940,7 +14966,13 @@ function updateRightPanel(card) {
 }
 
 function getKeywordDescription(keyword) {
-  return keywordDescriptions[keyword] || "";
+  const description = keywordDescriptions[keyword];
+
+  if (typeof description === "function") {
+    return description(alwaysLeadsText);
+  }
+
+  return description || "";
 }
 
 function updateKeywordDescriptions(keyword, descriptionElementId) {
@@ -17922,6 +17954,10 @@ function closeCardChoicePopup() {
   if (confirm) {
     confirm.disabled = true;
     confirm.textContent = "Confirm";
+  }
+
+  if (nothanks) {
+    nothanks.textContent = "No Thanks!";
   }
 
   // Hide modal overlay

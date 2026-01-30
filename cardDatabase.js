@@ -1,5 +1,5 @@
 // Card Database
-//19.01.26 20:00
+//30.01.26 17:00
 
 const bystanders = [
 { id: 1, name: 'Bystander', type: 'Bystander', victoryPoints: 1, classes: [], keywords: [], image: "Visual Assets/Other/Bystander.webp" },
@@ -1403,7 +1403,7 @@ const masterminds = [
   },
   {
     id: 14,
-    name: "Supreme Intelligence of the Kree",
+    name: "The Supreme Intelligence of the Kree",
     attack: 9,
     bonusAttack: 0,
     fightCondition: "None",
@@ -1467,6 +1467,7 @@ const masterminds = [
     masterStrike: "thanosStrike",
     masterStrikeConsoleLog: `Each player reveals their hand and puts one of their non-grey Heroes next to Thanos in a "Bound Souls" pile.`,
     keywords: [],
+    errata: "Thanos",
     masterStrikeImage: "Visual Assets/Masterminds/Thanos_MasterStrike.webp",
     image: "Visual Assets/Masterminds/GotG_Thanos.webp",
 
@@ -9853,8 +9854,12 @@ const keywordDescriptions = {
   "Mole Man": `Mole Man's abilities apply to whichever Villain Group you are using, as if they were Subterranea.`,
   "Invade the Daily Bugle News HQ": `Villains entering the HQ don't cause Ambush or Escape effects. Villains in the HQ aren't in any city space. For example, if Carrion is fought while in the HQ, he can't be “put back in the city space where he was.” If there is a Villain in the HQ space under Doppelganger, or if Doppelganger is in the HQ, then Doppelganger's <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> is 0.`,
   "Artifact": `When you gain a Hero Artifact, put it in your discard pile like any other Hero card (it still counts as a Hero card too). When you draw that Artifact later in the game, you may play it in front of you and use its effects. This means you “control” that Artifact. At end of turn, when you discard all the cards you played that turn, the Artifacts you control stay in front of you. Artifacts can be revealed as one of "your Heroes" or "Heroes you have" but are only counted as "played" on the turn you put it out. Artifacts do not have to be used each turn. They do not count as cards in your hand when discarding or targeted by card effects.`,
-
+  "Thanos": (alwaysLeadsText) =>
+    alwaysLeadsText === "Infinity Gems"
+      ? `Thanos gets -2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> for each Infinity Gem you control.`
+      : `As per Solo rules, when not playing with the Infinity Gems, Thanos gets -2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> for each Villain he leads in your Victory Pile. In this game, that is ${alwaysLeadsText} Villains.`,
 };
+
 
 window.henchmen = henchmen;
 window.villains = villains;

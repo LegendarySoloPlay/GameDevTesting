@@ -1,5 +1,5 @@
 // Expansion - Guardians of the Galaxy
-//19.01.26 20:00
+//30.01.26 17:00
 
 // Global Variables
 
@@ -26,6 +26,7 @@ document
 
 function openArtifactsPopup() {
   genericCardSort(playerArtifacts);
+
   const artifactsCardsTable = document.getElementById("artifacts-cards-window-cards");
   artifactsCardsTable.innerHTML = "";
 
@@ -77,10 +78,6 @@ useButton.addEventListener("click", async (e) => {
   e.stopPropagation();
   e.preventDefault();
   
-  if (typeof playSFX === "function") {
-    playSFX("focus");
-  }
-  
   const abilityFunctionName = card.unconditionalAbility;
   
   // Check if it's a function reference
@@ -90,6 +87,8 @@ useButton.addEventListener("click", async (e) => {
       closeArtifactsPopup();
       await abilityFunctionName(card);
       card.artifactAbilityUsed = true;
+      updateGameBoard();
+      openArtifactsPopup();
     } catch (error) {
       console.error(`Error executing ability for ${card.name}:`, error);
     }
@@ -106,6 +105,7 @@ useButton.addEventListener("click", async (e) => {
         await abilityFunction(card);
         card.artifactAbilityUsed = true;
         updateGameBoard();
+        openArtifactsPopup();
       } catch (error) {
         console.error(`Error executing ability for ${card.name}:`, error);
       }
@@ -144,7 +144,6 @@ async function playedArtifact(card) {
   if (cardIndex > -1) {
     playerHand.splice(cardIndex, 1);
   }
-  card.artifactAbilityUsed = true;
   playerArtifacts.push(card);
   playSFX("artifact");
   const secondCopy = card;
@@ -152,83 +151,14 @@ async function playedArtifact(card) {
   cardsPlayedThisTurn.push(secondCopy);
 
   // Update points
+  if (card.team !== "Infinity Gems") {
   totalAttackPoints += card.attack || 0;
   totalRecruitPoints += card.recruit || 0;
   cumulativeAttackPoints += card.attack || 0;
   cumulativeRecruitPoints += card.recruit || 0;
+  }
 
   updateGameBoard();
-
-  try {
-    // Unconditional
-    if (card.unconditionalAbility && card.unconditionalAbility !== "None") {
-      const abilityFunction = window[card.unconditionalAbility];
-      if (typeof abilityFunction === "function") {
-        await Promise.resolve(abilityFunction(card));
-      } else {
-        console.error(
-          `Unconditional ability function ${card.unconditionalAbility} not found`,
-        );
-      }
-    }
-
-    // Conditional
-    if (card.conditionalAbility && card.conditionalAbility !== "None") {
-      const { conditionType, condition } = card;
-      if (isConditionMet(conditionType, condition)) {
-        if (autoSuperpowers) {
-          const conditionalAbilityFunction = window[card.conditionalAbility];
-          if (typeof conditionalAbilityFunction === "function") {
-            await Promise.resolve(conditionalAbilityFunction(card));
-          } else {
-            console.error(
-              `Conditional ability function ${card.conditionalAbility} not found`,
-            );
-          }
-        } else {
-          await new Promise((abilityResolve) => {
-            const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-              `DO YOU WISH TO ACTIVATE <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ability?`,
-              "Yes",
-              "No",
-            );
-
-            document.querySelector(
-              ".info-or-choice-popup-preview",
-            ).style.backgroundImage = `url('${card.image}')`;
-
-            confirmButton.onclick = async () => {
-              try {
-                hideHeroAbilityMayPopup();
-                const fn = window[card.conditionalAbility];
-                if (typeof fn === "function") {
-                  await Promise.resolve(fn(card));
-                } else {
-                  console.error(
-                    `Conditional ability function ${card.conditionalAbility} not found`,
-                  );
-                }
-              } catch (error) {
-                console.error(error);
-              } finally {
-                abilityResolve();
-              }
-            };
-
-            denyButton.onclick = () => {
-              onscreenConsole.log(
-                `You have chosen not to activate <span class="console-highlights">${card.name}</span><span class="bold-spans">'s</span> ability.`,
-              );
-              hideHeroAbilityMayPopup();
-              abilityResolve();
-            };
-          });
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error processing card abilities:", error);
-  }
 }
 
 function toggleArtifactsDeck() {
@@ -240,7 +170,7 @@ function toggleArtifactsDeck() {
 
   if (playerArtifacts && playerArtifacts.length > 0) {
 artifactDeck.style.display = 'block';
-artifactDeckLabel.style.display = 'block';
+artifactDeckLabel.style.display = 'flex';
 playerHand.style.gridColumn = 'span 4';
 reserveAttackLabel.style.gridColumn = 'span 1';
 
@@ -394,8 +324,8 @@ if (choice === "recruit") {
       previewEl.style.backgroundPosition = "center";
     }
 
-    // PRESET TO MAXIMUM QUANTITY
-    let chosenQty = totalPlayerShards;
+    // PRESET TO 0 QUANTITY
+    let chosenQty = 0;
 
     // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
     noThanksBtn.textContent = "+";
@@ -1227,27 +1157,27 @@ async function intergalacticKreeNegaBomb() {
       }
 
       confirmButton.onclick = async () => {
-        closeInfoChoicePopup();
-        let removedCard = negaBombDeck.splice(-1);
-        onscreenConsole.log(
-          `You revealed <span class="console-highlights">${removedCard.name}</span>. It will be KO'd. All Heroes in the HQ will be KO'd and you will gain a Wound.`,
-        );
-        koPile.push(removedCard);
-        await KOAllHeroesInHQ();
-        await drawWound();
-        resolve();
-      };
+  closeInfoChoicePopup();
+  negaBombDeck.splice(-1, 1); // Just remove it, we already have the card in negaBombCard
+  onscreenConsole.log(
+    `You revealed <span class="console-highlights">${negaBombCard.name}</span>. It will be KO'd. All Heroes in the HQ will be KO'd and you will gain a Wound.`,
+  );
+  koPile.push(negaBombCard); // Use negaBombCard instead of removedCard[0]
+  await KOAllHeroesInHQ();
+  await drawWound();
+  resolve();
+};
 
-      denyButton.onclick = async () => {
-        closeInfoChoicePopup();
-        let removedCard = negaBombDeck.splice(-1);
-        bystanderDeck.push(removedCard);
-        onscreenConsole.log(
-          `You revealed <span class="console-highlights">${removedCard.name}</span>. They will be rescued now.`,
-        );
-        await bystanderRescue();        
-        resolve();
-      };
+denyButton.onclick = async () => {
+  closeInfoChoicePopup();
+  negaBombDeck.splice(-1, 1); // Just remove it
+  bystanderDeck.push(negaBombCard); // Use negaBombCard
+  onscreenConsole.log(
+    `You revealed <span class="console-highlights">${negaBombCard.name}</span>. They will be rescued now.`,
+  );
+  await bystanderRescue();        
+  resolve();
+};
     }, 10);
   });
 
@@ -1273,7 +1203,7 @@ async function theKreeSkrullWar() {
   ).length;
 
   if (kreeEscapes === skrullEscapes) {
-    onscreenConsole.log("There are an equal number of Kree and Skurll in the Escape Pile. This Scheme Twist will be KO'd.");
+    onscreenConsole.log("There are an equal number of Kree and Skrull in the Escape Pile. This Scheme Twist will be KO'd.");
     const twistCard = {
     name: "Scheme Twist",
     type: "Scheme Twist",
@@ -1298,7 +1228,7 @@ async function theKreeSkrullWar() {
    // Check escape pile - more Skrulls or Kree? Add a conquest or KO card
   } else {
   if (kreeConquests === skrullConquests) {
-    onscreenConsole.log("There are an equal number of Kree and Skurll Conquests. This Scheme Twist will be KO'd.");
+    onscreenConsole.log("There are an equal number of Kree and Skrull Conquests. This Scheme Twist will be KO'd.");
     const twistCard = {
     name: "Scheme Twist",
     type: "Scheme Twist",
@@ -1339,43 +1269,55 @@ function uniteTheShards() {
 // Masterminds
 
 async function supremeIntelligenceOfTheKreeStrike() {
-const mastermind = getSelectedMastermind();
-  if (typeof mastermind.shards === 'undefined') {
+  const mastermind = getSelectedMastermind();
+
+  if (typeof mastermind.shards === "undefined") {
     mastermind.shards = 0;
   }
-  playSFX("shards");
-mastermind.shards += 1;
-shardSupply -= 1;
-onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains a Shard.`);
 
-const cardsToPlay = playerHand.filter(card => 
-    card.cost === mastermind.shards || card.cost === mastermind.shards + 1
+  playSFX("shards");
+  mastermind.shards += 1;
+  shardSupply -= 1;
+
+  onscreenConsole.log(
+    `<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains a Shard.`
   );
-  
-  // Process each card with the discard check
-  for (const card of cardsToPlay) {
-    const { returned } = await checkDiscardForInvulnerability(card);
-    if (returned && returned.length) {
-      playerHand.push(...returned);
+
+  for (let i = playerHand.length - 1; i >= 0; i--) {
+    const card = playerHand[i];
+
+    if (card.cost === mastermind.shards || card.cost === mastermind.shards + 1) {
+      // Remove card from hand first (authoritative state)
+      playerHand.splice(i, 1);
+
+      const { returned } = await checkDiscardForInvulnerability(card);
+
+      // Only re-add if explicitly returned
+      if (returned?.length) {
+        playerHand.push(...returned);
+      }
     }
   }
-
+  updateGameBoard();
 }
+
 
 function supremeIntelligenceOfTheKreeCombinedKnowledgeOfAllKree() {
 const mastermind = getSelectedMastermind();
 const kreeVillains = escapedVillainsDeck.filter(
-      (card) => card.team === "Kree Starforce",
+      (card) => card.alwaysLeads === true,
     ).length + city.filter(
-      (card) => card && card.team === "Kree Starforce",
+      (card) => card && card.alwaysLeads === true,
     ).length;
       if (typeof mastermind.shards === 'undefined') {
     mastermind.shards = 0;
   }
-  playSFX("shards");
+if (kreeVillains > 0) {
+playSFX("shards");
+}  
 mastermind.shards += kreeVillains;
 shardSupply -= kreeVillains;
-onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains ${kreeVillains} Shard${kreeVillains === 1 ? '' : 's'} for each Kree Starforce Villain card in the city and/or Escape pile.`);
+onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains ${kreeVillains} Shard${kreeVillains === 1 ? '' : 's'} for each ${alwaysLeadsText} Villain card in the city and/or Escape pile.`);
 updateGameBoard();
 }
 
@@ -1387,7 +1329,9 @@ const masterStrikes = koPile.filter(
       if (typeof mastermind.shards === 'undefined') {
     mastermind.shards = 0;
   }
-  playSFX("shards");
+if (masterStrikes > 0) {
+playSFX("shards");
+}  
 mastermind.shards += masterStrikes;
 shardSupply -= masterStrikes;
 onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains ${masterStrikes} Shard${masterStrikes === 1 ? '' : 's'} for each Master Strike in the KO pile.`);
@@ -1402,7 +1346,9 @@ const previousTactics = victoryPile.filter(
       if (typeof mastermind.shards === 'undefined') {
     mastermind.shards = 0;
   }
-  playSFX("shards");
+if (previousTactics > 0) {
+playSFX("shards");
+}  
 mastermind.shards += previousTactics;
 shardSupply -= previousTactics;
 onscreenConsole.log(`<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains ${previousTactics} Shard${previousTactics === 1 ? '' : 's'} for each Mastermind Tactic in your Victory Pile.`);
@@ -2654,14 +2600,17 @@ async function thanosTheMadTitan() {
 // Villains
 
 function mindGemAmbush(gem) {
-const shardsToGain = twistCount;
+
+const shardsToGain = schemeTwistCount;
 
 onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'} for each Scheme Twist in the KO pile and/or stacked next to the Scheme.`);
 
   if (typeof gem.shards === 'undefined') {
     gem.shards = 0;
   }
+if (shardsToGain > 0) {
 playSFX("shards");
+}  
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -2684,7 +2633,9 @@ onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span>
   if (typeof gem.shards === 'undefined') {
     gem.shards = 0;
   }
+if (shardsToGain > 0) {
 playSFX("shards");
+}  
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -2706,7 +2657,9 @@ onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span>
   if (typeof gem.shards === 'undefined') {
     gem.shards = 0;
   }
+if (shardsToGain > 0) {
 playSFX("shards");
+}  
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -2764,6 +2717,7 @@ if (topVillainCard.name === "Scheme Twist") {
           closeInfoChoicePopup();
           villainDeck.unshift(villainDeck.pop());
           onscreenConsole.log(`<span class="console-highlights">${topVillainCard.name}</span> has been put on the bottom of the Villain Deck. You gain a Shard.`);
+          playSFX("shards");
           totalPlayerShards += 1;
           shardsGainedThisTurn += 1;
           shardSupply -= 1;
@@ -2788,7 +2742,9 @@ onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span>
   if (typeof gem.shards === 'undefined') {
     gem.shards = 0;
   }
+if (shardsToGain > 0) {
 playSFX("shards");
+}  
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -2809,7 +2765,9 @@ onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span>
   if (typeof gem.shards === 'undefined') {
     gem.shards = 0;
   }
+if (shardsToGain > 0) {
 playSFX("shards");
+}  
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 }
@@ -3316,6 +3274,10 @@ function spaceGemArtifact() {
 
         city[secondIndex] = city[firstIndex]; // Move the villain to the new space
         city[firstIndex] = null; // Clear the original space
+        playSFX("shards");
+        totalPlayerShards += 1;
+        shardsGainedThisTurn += 1;
+        shardSupply -= 1;
       } else if (city[secondIndex] && city[firstIndex]) {
         // Both cells have villains, perform the swap
         console.log("Swapping villains");
@@ -3328,7 +3290,7 @@ function spaceGemArtifact() {
         const temp = city[secondIndex];
         city[secondIndex] = city[firstIndex];
         city[firstIndex] = temp;
-
+        playSFX("shards");
         totalPlayerShards += 1;
         shardsGainedThisTurn += 1;
         shardSupply -= 1;
@@ -3366,7 +3328,9 @@ onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span>
   if (typeof gem.shards === 'undefined') {
     gem.shards = 0;
   }
+if (shardsToGain > 0) {
 playSFX("shards");
+}  
 gem.shards += shardsToGain;
 shardSupply -= shardsToGain;
 
@@ -3745,7 +3709,7 @@ function drMinervaAmbush() {
 }
 }
 
-async function korathThePursuerAmbush() {
+async function korathThePursuerAmbush(korath) {
   return new Promise((resolve) => {
     setTimeout(() => {
 if (playerDeck.length === 0) {
@@ -3790,7 +3754,7 @@ if (playerDeck.length === 0) {
      confirmButton.onclick = async function () {
           closeInfoChoicePopup();
           extraDraw();
-            if (typeof korath.shards === 'undefined') {
+          if (typeof korath.shards === 'undefined') {
     korath.shards = 0;
   }
   playSFX("shards");
@@ -3861,7 +3825,7 @@ function supremorAmbush(supremor) {
 if (typeof mastermind.shards === 'undefined') {
     mastermind.shards = 0;
   }
-
+  playSFX("shards");
   mastermind.shards += 1;
   shardSupply -= 2;
   updateGameBoard();
@@ -4627,6 +4591,7 @@ const previousCards = cardsPlayedThisTurn.slice(0, -1);
 onscreenConsole.log(
     `You gain 3 Shards.`,
   );
+  playSFX("shards");
 totalPlayerShards += 3;
 shardsGainedThisTurn += 3;
 shardSupply -= 3;
@@ -4634,6 +4599,7 @@ shardSupply -= 3;
     onscreenConsole.log(
     `You gain 2 Shards.`,
   );
+  playSFX("shards");
 totalPlayerShards += 2;
 shardsGainedThisTurn += 2;
 shardSupply -= 2;
@@ -5214,6 +5180,7 @@ function gamoraGodslayerBladeOne() {
 onscreenConsole.log(
     `You gain 2 Shards.`,
   );
+  playSFX("shards");
 totalPlayerShards += 2;
 shardsGainedThisTurn += 2;
 shardSupply -= 2;
@@ -5574,9 +5541,9 @@ return new Promise((resolve) => {
             `<span class="console-highlights">${selectedCard.name}</span> has been KO'd. You gain a Shard.`,
           );
         koBonuses();
+        playSFX("shards");
           totalPlayerShards += 1;
-          shardsGainedThisTurn += 1;
-        
+          shardsGainedThisTurn += 1;        
           shardSupply -= 1;
         updateGameBoard();
         resolve();
@@ -5611,7 +5578,7 @@ onscreenConsole.log(
   onscreenConsole.log(
     `You may spend Shards to get <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn.`,
   );
-  
+playSFX("shards");
 totalPlayerShards += 2;
 shardsGainedThisTurn += 2;
 shardSupply -= 2;
@@ -5637,6 +5604,9 @@ function grootRecruitShards(hero) {
   onscreenConsole.log(
     `<span class="console-highlights">${hero.name}</span> has a cost of ${hero.cost} <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons">. <span class="console-highlights">Groot - I Am Groot</span> gives you ${hero.cost} Shards.`,
   );
+  if (hero.cost > 0) {
+playSFX("shards");
+}  
   totalPlayerShards += hero.cost;
   shardsGainedThisTurn += hero.cost;
   shardSupply -= hero.cost;
@@ -5956,6 +5926,9 @@ const previousCards = cardsPlayedThisTurn.slice(0, -1);
 onscreenConsole.log(
     `You have played ${guardiansPlayed} Hero${guardiansPlayed === 1 ? '' : 'es'} and gain ${guardiansPlayed} Shard${guardiansPlayed === 1 ? '' : 's'}.`,
   );
+  if (guardiansPlayed > 0) {
+playSFX("shards");
+}  
 totalPlayerShards += guardiansPlayed;
 shardsGainedThisTurn += guardiansPlayed;
 shardSupply -= guardiansPlayed;
@@ -6010,6 +5983,7 @@ async function rocketRaccoonIncomingDetectorDecision() {
         onscreenConsole.log(
           `You gain a Shard.`,
         );
+        playSFX("shards");
         totalPlayerShards += 1;
         shardsGainedThisTurn += 1;
         shardSupply -= 1;
@@ -6058,6 +6032,7 @@ function starLordElementGuns() {
 onscreenConsole.log(
     `You gain 1 Shard.`,
   );
+  playSFX("shards");
 totalPlayerShards += 1;
 shardsGainedThisTurn += 1;
 shardSupply -= 1;
@@ -6289,6 +6264,9 @@ function starLordSentientStarship() {
 onscreenConsole.log(
     `You currently control ${playerArtifacts.length} Artifact${playerArtifacts.length === 1 ? '' : 's'} and gain ${playerArtifacts.length} Shard${playerArtifacts.length === 1 ? '' : 's'}.`,
   );
+  if (playerArtifacts.length > 0) {
+playSFX("shards");
+}  
 totalPlayerShards += playerArtifacts.length;
 shardsGainedThisTurn += playerArtifacts.length;
 shardSupply -= playerArtifacts.length;
