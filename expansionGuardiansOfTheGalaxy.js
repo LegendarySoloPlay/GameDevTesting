@@ -339,7 +339,7 @@ if (choice === "recruit") {
 
     function updateQuantityText() {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
-      const currentAttack = totalPlayerAttack;
+      const currentAttack = totalAttackPoints;
       instrEl.innerHTML =
         `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. This will give you a total of ${currentAttack + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
     }
@@ -447,7 +447,7 @@ function shardsToRecruit() {
 
     function updateQuantityText() {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
-      const currentRecruit = totalPlayerRecruit;
+      const currentRecruit = totalRecruitPoints;
       instrEl.innerHTML =
         `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. This will give you a total of ${currentRecruit + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
     }
@@ -6027,7 +6027,7 @@ const previousCards = cardsPlayedThisTurn.slice(0, -1);
 onscreenConsole.log(
     `There are ${masterStrikeCount} Master Strike${masterStrikeCount === 1 ? '' : 's'} in the KO pile and/or stacked next to the Mastermind. You get +${masterStrikeCount} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
   );
-totalPlayerAttack += masterStrikeCount;
+totalAttackPoints += masterStrikeCount;
 cumulativePlayerAttack += masterStrikeCount;
   } else {
         onscreenConsole.log(
