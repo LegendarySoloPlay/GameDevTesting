@@ -1054,6 +1054,21 @@ function boomBoomNicknames() {
       previewArea.style.backgroundPosition = "center";
       previewArea.style.display = "block";
     }
+    
+    const closeButton = document.querySelector(".info-or-choice-popup-close");
+    
+    closeButton.onclick = () => {
+      const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
+      playerHand.push(unplayedCard);
+      cardsPlayedThisTurn.pop(unplayedCard);
+      totalAttackPoints -= unplayedCard.attack;
+      totalRecruitPoints -= unplayedCard.recruit;
+      cumulativeAttackPoints -= unplayedCard.attack;
+      cumulativeRecruitPoints -= unplayedCard.recruit;
+      updateGameBoard();
+      resolve();
+      return;
+      };
 
     confirmButton.onclick = () => {
       boomboomTimeBomb();
