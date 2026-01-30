@@ -1055,7 +1055,7 @@ function boomBoomNicknames() {
       previewArea.style.display = "block";
     }
     
-    const closeButton = document.querySelector(".info-or-choice-popup-close");
+    const closeButton = document.querySelector(".info-or-choice-popup-closebutton");
     
     closeButton.onclick = () => {
       const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
