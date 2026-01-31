@@ -14619,8 +14619,8 @@ function showHeroAbilityMayPopup(
   );
 
   // Set the button labels
-  confirmButton.innerText = confirmLabel;
-  denyButton.innerText = denyLabel;
+  confirmButton.innerHTML = confirmLabel;
+  denyButton.innerHTML = denyLabel;
 
   // Ensure the confirm and deny buttons are visible
   confirmButton.style.display = "inline-block";
@@ -14628,7 +14628,7 @@ function showHeroAbilityMayPopup(
 
   // Set up the extra button
   if (showExtraButton) {
-    extraButton.innerText = extraLabel;
+    extraButton.innerHTML = extraLabel;
     extraButton.style.display = "inline-block";
   } else {
     extraButton.style.display = "none";
