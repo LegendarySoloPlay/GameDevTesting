@@ -16991,6 +16991,7 @@ async function KOAllHeroesInHQ() {
   for (let i = hq.length - 1; i >= 0; i--) {
     if (hq[i] && hq[i].type === "Hero") {
       koPile.push(hq.splice(i, 1)[0]);
+      playSFX("ko");
       heroesKOCounter++;
     }
   }
