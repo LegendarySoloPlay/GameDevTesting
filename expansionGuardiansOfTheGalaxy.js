@@ -4639,7 +4639,7 @@ updateGameBoard();
 
     // Set popup content
     titleElement.textContent = "GAMORA - BOUNTY HUNTER";
-    instructionsElement.textContent =
+    instructionsElement.innerHTML =
       `SELECT A VILLAIN TO GAIN NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN:`;
 
     // Clear preview
@@ -4780,7 +4780,7 @@ updateGameBoard();
                 previewElement.style.backgroundColor = "var(--panel-backgrounds)";
 
                 // Update instructions and confirm button
-                instructionsElement.textContent =
+                instructionsElement.innerHTML =
                   `SELECT A VILLAIN TO GAIN NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN:`;
                 document.getElementById(
                   "card-choice-city-hq-popup-confirm",
@@ -5119,11 +5119,11 @@ updateGameBoard();
         if (viewingHQ) {
           renderCityCards();
           otherChoiceButton.textContent = "SWITCH TO HQ";
-          instructionsElement.textContent = `SELECT A VILLAIN TO GAIN NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN:`;
+          instructionsElement.innerHTML = `SELECT A VILLAIN TO GAIN NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN:`;
         } else {
           renderHQCards();
           otherChoiceButton.textContent = "SWITCH TO CITY";
-          instructionsElement.textContent = `SELECT A VILLAIN TO GAIN NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN:`;
+          instructionsElement.innerHTML = `SELECT A VILLAIN TO GAIN NO <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> FROM SHARDS THIS TURN:`;
         }
       };
     } else {
