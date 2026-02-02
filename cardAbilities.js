@@ -1,5 +1,5 @@
 // cardAbilities.js
-//30.01.26 17:00
+//03.02.26 10:30
 
 function koBonuses() {
   playSFX("ko");
@@ -11,14 +11,18 @@ function koBonuses() {
     );
     updateGameBoard();
   }
+  const kodCard = koPile[koPile.length - 1];
+     if (kodCard.team && kodCard.team === "Infinity Gems") {
+          kodCard.attack = kodCard.originalAttack;
+        }
 }
 
 function defeatBonuses() {
-  if (extraThreeRecruitAvailable === true) {
-    totalRecruitPoints += 3;
-    cumulativeRecruitPoints += 3;
+  if (extraThreeRecruitAvailable > 0) {
+    totalRecruitPoints += extraThreeRecruitAvailable;
+    cumulativeRecruitPoints += extraThreeRecruitAvailable;
     onscreenConsole.log(
-      `You defeated a Villain or Mastermind. +3 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+      `You defeated a Villain or Mastermind. +${extraThreeRecruitAvailable} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
     );
   }
 }
@@ -106,7 +110,7 @@ function EmmaFrostExtraDraw() {
       ...playerHand,
       ...playerArtifacts,
       ...previousCards.filter(
-        (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+        (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
       ),
     ];
 
@@ -1410,7 +1414,7 @@ function CaptainAmericaCountUniqueColorsAndAddAttack() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -1441,7 +1445,7 @@ function CaptainAmericaCountUniqueColorsAndAddRecruit() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -1846,7 +1850,7 @@ function rescueThreeBystanders() {
 }
 
 function EmmaFrostExtraThreeRecruit() {
-  extraThreeRecruitAvailable = true;
+  extraThreeRecruitAvailable += 3;
 
   console.log(
     "Whenever you defeat a villain or mastermind this turn, you will gain 3 Recruit points.",
@@ -2784,120 +2788,134 @@ function showSequentialCardSelectionPopup({
   });
 }
 
-function RogueCopyTopCardEffect() {
+function RogueStealAbilities() {
   return new Promise((resolve) => {
-    // Check if the player deck is empty and needs reshuffling
+    // 1. Check if deck is empty and needs reshuffling
     if (playerDeck.length === 0) {
       if (playerDiscardPile.length > 0) {
         playerDeck = shuffle(playerDiscardPile);
         playerDiscardPile = [];
+        onscreenConsole.log("Discard pile shuffled into deck.");
       } else {
-        console.log("No cards left in deck or discard pile.");
-        onscreenConsole.log("No cards available to draw and discard.");
+        console.log("No cards available to draw.");
+        onscreenConsole.log("No cards available to be drawn.");
         resolve();
         return;
       }
     }
 
-    // Draw the top card and immediately send it to the discard pile
+    // 2. Draw the top card
     playSFX("card-draw");
     const topCard = playerDeck.pop();
+    
+    // 3. Immediately discard it
     playerDiscardPile.push(topCard);
-
-    // Simulate the play of the card by adding its full details to cardsPlayedThisTurn
-    const simulatedCard = { ...topCard };
+    
+    // 4. Create a CLEAN simulated copy for display only
+    const simulatedCard = createCleanSimulatedCard(topCard);
+    
+    // 5. Add simulation marker for endTurn cleanup
+    simulatedCard.isSimulation = true;
+    simulatedCard.markedForDeletion = true;
+    
+    // 6. Add to cardsPlayedThisTurn for display
     cardsPlayedThisTurn.push(simulatedCard);
-
-    // Extract card details for simulation
-    const cardName = simulatedCard.name;
-    const cardAttack = simulatedCard.attack || 0;
-    const cardRecruit = simulatedCard.recruit || 0;
-    const cardUnconditionalAbility =
-      simulatedCard.unconditionalAbility || "None";
-    const cardConditionalAbility = simulatedCard.conditionalAbility || "None";
-    const cardConditionType = simulatedCard.conditionType || null;
-    const cardCondition = simulatedCard.condition || null;
-
-    if (
-      simulatedCard.name !== "Rogue - Copy Powers" &&
-      simulatedCard.name !== "Prodigy"
-    ) {
-      simulatedCard.isCopied = true;
-    }
-
-    console.log(
-      `You reveal the top card of your deck: ${cardName}. It has ${cardAttack} attack and ${cardRecruit} recruit points.`,
-    );
+    
+    // 7. Log what happened
+    console.log(`Steal Abilities: Revealed and discarded ${topCard.name}`);
     onscreenConsole.log(
-      `You revealed the top card of your deck: <span class="console-highlights">${cardName}</span>. It has been discarded so that <span class="console-highlights">Rogue</span> can copy it.`,
+      `Revealed <span class="console-highlights">${topCard.name}</span> from deck and discarded it. Copying its abilities...`
     );
-    onscreenConsole.log(
-      `You have gained +${cardAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> attack and +${cardRecruit} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
-    );
-
-    // Simulate attack and recruit points
+    
+    // 8. Apply the card's attack and recruit points
+    const cardAttack = topCard.attack || 0;
+    const cardRecruit = topCard.recruit || 0;
+    
     totalAttackPoints += cardAttack;
     totalRecruitPoints += cardRecruit;
     cumulativeAttackPoints += cardAttack;
     cumulativeRecruitPoints += cardRecruit;
-
-    // Handle unconditional ability
+    
+    if (cardAttack > 0 || cardRecruit > 0) {
+      onscreenConsole.log(
+        `Gained +${cardAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${cardRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`
+      );
+    }
+    
+    // 9. Execute the card's unconditional ability (if any)
     let abilityPromise = Promise.resolve();
-    if (cardUnconditionalAbility && cardUnconditionalAbility !== "None") {
-      const abilityFunction = window[cardUnconditionalAbility];
+    if (topCard.unconditionalAbility && topCard.unconditionalAbility !== "None") {
+      const abilityFunction = window[topCard.unconditionalAbility];
       if (typeof abilityFunction === "function") {
-        // Wrap the result in a Promise if it isn't one
-        abilityPromise = new Promise((resolve, reject) => {
-          try {
-            const result = abilityFunction(simulatedCard);
-            resolve(result);
-          } catch (error) {
-            reject(error);
-          }
-        });
+        // Important: Pass the ORIGINAL card, not the simulation
+        abilityPromise = Promise.resolve().then(() => abilityFunction(topCard));
       } else {
-        console.error(
-          `Unconditional ability function ${cardUnconditionalAbility} not found`,
-        );
+        console.error(`Ability function ${topCard.unconditionalAbility} not found`);
       }
     }
-
-    // Handle conditional ability
+    
+    // 10. Execute conditional ability (if condition met)
     abilityPromise
       .then(() => {
-        if (cardConditionalAbility && cardConditionalAbility !== "None") {
-          if (isConditionMet(cardConditionType, cardCondition)) {
-            const conditionalAbilityFunction = window[cardConditionalAbility];
+        if (topCard.conditionalAbility && topCard.conditionalAbility !== "None") {
+          if (isConditionMet(topCard.conditionType, topCard.condition)) {
+            const conditionalAbilityFunction = window[topCard.conditionalAbility];
             if (typeof conditionalAbilityFunction === "function") {
-              // Wrap the result in a Promise if it isn't one
-              return new Promise((resolve, reject) => {
-                try {
-                  const result = conditionalAbilityFunction(simulatedCard);
-                  resolve(result);
-                } catch (error) {
-                  reject(error);
-                }
-              });
-            } else {
-              console.error(
-                `Conditional ability function ${cardConditionalAbility} not found`,
-              );
+              return conditionalAbilityFunction(topCard);
             }
-          } else {
-            console.log(`Condition not met for: ${cardConditionalAbility}`);
           }
         }
       })
       .then(() => {
-        // Update game state/UI
+        // 11. Update UI and resolve
         updateGameBoard();
         resolve();
       })
-      .catch((err) => {
-        console.error("Error during copy effect simulation:", err);
+      .catch((error) => {
+        console.error("Error in RogueStealAbilities:", error);
+        updateGameBoard();
         resolve();
       });
   });
+}
+
+// Helper function to create a clean simulated card without transformation properties
+function createCleanSimulatedCard(originalCard) {
+  // Create a new object with only display properties
+  const simulatedCard = {
+    // Basic card properties for display
+    id: `simulated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    name: originalCard.name,
+    type: originalCard.type,
+    rarity: originalCard.rarity,
+    team: originalCard.team,
+    classes: originalCard.classes ? [...originalCard.classes] : [],
+    color: originalCard.color,
+    cost: originalCard.cost || 0,
+    attack: originalCard.attack || 0,
+    recruit: originalCard.recruit || 0,
+    attackIcon: originalCard.attackIcon || false,
+    recruitIcon: originalCard.recruitIcon || false,
+    image: originalCard.image,
+    
+    // Visual styling for simulations
+    isCopied: true, // For greyed out display
+    opacity: 0.7,   // Visual indicator it's a simulation
+    
+    // DO NOT copy any of these transformation properties:
+    // - originalAttributes
+    // - isCopied (we set our own for display)
+    // - any other game state properties
+  };
+  
+  // Optional: Add keywords if they exist (for display only)
+  if (originalCard.keywords && Array.isArray(originalCard.keywords)) {
+    simulatedCard.keywords = [...originalCard.keywords];
+  } else if (originalCard.keywords && originalCard.keywords !== "None") {
+    simulatedCard.keywords = [originalCard.keywords];
+  }
+  
+  return simulatedCard;
 }
 
 function findCardsWithBystanders() {
@@ -7369,97 +7387,73 @@ function RogueKOHandOrDiscardForRecruit() {
 
 function RogueCopyPowers() {
   return new Promise((resolve) => {
-    // Check if any cards have been played this turn
-    if (cardsPlayedThisTurn.length === 1) {
-      console.log("No heroes have been played yet.");
-      onscreenConsole.log(
-        "No Heroes have been played this turn. There are no powers to copy.",
-      );
+    // 1. Check if any cards have been played (excluding this Rogue card)
+    const eligibleCards = cardsPlayedThisTurn.slice(0, -1);
+    
+    // Filter out simulated cards
+    const realCardsOnly = eligibleCards.filter(card => 
+      !card.isSimulation && !card.markedForDeletion
+    );
+    
+    if (realCardsOnly.length === 0) {
+      console.log("No real heroes have been played yet to copy.");
+      onscreenConsole.log("No real Heroes have been played this turn. There are no powers to copy.");
       resolve(false);
       return;
     }
-
+    
     updateGameBoard();
-
+    
+    // 2. Show card selection UI (using your existing popup system)
     const cardchoicepopup = document.querySelector(".card-choice-popup");
     const modalOverlay = document.getElementById("modal-overlay");
-    const selectionRow1 = document.querySelector(
-      ".card-choice-popup-selectionrow1",
-    );
-    const selectionContainer = document.querySelector(
-      ".card-choice-popup-selection-container",
-    );
+    const selectionRow1 = document.querySelector(".card-choice-popup-selectionrow1");
     const previewElement = document.querySelector(".card-choice-popup-preview");
     const titleElement = document.querySelector(".card-choice-popup-title");
-    const instructionsElement = document.querySelector(
-      ".card-choice-popup-instructions",
-    );
-    const closeButton = document.querySelector(
-      ".card-choice-popup-closebutton",
-    );
-
+    const instructionsElement = document.querySelector(".card-choice-popup-instructions");
+    
     // Set popup content
     titleElement.textContent = "Rogue - Copy Powers";
     instructionsElement.innerHTML = "Select a Hero to copy:";
-
-    // Hide row labels and row2, hide close button (no cancellation option)
-    document.querySelector(
-      ".card-choice-popup-selectionrow1label",
-    ).style.display = "none";
-    document.querySelector(
-      ".card-choice-popup-selectionrow2label",
-    ).style.display = "none";
-    document.querySelector(".card-choice-popup-selectionrow2").style.display =
-      "none";
-    document.querySelector(
-      ".card-choice-popup-selectionrow2-container",
-    ).style.display = "none";
-    document.querySelector(
-      ".card-choice-popup-selectionrow1-container",
-    ).style.height = "50%";
-    document.querySelector(
-      ".card-choice-popup-selectionrow1-container",
-    ).style.top = "28%";
-    document.querySelector(
-      ".card-choice-popup-selectionrow1-container",
-    ).style.transform = "translateY(-50%)";
-    closeButton.style.display = "none";
-
+    
+    // Hide unnecessary UI elements
+    document.querySelector(".card-choice-popup-selectionrow1label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2label").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow2-container").style.display = "none";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.height = "50%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.top = "28%";
+    document.querySelector(".card-choice-popup-selectionrow1-container").style.transform = "translateY(-50%)";
+    document.querySelector(".card-choice-popup-closebutton").style.display = "none";
+    
     // Clear existing content
     selectionRow1.innerHTML = "";
     previewElement.innerHTML = "";
     previewElement.style.backgroundColor = "var(--panel-backgrounds)";
-
-    // Filter eligible heroes (excluding last played card)
-    const heroesToCopy = cardsPlayedThisTurn.slice(0, -1);
+    
+    // Filter and sort eligible heroes
+    const heroesToCopy = [...eligibleCards];
     genericCardSort(heroesToCopy);
-
+    
     let selectedHero = null;
     let selectedCardImage = null;
     let isDragging = false;
-
-    const row1 = selectionRow1;
-    const row2Visible = false;
-
-    // Initialize scroll gradient detection
-    setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
-
+    
     // Create card elements for each eligible hero
     heroesToCopy.forEach((hero) => {
       const cardElement = document.createElement("div");
       cardElement.className = "popup-card";
       cardElement.setAttribute("data-card-id", hero.id);
-
-      // Create card image
+      
       const cardImage = document.createElement("img");
       cardImage.src = hero.image;
       cardImage.alt = hero.name;
       cardImage.className = "popup-card-image";
-
+      
       // Hover effects
       const handleHover = () => {
         if (isDragging) return;
-
+        
         // Update preview
         previewElement.innerHTML = "";
         const previewImage = document.createElement("img");
@@ -7467,17 +7461,15 @@ function RogueCopyPowers() {
         previewImage.alt = hero.name;
         previewImage.className = "popup-card-preview-image";
         previewElement.appendChild(previewImage);
-
-        // Only change background if no card is selected
+        
         if (selectedHero === null) {
           previewElement.style.backgroundColor = "var(--accent)";
         }
       };
-
+      
       const handleHoverOut = () => {
         if (isDragging) return;
-
-        // Only clear preview if no card is selected AND we're not hovering over another card
+        
         if (selectedHero === null) {
           setTimeout(() => {
             if (!selectionRow1.querySelector(":hover") && !isDragging) {
@@ -7487,10 +7479,10 @@ function RogueCopyPowers() {
           }, 50);
         }
       };
-
+      
       cardElement.addEventListener("mouseover", handleHover);
       cardElement.addEventListener("mouseout", handleHoverOut);
-
+      
       // Selection click handler
       cardElement.addEventListener("click", (e) => {
         if (isDragging) {
@@ -7498,7 +7490,7 @@ function RogueCopyPowers() {
           e.stopPropagation();
           return;
         }
-
+        
         if (selectedHero === hero) {
           // Deselect
           selectedHero = null;
@@ -7506,8 +7498,7 @@ function RogueCopyPowers() {
           selectedCardImage = null;
           previewElement.innerHTML = "";
           previewElement.style.backgroundColor = "var(--panel-backgrounds)";
-
-          // Update instructions and confirm button
+          
           instructionsElement.innerHTML = "Select a Hero to copy:";
           document.getElementById("card-choice-popup-confirm").disabled = true;
         } else {
@@ -7515,12 +7506,12 @@ function RogueCopyPowers() {
           if (selectedCardImage) {
             selectedCardImage.classList.remove("selected");
           }
-
+          
           // Select new
           selectedHero = hero;
           selectedCardImage = cardImage;
           cardImage.classList.add("selected");
-
+          
           // Update preview
           previewElement.innerHTML = "";
           const previewImage = document.createElement("img");
@@ -7529,168 +7520,109 @@ function RogueCopyPowers() {
           previewImage.className = "popup-card-preview-image";
           previewElement.appendChild(previewImage);
           previewElement.style.backgroundColor = "var(--accent)";
-
-          // Update instructions and confirm button
+          
           instructionsElement.innerHTML = `Selected: <span class="console-highlights">${hero.name}</span> will be copied.`;
           document.getElementById("card-choice-popup-confirm").disabled = false;
         }
       });
-
+      
       cardElement.appendChild(cardImage);
       selectionRow1.appendChild(cardElement);
     });
-
-    if (heroesToCopy.length > 20) {
-      selectionRow1.classList.add("multi-row");
-      selectionRow1.classList.add("three-row"); // Add a special class for 3-row mode
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.height = "75%";
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.top = "40%";
-      selectionRow1.style.gap = "0.3vw";
-    } else if (heroesToCopy.length > 10) {
-      selectionRow1.classList.add("multi-row");
-      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
-      // Reset container styles when in multi-row mode
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.height = "50%";
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.top = "25%";
-    } else if (heroesToCopy.length > 5) {
-      selectionRow1.classList.remove("multi-row");
-      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.height = "42%";
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.top = "25%";
-    } else {
-      selectionRow1.classList.remove("multi-row");
-      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
-      // Reset container styles for normal mode
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.height = "50%";
-      document.querySelector(
-        ".card-choice-popup-selectionrow1-container",
-      ).style.top = "28%";
-    }
-
-    // Drag scrolling functionality
+    
+    // Setup drag scrolling (use your existing setupDragScrolling function)
     setupDragScrolling(selectionRow1);
-
+    
     // Set up button handlers
     const confirmButton = document.getElementById("card-choice-popup-confirm");
-    const otherChoiceButton = document.getElementById(
-      "card-choice-popup-otherchoice",
-    );
-    const noThanksButton = document.getElementById(
-      "card-choice-popup-nothanks",
-    );
-
-    // Configure buttons - hide all except confirm, which is required
+    const otherChoiceButton = document.getElementById("card-choice-popup-otherchoice");
+    const noThanksButton = document.getElementById("card-choice-popup-nothanks");
+    
     confirmButton.textContent = "Confirm";
-    confirmButton.disabled = true; // Initially disabled until card is selected
+    confirmButton.disabled = true;
     otherChoiceButton.style.display = "none";
     noThanksButton.style.display = "none";
-
-    // Confirm button handler
+    
+    // THIS IS THE CRITICAL PART - Connect the callback
     confirmButton.onclick = async (e) => {
       e.stopPropagation();
       e.preventDefault();
+      
       if (!selectedHero) return;
-
-      closeCardChoicePopup();
-
+      
+      // Close the popup
+      modalOverlay.style.display = "none";
+      cardchoicepopup.style.display = "none";
+      
       try {
-        // Find Rogue card
-        const rogueCardIndex = cardsPlayedThisTurn.findIndex(
-          (c) => c.name === "Rogue - Copy Powers" && !c.isCopied,
+        // 3. Find the Rogue - Copy Powers card in cardsPlayedThisTurn
+        const rogueIndex = cardsPlayedThisTurn.findIndex(
+          card => card.name === "Rogue - Copy Powers" && !card.isSimulation
         );
-        if (rogueCardIndex === -1) {
-          console.log("Rogue has already copied a card.");
+        
+        if (rogueIndex === -1) {
+          console.error("Rogue - Copy Powers card not found");
           resolve(false);
           return;
         }
-
-        const rogueCard = cardsPlayedThisTurn[rogueCardIndex];
-
-        // Mark Rogue as copied
-        rogueCard.isCopied = true;
-
-        // Store original attributes
-        rogueCard.originalAttributes = {
-          name: rogueCard.name,
-          type: rogueCard.type,
-          rarity: rogueCard.rarity,
-          team: rogueCard.team,
-          classes: rogueCard.classes,
-          color: rogueCard.color,
-          cost: rogueCard.cost,
-          attack: rogueCard.attack,
-          recruit: rogueCard.recruit,
-          attackIcon: rogueCard.attackIcon,
-          recruitIcon: rogueCard.recruitIcon,
-          bonusAttack: rogueCard.bonusAttack,
-          bonusRecruit: rogueCard.bonusRecruit,
-          multiplier: rogueCard.multiplier,
-          multiplierAttribute: rogueCard.multiplierAttribute,
-          mulitplierLocation: rogueCard.mulitplierLocation,
-          unconditionalAbility: rogueCard.unconditionalAbility,
-          conditionalAbility: rogueCard.conditionalAbility,
-          conditionType: rogueCard.conditionType,
-          condition: rogueCard.condition,
-          invulnerability: rogueCard.invulnerability,
-          keywords: rogueCard.keywords, // Fixed typo: was "kewyords"
-          image: rogueCard.image,
-        };
-
-        // Prepare keywords for copying - remove "Artifact" if present
-        let copiedKeywords = [];
-        if (selectedHero.keywords && Array.isArray(selectedHero.keywords)) {
-          // Filter out "Artifact" keyword
-          copiedKeywords = selectedHero.keywords.filter(keyword => 
-            keyword !== "Artifact" && keyword !== "artifact"
-          );
-        } else if (selectedHero.keywords && selectedHero.keywords !== "None") {
-          // Handle case where keywords might be a string
-          const keywordsStr = String(selectedHero.keywords);
-          if (!keywordsStr.includes("Artifact") && !keywordsStr.includes("artifact")) {
-            copiedKeywords = [keywordsStr];
-          }
+        
+        const rogueCard = cardsPlayedThisTurn[rogueIndex];
+        
+        // 4. Store original attributes BEFORE transformation
+        if (!rogueCard.originalAttributes) {
+          rogueCard.originalAttributes = {
+            name: rogueCard.name,
+            type: rogueCard.type,
+            rarity: rogueCard.rarity,
+            team: rogueCard.team,
+            classes: rogueCard.classes ? [...rogueCard.classes] : [],
+            color: rogueCard.color,
+            cost: rogueCard.cost || 0,
+            attack: rogueCard.attack || 0,
+            recruit: rogueCard.recruit || 0,
+            attackIcon: rogueCard.attackIcon || false,
+            recruitIcon: rogueCard.recruitIcon || false,
+            bonusAttack: rogueCard.bonusAttack || 0,
+            bonusRecruit: rogueCard.bonusRecruit || 0,
+            multiplier: rogueCard.multiplier || "None",
+            multiplierAttribute: rogueCard.multiplierAttribute || "None",
+            unconditionalAbility: rogueCard.unconditionalAbility || "None",
+            conditionalAbility: rogueCard.conditionalAbility || "None",
+            conditionType: rogueCard.conditionType || "None",
+            condition: rogueCard.condition || "None",
+            invulnerability: rogueCard.invulnerability || "None",
+            keywords: rogueCard.keywords ? [...rogueCard.keywords] : [],
+            image: rogueCard.image
+          };
         }
-
-        // Prepare classes for copying - ensure Covert is included
-        let copiedClasses = [];
+        
+        // 5. Transform Rogue to look like the selected hero
+        // But keep Covert class and remove Artifact keyword
+        const transformedClasses = ["Covert"];
         if (selectedHero.classes && Array.isArray(selectedHero.classes)) {
-          // Start with Covert, then add other classes (excluding Covert if already present)
-          copiedClasses = ["Covert", ...selectedHero.classes.filter(cls => 
-            cls !== "Covert" && cls !== "covert"
-          )];
-        } else if (selectedHero.classes) {
-          // Handle case where classes might be a string
-          const classesStr = String(selectedHero.classes);
-          if (classesStr.includes("Covert") || classesStr.includes("covert")) {
-            copiedClasses = ["Covert"];
-          } else {
-            copiedClasses = ["Covert", classesStr];
-          }
-        } else {
-          copiedClasses = ["Covert"];
+          selectedHero.classes.forEach(cls => {
+            if (cls !== "Covert" && !transformedClasses.includes(cls)) {
+              transformedClasses.push(cls);
+            }
+          });
         }
-
-        // Copy selected hero's attributes with artifact keyword removed
+        
+        const filteredKeywords = [];
+        if (selectedHero.keywords && Array.isArray(selectedHero.keywords)) {
+          selectedHero.keywords.forEach(keyword => {
+            if (keyword !== "Artifact" && keyword !== "artifact") {
+              filteredKeywords.push(keyword);
+            }
+          });
+        }
+        
+        // Apply transformation
         Object.assign(rogueCard, {
-          name: selectedHero.name || "None",
-          type: selectedHero.type || "None",
+          name: selectedHero.name,
+          type: selectedHero.type || "Hero",
           rarity: selectedHero.rarity || "None",
           team: selectedHero.team || "None",
-          classes: copiedClasses,
+          classes: transformedClasses,
           color: selectedHero.color || "None",
           cost: selectedHero.cost || 0,
           attack: selectedHero.attack || 0,
@@ -7701,60 +7633,51 @@ function RogueCopyPowers() {
           bonusRecruit: selectedHero.bonusRecruit || 0,
           multiplier: selectedHero.multiplier || "None",
           multiplierAttribute: selectedHero.multiplierAttribute || "None",
-          mulitplierLocation: selectedHero.mulitplierLocation || "None",
           unconditionalAbility: selectedHero.unconditionalAbility || "None",
           conditionalAbility: selectedHero.conditionalAbility || "None",
           conditionType: selectedHero.conditionType || "None",
           condition: selectedHero.condition || "None",
           invulnerability: selectedHero.invulnerability || "None",
-          keywords: copiedKeywords, // Use filtered keywords (without Artifact)
-          image: selectedHero.image || "None",
+          keywords: filteredKeywords,
+          image: selectedHero.image
         });
-
-        console.log(
-          `Copied: ${selectedHero.name}. Gained ${rogueCard.attack} attack and ${rogueCard.recruit} recruit.`,
-        );
+        
+        // 6. Apply the copied card's attack and recruit
+        totalAttackPoints += selectedHero.attack || 0;
+        totalRecruitPoints += selectedHero.recruit || 0;
+        cumulativeAttackPoints += selectedHero.attack || 0;
+        cumulativeRecruitPoints += selectedHero.recruit || 0;
+        
+        console.log(`Copied ${selectedHero.name}: +${selectedHero.attack || 0} attack, +${selectedHero.recruit || 0} recruit`);
         onscreenConsole.log(
-          `Copied <span class="console-highlights">${selectedHero.name}</span>. Gained +${rogueCard.attack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${rogueCard.recruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
+          `Copied <span class="console-highlights">${selectedHero.name}</span>. Gained +${selectedHero.attack || 0}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${selectedHero.recruit || 0}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`
         );
-
-        // Handle unconditional ability if it exists
-        if (
-          selectedHero.unconditionalAbility &&  // Use the ORIGINAL hero's ability
-          selectedHero.unconditionalAbility !== "None"
-        ) {
-          const abilityFn = window[selectedHero.unconditionalAbility];
-          if (typeof abilityFn === "function") {
-            // Temporarily swap the last card to be the original hero for the ability execution
-            const originalLastCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
-            cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = selectedHero;
-            
-            await abilityFn(selectedHero);  // Pass the original hero
-            
-            // Restore the last card
-            cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = originalLastCard;
-          } else {
-            console.error(
-              `Ability function ${selectedHero.unconditionalAbility} not found`,
-            );
+        
+        // 7. Execute the copied ability (if any)
+        if (selectedHero.name !== "Lockjaw") {
+        if (selectedHero.unconditionalAbility && selectedHero.unconditionalAbility !== "None") {
+          const abilityFunction = window[selectedHero.unconditionalAbility];
+          if (typeof abilityFunction === "function") {
+            // Pass the ORIGINAL selectedHero, not the transformed rogueCard
+            await abilityFunction(selectedHero);
           }
         }
-
-        // Update game state
-        totalAttackPoints += rogueCard.attack;
-        totalRecruitPoints += rogueCard.recruit;
-        cumulativeAttackPoints += rogueCard.attack;
-        cumulativeRecruitPoints += rogueCard.recruit;
-
+      } else {
+        totalAttackPoints += 2;
+        cumulativeAttackPoints += 2;
+      }
+        
+        // 8. Update UI and resolve
         updateGameBoard();
         resolve(true);
+        
       } catch (error) {
-        console.error("Error copying powers:", error);
+        console.error("Error in RogueCopyPowers:", error);
         resolve(false);
       }
     };
-
-    // Show popup
+    
+    // Show the popup
     modalOverlay.style.display = "block";
     cardchoicepopup.style.display = "block";
   });
@@ -8391,7 +8314,7 @@ function HenchmenKOHeroYouHave() {
     const handHeroes = playerHand.filter((card) => card.type === "Hero");
     const playedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
-        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     );
     const artifactHeroes = playerArtifacts.filter((card) => card.type === "Hero");
 
@@ -8691,7 +8614,7 @@ function FightKOHeroYouHave() {
       (card) =>
         card.type === "Hero" &&
         card.isCopied !== true &&
-        card.sidekickToDestroy !== true,
+        card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     );
 
     // Check if there are any heroes available
@@ -9331,7 +9254,7 @@ function doomStrike() {
             card.classes &&
             card.classes.includes("Tech") &&
             card.isCopied !== true &&
-            card.sidekickToDestroy !== true,
+            card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
         ) ||
         playerArtifacts.some(
           (card) => card.classes && card.classes.includes("Tech"),
@@ -9761,7 +9684,7 @@ function magnetoStrike() {
         playerHand.some((card) => card.team === "X-Men") ||
         cardsPlayedThisTurn.some(
           (card) =>
-            card.team === "X-Men" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+            card.team === "X-Men" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
         ) ||
         playerArtifacts.some((card) => card.team === "X-Men");
 
@@ -10426,7 +10349,7 @@ function revealStrengthOrWound() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -10538,7 +10461,7 @@ async function LokiRevealStrengthOrWound() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -10652,7 +10575,7 @@ async function revealTechOrWound() {
   const cardsYouHave = [
     ...playerHand,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -10732,7 +10655,7 @@ async function EscapeRevealTechOrWound() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -10802,7 +10725,7 @@ function revealRangeOrWound() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -10902,7 +10825,7 @@ async function AmbushRevealRangeOrWound() {
   const cardsYouHave = [
     ...playerHand,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -13086,7 +13009,7 @@ async function MagnetoRevealXMenOrWound() {
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -13158,7 +13081,7 @@ function revealXMenOrWound() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -13259,7 +13182,7 @@ async function XMenToBystanders() {
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -13294,7 +13217,7 @@ async function AvengersToBystanders() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
   const AvengersCardsYouHave = cardsYouHave.filter(
@@ -13338,7 +13261,7 @@ function XMen7thDraw() {
       }));
 
     const playedCards = cardsPlayedThisTurn
-      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy)
+      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,)
       .map((card, index) => ({
         ...card,
         source: "played",
@@ -14442,7 +14365,7 @@ function chooseHeroesToKO() {
         card.type === "Hero" &&
         !card.isCopied &&
         !card.sidekickToDestroy && 
-        !card.markedToDestroy
+        !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
       )
       .map((card, index) => ({ ...card, uniqueId: `${card.id}-played-${index}`, source: "played" }));
 
@@ -16178,7 +16101,7 @@ function strengthHeroesNumberToKO() {
       (card) =>
         card &&
         card.type === "Hero" &&
-        (card.fromHand || (!card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy)),
+        (card.fromHand || (!card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation)),
     );
 
     const availableHeroes = [...availableArtifactHeroes, ...availableHandHeroes, ...availablePlayedHeroes];

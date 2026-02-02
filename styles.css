@@ -1,5 +1,5 @@
 /* Styles */
-/* //30.01.26 17:00 */
+/* //03.02.26 10:30 */
 
 body {
   font-family: Arial, sans-serif;
@@ -497,6 +497,36 @@ button:active {
   }
 }
 
+@keyframes pulseGlowArtifact {
+  0% {
+    border-color: rgb(92, 60, 159);
+    box-shadow: 0 0 25px rgb(92 60 159 / 70%);
+  }
+  50% {
+    border-color: rgb(92, 60, 159);
+    box-shadow: 0 0 35px rgba(119, 82, 201, 0.8);
+  }
+  100% {
+    border-color: rgb(92, 60, 159);
+    box-shadow: 0 0 25px rgb(92 60 159 / 70%);
+  }
+}
+
+@keyframes pulseGlowFocus {
+  0% {
+    border-color: #06a2d2;
+    box-shadow: 0 0 25px rgb(0 112 163 / 70%);
+  }
+  50% {
+    border-color: #06a2d2;
+    box-shadow: 0 0 35px rgba(6, 162, 210, 0.8);
+  }
+  100% {
+    border-color: #06a2d2;
+    box-shadow: 0 0 25px rgb(0 112 163 / 70%);
+  }
+}
+
 @keyframes pulseGlowAttack {
   0% {
     border-color: #d7182a;
@@ -955,7 +985,7 @@ button:active {
   transform: scale(1.5);
   z-index: 998;
   position: absolute;
-  right: 12%;
+  right: -18%;
   bottom: -2.5vh;
 }
 
@@ -2128,7 +2158,7 @@ h2 {
 .mastermind-attack-overlay {
   position: absolute;
   bottom: 4px;
-  right: 22%;
+  right: 0;
   background-color: rgb(226 222 218);
   color: #fdfdfd;
   box-sizing: border-box;
@@ -4762,7 +4792,7 @@ button:disabled:hover {
 
 #stacked-mastermind-cards {
   position: absolute;
-  width: 65%;
+  width: 25%;
   height: 65%;
   display: flex;
   background-image: url("Visual Assets/CardBack.webp");
@@ -4796,6 +4826,51 @@ button:disabled:hover {
   pointer-events: none;
   border-radius: 1vh;
   box-shadow: 2px 2px #000000;
+}
+
+#stacked-mastermind-cards-right {
+  position: absolute;
+  width: 25%;
+  height: 65%;
+  display: flex;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 1;
+  margin-right: -71%;
+  align-items: center;
+    justify-content: center;
+}
+
+#stacked-mastermind-cards-right-label {
+    margin-top: auto;
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
+    margin-right: auto;
+    color: var(--buttonText);
+    font-family: var(--heading-font);
+    text-transform: var(--text-transform);
+    letter-spacing: var(--letter-spacing);
+    margin-bottom: auto;
+    filter: drop-shadow(0vh 0vh 1.1vh black);
+    cursor: default;
+    background-color: var(--accent);
+    width: 2.2vw;
+    height: 1.2vw;
+    border-radius: 0.5vh;
+    border: 2px solid white;
+    font-size: calc(0.35vh + 0.3vw);
+    text-shadow: 0vh 0 0.2vh #727272;
+    pointer-events: none;
+    border-radius: 1vh;
+    box-shadow: 2px 2px #000000;
+    align-items: center;
+    justify-content: center;
+}
+
+#mastermind-image-placeholder {
+  position: relative;
 }
 
 .villain-baby-overlay {
@@ -8448,7 +8523,7 @@ div.screws:nth-of-type(4) {
 }
 
 .villain-shards-class {
-    width: 2vw;
+        width: 1.5vw;
     height: auto;
     display: inline-block;
     position: absolute;
@@ -8458,11 +8533,37 @@ div.screws:nth-of-type(4) {
 }
 
 .villain-shards-count {
-    color: #ebe5e4;
-    font-size: calc(0.7vh + 0.7vw);
+        color: #ebe5e4;
+    font-size: calc(0.6vh + 0.6vw);
     position: absolute;
-    bottom: 1.6vh;
-    left: 0.49vw;
+    bottom: 1vh;
+    left: 0.19vw;
+    text-shadow: 0.1vh 0.1 0.2vh #000000;
+    pointer-events: none;
+    border-radius: 1vh;
+    width: 1.2vw;
+    height: 1.2vw;
+    font-family: var(--heading-font);
+    z-index: 996;
+}
+
+.artifacts-shards-class {
+        width: 1.5vw;
+    height: auto;
+    display: inline-block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 30%;
+    z-index: 1;
+}
+
+.artifacts-shards-count {
+        color: #ebe5e4;
+    font-size: calc(0.6vh + 0.6vw);
+    position: absolute;
+    bottom: 0.9vh;
+    left: 0.39vw;
     text-shadow: 0.1vh 0.1 0.2vh #000000;
     pointer-events: none;
     border-radius: 1vh;

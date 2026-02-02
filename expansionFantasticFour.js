@@ -1,5 +1,5 @@
 // Fantastic Four Expansion
-//30.01.26 17:00
+//03.02.26 10:30
 
 //Keywords
 
@@ -66,7 +66,7 @@ async function handleCosmicThreatCardSelection(
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -200,7 +200,7 @@ async function handleGalactusCosmicThreatCardSelection(chosenClass) {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -322,7 +322,7 @@ async function handleBeyonderCosmicThreatCardSelection(threshold) {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -436,7 +436,7 @@ async function handleCosmicThreatChoice(card, index) {
         ...playerHand,
         ...playerArtifacts,
         ...cardsPlayedThisTurn.filter(
-          (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+          (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
         ),
       ];
 
@@ -1377,7 +1377,7 @@ async function galactusCosmicEntity() {
   const cardsPool = [
     ...playerHand,
     ...playerArtifacts,
-    ...cardsPlayedThisTurn.filter((c) => !c?.isCopied && !c?.sidekickToDestroy),
+    ...cardsPlayedThisTurn.filter((c) => !c?.isCopied && !c?.sidekickToDestroy  && !c?.markedForDeletion && !c?.isSimulation),
   ];
 
   const cardHasClass = (card, cls) =>
@@ -1635,7 +1635,7 @@ async function galactusPanickedMobs() {
   const cardsPool = [
     ...playerHand,
     ...playerArtifacts,
-    ...cardsPlayedThisTurn.filter((c) => !c?.isCopied && !c?.sidekickToDestroy),
+    ...cardsPlayedThisTurn.filter((c) => !c?.isCopied && !c?.sidekickToDestroy && !c?.markedForDeletion && !c?.isSimulation),
   ];
   const cardHasClass = (card, cls) =>
     !!card && card.classes && card.classes.includes(cls);
@@ -2725,7 +2725,7 @@ function moloidsFight() {
     const handHeroes = playerHand.filter((card) => card.type === "Hero");
     const playedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
-        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     );
 
     // Check if there are any heroes available
@@ -3154,7 +3154,7 @@ function FirelordRevealRangeOrWound() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -3292,7 +3292,7 @@ function stardustFight() {
         card.classes.includes("Covert") &&
         !card.isCopied && 
         !card.sidekickToDestroy && 
-        !card.markedToDestroy
+        !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     );
 
     // Combine all Covert cards
@@ -4334,7 +4334,7 @@ function canRevealInvisibleWomanInvisibleBarrier() {
   const cardsYouHave = [
     ...playerHand,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     ),
   ];
   return cardsYouHave.some(
@@ -4435,7 +4435,7 @@ function canRevealMrFantasticUltimateNullifier() {
   const cardsYouHave = [
     ...playerHand,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     ),
   ];
   return cardsYouHave.some(

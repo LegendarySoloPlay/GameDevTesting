@@ -1,5 +1,5 @@
 // Card Database
-//30.01.26 17:00
+//03.02.26 10:30
 
 const bystanders = [
 { id: 1, name: 'Bystander', type: 'Bystander', victoryPoints: 1, classes: [], keywords: [], image: "Visual Assets/Other/Bystander.webp" },
@@ -5601,7 +5601,7 @@ const heroes = [
         multiplier: "None",
         multiplierAttribute: "None",
         multiplierLocation: "None",
-        unconditionalAbility: "RogueCopyTopCardEffect",
+        unconditionalAbility: "RogueStealAbilities",
         conditionalAbility: "None",
         conditionType: "None",
         condition: "None",

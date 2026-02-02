@@ -1,5 +1,5 @@
 // Card Abilities for Sidekicks
-//19.01.26 20:00
+//03.02.26 10:30
 
 function returnToSidekickDeck(card) {
   if (!card) {
@@ -212,10 +212,15 @@ function throgHighRecruitReward() {
 
   if (cumulativeRecruitPoints >= 6) {
     onscreenConsole.log(
-      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+      `You have already made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
     );
     totalAttackPoints += 2;
     cumulativeAttackPoints += 2;
+  } else {
+    throgRecruit = true;
+onscreenConsole.log(
+      `Once this turn, if you make at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">, you get +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
+    );
   }
 
   returnToSidekickDeck(playedSidekick);
@@ -247,6 +252,22 @@ function lockjawPhasing() {
       previewArea.style.backgroundPosition = "center";
       previewArea.style.display = "block";
     }
+
+    const closeButton = document.getElementById("info-or-choice-popup-close-button");
+    
+    closeButton.onclick = () => {
+      const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
+      playerHand.push(unplayedCard);
+      cardsPlayedThisTurn.pop(unplayedCard);
+      totalAttackPoints -= unplayedCard.attack;
+      totalRecruitPoints -= unplayedCard.recruit;
+      cumulativeAttackPoints -= unplayedCard.attack;
+      cumulativeRecruitPoints -= unplayedCard.recruit;
+      closeInfoChoicePopup();
+      updateGameBoard();
+      resolve();
+      return;
+      };
 
     confirmButton.onclick = () => {
       // Player chose to Phase
@@ -1055,7 +1076,7 @@ function boomBoomNicknames() {
       previewArea.style.display = "block";
     }
     
-    const closeButton = document.querySelector(".info-or-choice-popup-closebutton");
+    const closeButton = document.getElementById("info-or-choice-popup-close-button");
     
     closeButton.onclick = () => {
       const unplayedCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
@@ -1065,6 +1086,7 @@ function boomBoomNicknames() {
       totalRecruitPoints -= unplayedCard.recruit;
       cumulativeAttackPoints -= unplayedCard.attack;
       cumulativeRecruitPoints -= unplayedCard.recruit;
+      closeInfoChoicePopup();
       updateGameBoard();
       resolve();
       return;
@@ -1105,7 +1127,7 @@ function boomboomMeltdown() {
   }
 
   // Skip card movement if this is a Prodigy copy
-  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom") {
+  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  !playedSidekick.markedForDeletion || !playedSidekick.isSimulation) {
     totalAttackPoints += 4;
     cumulativeAttackPoints += 4;
     drawWound();
@@ -1150,7 +1172,7 @@ function boomboomBoomer() {
   }
 
   // Skip card movement if this is a Prodigy copy
-  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom") {
+  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  !playedSidekick.markedForDeletion || !playedSidekick.isSimulation) {
     totalAttackPoints += 3;
     cumulativeAttackPoints += 3;
 
@@ -1190,7 +1212,7 @@ async function boomboomTimeBomb() {
   }
 
   // Skip card movement if this is a Prodigy copy
-  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom") {
+  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  !playedSidekick.markedForDeletion || !playedSidekick.isSimulation) {
     totalAttackPoints += 1;
     cumulativeAttackPoints += 1;
 
@@ -1275,7 +1297,13 @@ async function prodigyCopyPowers() {
     // 1) Check eligibility (exclude the most recently played card)
     const heroesToCopy = cardsPlayedThisTurn
       .slice(0, -1)
-      .filter((card) => card && card.type === "Hero" && card.cost <= 6);
+      .filter((card) => 
+  card && 
+  card.type === "Hero" && 
+  card.cost <= 6 &&
+  !card.isSimulation &&        // NEW: Exclude simulated cards
+  !card.markedForDeletion      // NEW: Exclude cards marked for deletion
+);
 
     if (heroesToCopy.length === 0) {
       console.log("No eligible heroes have been played yet (cost 6 or less).");

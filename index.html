@@ -16,7 +16,7 @@
 <body>
   <div class="fullscreen-background"></div>
 
-  <div style="display:none;">//30.01.26 17:00</div>
+  <div style="display:none;">//03.02.26 10:30</div>
 
   <div id="background-for-expansion-popup"><canvas id="mycanvas"></canvas></div>
 
@@ -104,7 +104,7 @@
     <div class="overall-filter">
       <div id="overallsetlist" class="dropdown-check-list" tabindex="100">
         <span class="anchor">OVERALL SET</span>
-        <ul class="items">
+        <ul class="items" id="overall-set-filters">
           <li><label><input type="checkbox" data-set="Core" /> Core</label></li>
           <li><label><input type="checkbox" data-set="Dark City" /> Dark City</label></li>
           <li><label><input type="checkbox" data-set="Fantastic Four" /> Fantastic Four</label></li>
@@ -635,7 +635,9 @@
           <div id="demon-goblin-deck" style="display:none;"><span id="demon-goblin-count"></span></div>
         </div>
         <div id="mastermind" class="cell mastermind">
+          <div id="mastermind-image-placeholder"></div>
           <div id="stacked-mastermind-cards" style="display:none;"><span id="stacked-mastermind-cards-count"></span></div>
+          <div id="stacked-mastermind-cards-right" style="display:none;"><div id="stacked-mastermind-cards-right-label"></div></div>
           <div id="mastermind-attack-button" style="display:none;"><span style="filter: drop-shadow(0vh 0vh 0.3vh black);"><img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="overlay-attack-icons"></span>
           </div>
           <div class="overlay"></div>
@@ -1030,7 +1032,7 @@
 
   <div id="defeat-popup" class="defeat-popup-class" style="display: none;">
     <div class="defeat-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
-    <div class="end-game-title">EVIL WINS!</div>
+    <div class="end-game-title" id="evil-wins-title">EVIL WINS!</div>
     <br>
     <div class="end-game-context" style="margin-bottom: 10px;" id="defeat-context">The Mastermind has succeeded in their scheme. All hope is lost!</div>
     <button id="defeat-return-home-button">Restart</button>
@@ -1613,7 +1615,7 @@
 
   <div class="info-or-choice-popup">
     <div class="info-or-choice-popup-minimizebutton"><span style='font-size:6vh;'>&#8689;</span></div>
-    <div class="info-or-choice-popup-closebutton">✕</div>
+    <div class="info-or-choice-popup-closebutton" id="info-or-choice-popup-close-button">✕</div>
     <div class="info-or-choice-popup-title">POPUP TITLE</div>
     <div class="info-or-choice-popup-instructions">Instructions will go in here...</div>
     <div class="info-or-choice-popup-preview"></div>

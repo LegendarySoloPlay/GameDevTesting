@@ -1,5 +1,5 @@
 // Expansion - Guardians of the Galaxy
-//30.01.26 22:30
+//03.02.26 10:30
 
 // Global Variables
 
@@ -7,12 +7,10 @@ let shardSupply = 500;
 let totalPlayerShards = 0;
 let shardsGainedThisTurn = 0;
 let playerArtifacts = [];
-let rocketRacoonShardBonus = false;
 let grootRecruitBonus = false;
 let shardsForRecruitEnabled = false;
 let gamoraGodslayerOne = false;
 let gamoraGodslayerTwo = false;
-let realityGemVillainDraw = false;
 let boundSouls = [];
 let negaBombDeck = [];
 let kreeConquests = 0;
@@ -53,11 +51,18 @@ function openArtifactsPopup() {
     imgElement.alt = card.name;
     imgElement.classList.add("pile-card-image");
 
+if (card.name === "Soul Gem" && card.shards && card.shards > 0) {
+    const shardsOverlay = document.createElement("div");
+    shardsOverlay.classList.add("artifacts-shards-class");
+    shardsOverlay.innerHTML = `<span class="artifacts-shards-count">${card.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+    cardContainer.appendChild(shardsOverlay);
+  }
+
     // Apply visual effects based on usage state
     if (card.artifactAbilityUsed === true) {
       imgElement.style.opacity = "0.5";
     } else {
-      imgElement.style.opacity = "0.9";
+      imgElement.style.animation = "pulseGlowArtifact 2s infinite ease-in-out";
       
       // Make card interactive only if not used
       imgElement.classList.add("clickable-card", "telepathic-probe-active");
@@ -86,15 +91,16 @@ useButton.addEventListener("click", async (e) => {
     try {
       await closeArtifactsPopup();
       await abilityFunctionName(card);
-      card.artifactAbilityUsed = true;
+      updateArtifactUsageState(card); // Use the helper
       updateGameBoard();
       openArtifactsPopup();
     } catch (error) {
       console.error(`Error executing ability for ${card.name}:`, error);
     }
   } 
+
   // Check if it's a string that should map to a function
-  else if (typeof abilityFunctionName === "string") {
+  else if (card.artifactAbilityUsed === false && typeof abilityFunctionName === "string") {
     // Try to find the function in the global scope or your game's namespace
     const abilityFunction = window[abilityFunctionName] || 
                           abilityFunctions[abilityFunctionName]; // Using Option 1's lookup
@@ -103,7 +109,7 @@ useButton.addEventListener("click", async (e) => {
       try {
         await closeArtifactsPopup();
         await abilityFunction(card);
-        card.artifactAbilityUsed = true;
+        updateArtifactUsageState(card); // Use the helper
         updateGameBoard();
         openArtifactsPopup();
       } catch (error) {
@@ -130,6 +136,38 @@ useButton.addEventListener("click", async (e) => {
   const overlay = document.getElementById("played-cards-modal-overlay");
   if (overlay) {
     overlay.style.display = "block";
+  }
+}
+
+// Add this helper function at the top of your file or in a utility section
+function updateArtifactUsageState(card) {
+  console.log("=== UPDATE ARTIFACT USAGE DEBUG ===");
+  console.log("Card name:", card.name);
+  console.log("gamoraGodslayerOne:", gamoraGodslayerOne);
+  console.log("gamoraGodslayerTwo:", gamoraGodslayerTwo);
+  
+  if (card.name === "Gamora - Godslayer Blade") {
+    // Special handling for Gamora
+    const bothAbilitiesUsed = gamoraGodslayerOne && gamoraGodslayerTwo;
+    const oneAbilityUsed = (gamoraGodslayerOne || gamoraGodslayerTwo) && !bothAbilitiesUsed;
+    
+    console.log("bothAbilitiesUsed:", bothAbilitiesUsed);
+    console.log("oneAbilityUsed:", oneAbilityUsed);
+    
+    card.artifactAbilityUsed = bothAbilitiesUsed;
+    card.partiallyUsed = oneAbilityUsed;
+    
+    console.log("Set artifactAbilityUsed to:", card.artifactAbilityUsed);
+    console.log("Set partiallyUsed to:", card.partiallyUsed);
+    console.log("======================");
+    
+    return card.artifactAbilityUsed;
+  } else {
+    // Standard behavior for all other artifacts
+    card.artifactAbilityUsed = true;
+    console.log("Non-Gamora card, set artifactAbilityUsed to true");
+    console.log("======================");
+    return true;
   }
 }
 
@@ -219,6 +257,7 @@ function shardsToAttack() {
         const closeBtn = document.querySelector(
           ".info-or-choice-popup-closebutton",
         );
+        closeBtn.onclick = null;
         closeBtn.style.display = "none";
         const minimizeBtn = document.querySelector(
           ".info-or-choice-popup-minimizebutton",
@@ -247,6 +286,12 @@ function shardsToAttack() {
         confirmBtn.style.display = "inline-block";
         otherBtn.style.display = "inline-block";
         noThanksBtn.style.display = "inline-block";
+
+        closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeInfoChoicePopup();
+          choiceResolve("cancel");
+        }
 
         // Button handlers
         confirmBtn.onclick = (e) => {
@@ -306,6 +351,7 @@ if (choice === "recruit") {
       ".info-or-choice-popup-closebutton",
     );
     closeBtn.style.display = "none";
+    closeBtn.onclick = null;
     const minimizeBtn = document.querySelector(
       ".info-or-choice-popup-minimizebutton",
     );
@@ -323,6 +369,12 @@ if (choice === "recruit") {
       previewEl.style.backgroundRepeat = "no-repeat";
       previewEl.style.backgroundPosition = "center";
     }
+
+    closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeInfoChoicePopup();
+          resolve();
+        }
 
     // PRESET TO 0 QUANTITY
     let chosenQty = 0;
@@ -416,6 +468,13 @@ function shardsToRecruit() {
       ".info-or-choice-popup-closebutton",
     );
     closeBtn.style.display = "none";
+    closeBtn.onclick = null;
+
+    closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeInfoChoicePopup();
+          resolve();
+        }
 
     // Set popup content
     titleEl.textContent = "SHARDS";
@@ -509,58 +568,59 @@ function shardsToRecruit() {
 // Schemes
 
 async function forgeTheInfinityGauntlet() {
-const gemsInPlay = playerArtifacts.filter((card) => card.team === "Infinity Gems").length;
-const gemsInDiscard = playerDiscardPile.filter((card) => card.team === "Infinity Gems").length;
+  const gemsInPlay = playerArtifacts.filter((card) => card.team === "Infinity Gems").length;
+  const gemsInDiscard = playerDiscardPile.filter((card) => card.team === "Infinity Gems").length;
+  const gemsInCity = city.filter((card) => card && card.team === "Infinity Gems").length;
 
-if (gemsInPlay === 0 && gemsInDiscard === 0) {
-onscreenConsole.log(`You have no Infinity Gems in play or in your discard pile.`);
-
-if (city.filter((card) => card && card.team === "Infinity Gems").length === 0) {
-  onscreenConsole.log(`There are no Infinity Gems in the city to gain a Shard.`);
-} else {
-  onscreenConsole.log(`Each Infinity Gem in the city gains a Shard.`);
-  for (let i = 0; i < city.length; i++) {
-  const card = city[i];
-  if (card && card.team === "Infinity Gems" && shardSupply > 0) {
-
-      if (typeof card.shards === 'undefined') {
-    card.shards = 0;
-  }
-  playSFX("shards");
-    card.shards += 1;
-    shardSupply -= 1;
-  }
-}
-}
-return;
-}
-
-if (gemsInPlay > 0 && gemsInDiscard > 0) {
-  await forgeTheInfinityGauntletBoth();
-} else {
-  await forgeTheInfinityGauntletSingle();
-}
-
-onscreenConsole.log(`Each Infinity Gem in the city gains a Shard.`);
-  for (let i = 0; i < city.length; i++) {
-  const card = city[i];
-  if (card && card.team === "Infinity Gems" && shardSupply > 0) {
-      if (typeof card.shards === 'undefined') {
-    card.shards = 0;
-  }
-  playSFX("shards");
-    card.shards += 1;
-    shardSupply -= 1;
+  // Phase 1: Handle city gems (always happens if there are any)
+  if (gemsInCity > 0) {
+    onscreenConsole.log(`Each Infinity Gem in the city gains a Shard.`);
+    
+    let shardsAdded = 0;
+    for (let i = 0; i < city.length; i++) {
+      const card = city[i];
+      if (card && card.team === "Infinity Gems" && shardSupply > 0) {
+        if (typeof card.shards === 'undefined') {
+          card.shards = 0;
+        }
+        playSFX("shards");
+        card.shards += 1;
+        shardSupply -= 1;
+        shardsAdded++;
+      }
+    }
+    
+    if (shardsAdded === 0 && shardSupply === 0) {
+      onscreenConsole.log(`No Shards available in the supply.`);
+    }
+  } else {
+    onscreenConsole.log(`There are no Infinity Gems in the city to gain a Shard.`);
   }
 
-}
+  // Phase 2: Check if player has any gems
+  if (gemsInPlay === 0 && gemsInDiscard === 0) {
+    onscreenConsole.log(`You have no Infinity Gems in play or in your discard pile.`);
+    return;
+  }
+
+  // Phase 3: Player has gems - determine which scenario to execute
+  if (gemsInPlay > 0 && gemsInDiscard > 0) {
+    await forgeTheInfinityGauntletBoth();
+  } else {
+    await forgeTheInfinityGauntletSingle();
+  }
 }
 
 async function forgeTheInfinityGauntletSingle() {
   return new Promise((resolve) => {
-    
     const cardchoicepopup = document.querySelector(".card-choice-popup");
     const modalOverlay = document.getElementById("modal-overlay");
+    
+    if (!cardchoicepopup || !modalOverlay) {
+      resolve();
+      return;
+    }
+
     const selectionRow1 = document.querySelector(
       ".card-choice-popup-selectionrow1",
     );
@@ -613,22 +673,28 @@ async function forgeTheInfinityGauntletSingle() {
     const row2Visible = false;
     setupIndependentScrollGradients(row1, row2Visible ? selectionRow2 : null);
 
-const gemsInPlay = playerArtifacts.filter((card) => card.team === "Infinity Gems");
-const gemsInDiscard = playerDiscardPile.filter((card) => card.team === "Infinity Gems");
+    const gemsInPlay = playerArtifacts.filter((card) => card.team === "Infinity Gems");
+    const gemsInDiscard = playerDiscardPile.filter((card) => card.team === "Infinity Gems");
+    
+    // Determine which location has gems
+    let gemsSource;
+    let displayCards;
+    
+    if (gemsInPlay.length > 0) {
+        gemsSource = "play";
+        displayCards = gemsInPlay;
+    } else {
+        gemsSource = "discard";
+        displayCards = gemsInDiscard;
+    }
+    
+    if (displayCards.length === 0) {
+      closeCardChoicePopup();
+      resolve();
+      return;
+    }
 
-// Based on your description, gems will be in one location or the other, not both
-let gemsSourceArray;
-let displayCards;
-
-if (gemsInPlay.length > 0) {
-    gemsSourceArray = playerArtifacts;  // Gems are in play
-    displayCards = [...gemsInPlay];
-} else {
-    gemsSourceArray = playerDiscardPile; // Gems are in discard
-    displayCards = [...gemsInDiscard];
-}
-
-genericCardSort(displayCards);
+    genericCardSort(displayCards);
 
     // Create card elements for each eligible card
     displayCards.forEach((card) => {
@@ -731,7 +797,7 @@ genericCardSort(displayCards);
 
     if (displayCards.length > 20) {
       selectionRow1.classList.add("multi-row");
-      selectionRow1.classList.add("three-row"); // Add a special class for 3-row mode
+      selectionRow1.classList.add("three-row");
       document.querySelector(
         ".card-choice-popup-selectionrow1-container",
       ).style.height = "75%";
@@ -741,8 +807,7 @@ genericCardSort(displayCards);
       selectionRow1.style.gap = "0.3vw";
     } else if (displayCards.length > 10) {
       selectionRow1.classList.add("multi-row");
-      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
-      // Reset container styles when in multi-row mode
+      selectionRow1.classList.remove("three-row");
       document.querySelector(
         ".card-choice-popup-selectionrow1-container",
       ).style.height = "50%";
@@ -751,7 +816,7 @@ genericCardSort(displayCards);
       ).style.top = "25%";
     } else if (displayCards.length > 5) {
       selectionRow1.classList.remove("multi-row");
-      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
+      selectionRow1.classList.remove("three-row");
       document.querySelector(
         ".card-choice-popup-selectionrow1-container",
       ).style.height = "42%";
@@ -760,8 +825,7 @@ genericCardSort(displayCards);
       ).style.top = "25%";
     } else {
       selectionRow1.classList.remove("multi-row");
-      selectionRow1.classList.remove("three-row"); // Remove 3-row class if present
-      // Reset container styles for normal mode
+      selectionRow1.classList.remove("three-row");
       document.querySelector(
         ".card-choice-popup-selectionrow1-container",
       ).style.height = "50%";
@@ -789,44 +853,53 @@ genericCardSort(displayCards);
     noThanksButton.style.display = "none";
 
     // Confirm button handler
-confirmButton.onclick = async (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    if (selectedCard === null) {
+    confirmButton.onclick = async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      
+      if (selectedCard === null) {
         closeCardChoicePopup();
         return;
-    }
-    
-    // Close popup before proceeding
-    closeCardChoicePopup();
-    
-    setTimeout(async () => {
-        // Find the selected gem in the correct source array
-        const cardIndex = gemsSourceArray.findIndex(
-            (c) => c && c.id === selectedCard.id
-        );
-        
-        if (cardIndex !== -1) {
-            // Remove the gem from wherever it was (play or discard)
-            const chosenGem = gemsSourceArray.splice(cardIndex, 1)[0];
-            
+      }
+      
+      closeCardChoicePopup();
+      
+      setTimeout(async () => {
+        if (gemsSource === "play") {
+          const cardIndex = playerArtifacts.findIndex(
+            (c) => c && c.id === selectedCard.id && c.team === "Infinity Gems"
+          );
+          
+          if (cardIndex !== -1) {
+            const chosenGem = playerArtifacts.splice(cardIndex, 1)[0];
             chosenGem.type = "Villain";
-            // Add it to the villain deck (entering the city)
             villainDeck.push(chosenGem);
-            
-            // Update villain display
             await drawVillainCard();
-            
-            console.log(`${chosenGem.name} entered the city from ${gemsSourceArray === playerArtifacts ? 'play' : 'discard'}`);
-        } else {
-            console.error("Selected gem not found in source array");
-            onscreenConsole.log("Error: Selected gem could not be found.");
+            onscreenConsole.log(`${chosenGem.name} enters the city from your control!`);
+          }
+        } else if (gemsSource === "discard") {
+          const cardIndex = playerDiscardPile.findIndex(
+            (c) => c && c.id === selectedCard.id && c.team === "Infinity Gems"
+          );
+          
+          if (cardIndex !== -1) {
+            const chosenGem = playerDiscardPile.splice(cardIndex, 1)[0];
+            chosenGem.type = "Villain";
+            chosenGem.attack = chosenGem.originalAttack;
+            villainDeck.push(chosenGem);
+            await drawVillainCard();
+            onscreenConsole.log(`${chosenGem.name} enters the city from your discard pile!`);
+          }
         }
         
+        updateGameBoard();
         resolve();
-    }, 100);
-};
+      }, 100);
+    };
+
+    // Show popup
+    modalOverlay.style.display = "block";
+    cardchoicepopup.style.display = "block";
   });
 }
 
@@ -1096,6 +1169,7 @@ return new Promise((resolve) => {
           if (indexInPlayed !== -1) {
             const chosenCard = playerDiscardPile.splice(indexInPlayed, 1)[0];
             chosenCard.type = "Villain";
+            chosenCard.attack = chosenCard.originalAttack;
             villainDeck.push(chosenCard);
             await drawVillainCard();
           } else {
@@ -1282,8 +1356,10 @@ async function supremeIntelligenceOfTheKreeStrike() {
   shardSupply -= 1;
 
   onscreenConsole.log(
-    `<span class="bold-spans">The </span><span class="console-highlights">${mastermind.name}</span> gains a Shard.`
+    `<span class="console-highlights">${mastermind.name}</span> gains a Shard.`
   );
+
+  updateMastermindOverlay();
 
   for (let i = playerHand.length - 1; i >= 0; i--) {
     const card = playerHand[i];
@@ -1396,7 +1472,7 @@ async function thanosStrike() {
     );
     
     const eligiblePlayedCards = cardsPlayedThisTurn.filter(
-      (c) => c && COLOURS.has(String(c.color || "").trim()) && !c.isCopied && !c.sidekickToDestroy,
+      (c) => c && COLOURS.has(String(c.color || "").trim()) && !c.isCopied && !c.sidekickToDestroy && !c.markedForDeletion && !c.isSimulation
     );
 
     if (eligibleArtifactCards.length === 0 && eligibleHandCards.length === 0 && eligiblePlayedCards.length === 0) {
@@ -2654,7 +2730,7 @@ function realityGemAmbush(gem) {
 const shardsToGain = city.filter((card) => card && card.team === "Infinity Gems").length + 
                                      escapedVillainsDeck.filter((card) => card.team === "Infinity Gems").length;
 
-onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's'} for each Infinity Gem Villain card in the city and/or Escape pile.`);
+onscreenConsole.log(`Ambush! <span class="console-highlights">${gem.name}</span> gains ${shardsToGain} Shard${shardsToGain === 1 ? '' : 's, one'} for each Infinity Gem Villain card in the city and/or Escape pile.`);
 
   if (typeof gem.shards === 'undefined') {
     gem.shards = 0;
@@ -2668,7 +2744,6 @@ shardSupply -= shardsToGain;
 
 async function realityGemArtifact() {
 onscreenConsole.log(`Before you play a card from the Villain Deck, you may first reveal the top card of the Villain Deck. If it's not a Scheme Twist, you may put it on the bottom of the Villain Deck. If you do, gain a Shard.`);
-realityGemVillainDraw = true;
 }
 
 async function realityGemVillainChoice() {
@@ -2729,7 +2804,7 @@ if (topVillainCard.name === "Scheme Twist") {
 
       denyButton.onclick = async function () {
           closeInfoChoicePopup();
-          onscreenConsole.log(`You chose to leave <span class="console-highlights">${topVillainCard.name}</span> on top of the Villain Decl. Drawing now...`);
+          onscreenConsole.log(`You chose to leave <span class="console-highlights">${topVillainCard.name}</span> on top of the Villain Deck. Drawing now...`);
           resolve();
       };
     }, 10);
@@ -2756,6 +2831,7 @@ const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
 onscreenConsole.log(`You gain +${soulGem.shards} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 totalAttackPoints += soulGem.shards || 0;
 cumulativeAttackPoints += soulGem.shards || 0;
+soulGem.shards = 0;
 updateGameBoard();
 }
 
@@ -3919,11 +3995,12 @@ return new Promise((resolve) => {
     
   } else {
     
-    const { confirmButton, otherButton, denyButton  } = showHeroAbilityMayPopup(
+    const { confirmButton, denyButton, extraButton  } = showHeroAbilityMayPopup(
       `You revealed the top card of your deck: <span class="bold-spans">${topCardPlayerDeck.name}</span>. You may discard it or put it back. As you have played an <img src="Visual Assets/Icons/Instinct.svg" alt="Instinct Icon" class="console-card-icons"> Hero, you can choose to KO it after discarding.`,
       "Discard",
       "Discard, Then KO",
       "Put it Back",
+      true
     );
 
     const previewArea = document.querySelector(".info-or-choice-popup-preview");
@@ -3947,7 +4024,7 @@ return new Promise((resolve) => {
       resolve();
     };
     
-otherButton.onclick = async function () {
+denyButton.onclick = async function () {
   playerDeck.pop();
   hideHeroAbilityMayPopup();
   const { returned } = await checkDiscardForInvulnerability(topCardPlayerDeck);
@@ -3978,7 +4055,7 @@ otherButton.onclick = async function () {
   resolve();
 };
 
-    denyButton.onclick = function () {
+    extraButton.onclick = function () {
       console.log(
         `You put ${topCardPlayerDeck.name} back on top of your deck.`,
       );
@@ -5195,16 +5272,10 @@ gamoraGodslayerOne = true;
 }
 
 async function gamoraGodslayerBladeTwo() {
-if (totalPlayerShards < 5) {
-  onscreenConsole.log(
-    `You don't have enough Shards.`,
-  );
-}
-
 totalPlayerShards -= 5;
 shardSupply += 5;
 totalAttackPoints += 10;
-cumulstiveAttackPoints += 10;
+cumulativeAttackPoints += 10;
 
 onscreenConsole.log(
     `You spent 5 Shards and gained +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`,
@@ -5216,7 +5287,7 @@ onscreenConsole.log(
 async function gamoraGodslayerBlade() {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // Check if the player deck is empty and needs reshuffling
+      // Check if ALL abilities have been used
       if (gamoraGodslayerOne && gamoraGodslayerTwo) {
         resolve();
         return;
@@ -5242,39 +5313,80 @@ async function gamoraGodslayerBlade() {
         ".info-or-choice-popup-preview",
       );
       if (previewArea) {
-        previewArea.style.backgroundImage = `url('Visual Assets/Heroes/Guardians of the Galaxy/GotG_Gamora_GodslayerBlade.webp')`;
+        previewArea.style.backgroundImage = `url('Visual Assets/Heroes/GotG/GotG_Gamora_GodslayerBlade.webp')`;
         previewArea.style.backgroundSize = "contain";
         previewArea.style.backgroundRepeat = "no-repeat";
         previewArea.style.backgroundPosition = "center";
         previewArea.style.display = "block";
       }
 
-      // Disable buttons based on corresponding variables
+      // Disable ONLY the specific button that's already been used
       if (gamoraGodslayerOne) {
         confirmButton.disabled = true;
         confirmButton.style.opacity = "0.5";
         confirmButton.style.cursor = "not-allowed";
+        confirmButton.innerHTML = "GAIN TWO SHARDS (Already Used)";
+      } else {
+        // Ensure first button is enabled and reset
+        confirmButton.disabled = false;
+        confirmButton.style.opacity = "1";
+        confirmButton.style.cursor = "pointer";
+        confirmButton.innerHTML = "GAIN TWO SHARDS";
       }
 
       if (gamoraGodslayerTwo) {
         denyButton.disabled = true;
         denyButton.style.opacity = "0.5";
         denyButton.style.cursor = "not-allowed";
+        denyButton.innerHTML = `SPEND 5 SHARDS FOR +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> (Already Used)`;
+      } else {
+        // Reset second button first
+        denyButton.disabled = false;
+        denyButton.style.opacity = "1";
+        denyButton.style.cursor = "pointer";
+        denyButton.innerHTML = `SPEND 5 SHARDS FOR +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">`;
+        
+        // Check shards for second ability only if it's NOT already used
+        if (typeof totalPlayerShards !== 'undefined') {
+          if (totalPlayerShards < 5) {
+            denyButton.disabled = true;
+            denyButton.style.opacity = "0.5";
+            denyButton.style.cursor = "not-allowed";
+            denyButton.innerHTML = `SPEND 5 SHARDS FOR +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> (Need ${5 - totalPlayerShards} more)`;
+          }
+        } else {
+          denyButton.disabled = true;
+          denyButton.style.opacity = "0.5";
+          denyButton.style.cursor = "not-allowed";
+          denyButton.innerHTML = `SPEND 5 SHARDS FOR +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> (Shards not available)`;
+        }
       }
 
+      // Add click handlers
       confirmButton.onclick = async function () {
         if (!gamoraGodslayerOne) {
+          // Reset styles before closing
+          resetPopupButtonStyles();
           closeInfoChoicePopup();
+          // Set the flag for this ability
+          gamoraGodslayerOne = true;
+          await gamoraGodslayerBladeOne();
           resolve();
-          gamoraGodslayerBladeOne();
         }
       };
 
       denyButton.onclick = async function () {
         if (!gamoraGodslayerTwo) {
-          closeInfoChoicePopup();
-          resolve();
-          gamoraGodslayerBladeTwo();
+          // Check shards again in onclick handler for safety
+          if (typeof totalPlayerShards !== 'undefined' && totalPlayerShards >= 5) {
+            // Reset styles before closing
+            resetPopupButtonStyles();
+            closeInfoChoicePopup();
+            // Set the flag for this ability
+            gamoraGodslayerTwo = true;
+            await gamoraGodslayerBladeTwo();
+            resolve();
+          }
         }
       };
     }, 10);
@@ -5951,7 +6063,6 @@ async function rocketRaccoonIncomingDetector() {
 onscreenConsole.log(
     `Whenever a Master Strike or Villain's Ambush ability is completed, you may gain a Shard.`,
   );
-rocketRacoonShardBonus = true;
 }
 
 async function rocketRaccoonIncomingDetectorDecision() {
@@ -5979,7 +6090,7 @@ async function rocketRaccoonIncomingDetectorDecision() {
       );
       if (previewArea) {
         previewArea.style.backgroundImage =
-          "url('Visual Assets/Heroes/Guardians of the Galaxy/GotG_RocketRaccoon_IncomingDetector.webp')";
+          "url('Visual Assets/Heroes/GotG/GotG_RocketRaccoon_IncomingDetector.webp')";
         previewArea.style.backgroundSize = "contain";
         previewArea.style.backgroundRepeat = "no-repeat";
         previewArea.style.backgroundPosition = "center";

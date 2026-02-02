@@ -1,5 +1,5 @@
 // Paint the Town Red Expansion
-//19.01.26 20:00
+//03.02.26 10:30
 
 //Schemes
 
@@ -952,7 +952,7 @@ async function theCloneSagaTwist() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -1354,25 +1354,18 @@ async function theCloneSagaDiscard() {
 //Keywords
 
 async function wallCrawlRecruit(card) {
-  return new Promise(async (resolve) => {
+  return new Promise((resolve) => {
     const drawChoicePopup = document.querySelector(".draw-choice-popup");
     const modalOverlay = document.getElementById("modal-overlay");
-    const drawChoicePopupTitle = document.querySelector(
-      ".draw-choice-popup-title",
-    );
-    const drawChoicePopupInstructions = document.querySelector(
-      ".draw-choice-popup-instructions",
-    );
+    const drawChoicePopupTitle = document.querySelector(".draw-choice-popup-title");
+    const drawChoicePopupInstructions = document.querySelector(".draw-choice-popup-instructions");
     const cardNameElement = document.getElementById("draw-choice-card-name");
     const previewElement = document.querySelector(".draw-choice-popup-preview");
     const confirmButton = document.getElementById("draw-choice-popup-confirm");
-    const noThanksButton = document.getElementById(
-      "draw-choice-popup-nothanks",
-    );
+    const noThanksButton = document.getElementById("draw-choice-popup-nothanks");
 
     // Track modal overlay's original state
-    const wasModalOverlayVisible =
-      modalOverlay && modalOverlay.style.display === "block";
+    const wasModalOverlayVisible = modalOverlay && modalOverlay.style.display === "block";
 
     drawChoicePopupTitle.innerHTML = `WALL-CRAWL`;
     drawChoicePopupInstructions.innerHTML = `Wall-Crawl allows you to put this card on top of your deck. Where do you wish to recruit to?`;
@@ -1391,36 +1384,58 @@ async function wallCrawlRecruit(card) {
       previewElement.style.backgroundPosition = "center";
     }
 
-    // Set up button handlers - now they resolve with the destinationId
-    confirmButton.onclick = async () => {
+    // Set up button handlers
+    const onConfirm = async () => {
       playSFX("wall-crawl");
-      playerDeck.push(card);
-      card.revealed = true;
       onscreenConsole.log(
         `<span class="console-highlights">${card.name}</span> has been put on top of your deck.`,
       );
       closeDrawChoicePopup(wasModalOverlayVisible);
-      resolve("player-deck-cell"); // Return the destinationId
+      
+      // Clean up event listeners
+      confirmButton.removeEventListener('click', onConfirm);
+      noThanksButton.removeEventListener('click', onNoThanks);
+      
+      // Handle stingOfTheSpider BEFORE resolving
       if (stingOfTheSpider) {
         await scarletSpiderStingOfTheSpiderDrawChoice(card);
       }
+      
+      // Return both destinationId and location
+      resolve({
+        destinationId: "player-deck-cell",
+        location: "deck"
+      });
     };
 
-    noThanksButton.onclick = () => {
-      playerDiscardPile.push(card);
+    const onNoThanks = () => {
       onscreenConsole.log(
         `<span class="console-highlights">${card.name}</span> has been added to your discard pile.`,
       );
       closeDrawChoicePopup(wasModalOverlayVisible);
-      resolve("discard-pile-cell"); // Return the destinationId
+      
+      // Clean up event listeners
+      confirmButton.removeEventListener('click', onConfirm);
+      noThanksButton.removeEventListener('click', onNoThanks);
+      
+      resolve({
+        destinationId: "discard-pile-cell",
+        location: "discard"
+      });
     };
 
-    // Show the popup - only show modal overlay if it's not already visible
+    // Use addEventListener instead of onclick to avoid overwriting
+    confirmButton.addEventListener('click', onConfirm);
+    noThanksButton.addEventListener('click', onNoThanks);
+
+    // Show the popup
     if (modalOverlay && !wasModalOverlayVisible) {
       modalOverlay.style.display = "block";
     }
 
-    if (drawChoicePopup) drawChoicePopup.style.display = "block";
+    if (drawChoicePopup) {
+      drawChoicePopup.style.display = "block";
+    }
   });
 }
 
@@ -2125,7 +2140,7 @@ async function sandmanEscape() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -2202,7 +2217,7 @@ async function vultureEscape() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -2279,7 +2294,7 @@ async function shockerAmbush() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -2812,7 +2827,7 @@ function moonKnightLunarCommunionKOChoice() {
     const handCards = playerHand.map((card) => ({ card, source: "hand" }));
     
     const playedCards = cardsPlayedThisTurn
-      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy)
+      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation)
       .map((card) => ({ card, source: "played" }));
 
     // Combine all cards for "Your Cards" section
@@ -4578,53 +4593,12 @@ function spiderWomanArachnoPheromones() {
 
       const hero = hq[selectedHQIndex];
 
-      // Recruit the hero using the original function
-      recruitHeroConfirmed(hero, selectedHQIndex);
-
-      console.log(`${hero.name} has been recruited.`);
-      onscreenConsole.log(
-        `You have recruited <span class="console-highlights">${hero.name}</span> for free.`,
-      );
-      playSFX("recruit");
-
-      const previousCards = cardsPlayedThisTurn.slice(0, -1);
-      const cardsYouHave = [
-        ...playerHand,
-        ...previousCards.filter(
-          (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
-        ),
-      ];
-
-      updateGameBoard();
       closeHQCityCardChoicePopup();
 
-      const spiderFriends = cardsYouHave.filter(
-        (item) => item.team === "Spider Friends",
-      );
+      spiderWomanArachnoRecruit = true;
 
-      // Check if there are any Spider Friends (use length, not the array itself)
-      if (spiderFriends.length > 0) {
-        // Get the last recruited hero (the one just added to discard pile)
-        const justRecruited = playerDiscardPile[playerDiscardPile.length - 1];
-
-        // Remove from discard pile and add to deck
-        const recruitedCardIndex = playerDiscardPile.indexOf(justRecruited);
-        if (recruitedCardIndex !== -1) {
-          const [recruitedHero] = playerDiscardPile.splice(
-            recruitedCardIndex,
-            1,
-          );
-          playerDeck.push(recruitedHero);
-          recruitedHero.revealed = true;
-          onscreenConsole.log(
-            `<img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="console-card-icons"> Hero played. Superpower Ability activated. <span class="console-highlights">${recruitedHero.name}</span> has been put on top of your deck.`,
-          );
-
-          if (stingOfTheSpider) {
-            await scarletSpiderStingOfTheSpiderDrawChoice(recruitedHero);
-          }
-        }
-      }
+      // Recruit the hero using the original function
+      recruitHeroConfirmed(hero, selectedHQIndex);
 
       resolve(true);
     };
@@ -4739,7 +4713,7 @@ function symbioteSpiderManShadowedSpider() {
         (card.cost === 1 || card.cost === 2) &&
         !card.isCopied &&
         !card.sidekickToDestroy &&
-        !card.markedToDestroy,
+        !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
     );
 
   if (lowCostPlayedHeroes.length === 0) {

@@ -1,5 +1,5 @@
 // Core Mechanics
-//30.01.26 17:00
+//03.02.26 10:30
 
 console.log("Script loaded");
 console.log(window.henchmen);
@@ -677,7 +677,7 @@ let extraCardsDrawnThisTurn = 0;
 let nextTurnsDraw = 6;
 let cardsToBeDrawnNextTurn = [];
 let rescueExtraBystanders = 0;
-let extraThreeRecruitAvailable = false;
+let extraThreeRecruitAvailable = 0;
 let schemeTwistCount = 0;
 let turnCount = 1;
 let killbotSchemeTwistCount = 0;
@@ -707,6 +707,8 @@ let silentMeditationRecruit = false;
 let backflipRecruit = false;
 let sewerRooftopDefeats = 0;
 let thingCrimeStopperRescue = false;
+let spiderWomanArachnoRecruit = false;
+let throgRecruit = false;
 let bystandersRescuedThisTurn = 0;
 let galactusForceOfEternityDraw = false;
 let galactusDestroyedCityDelay = false;
@@ -2297,13 +2299,10 @@ function randomizeHero() {
     (scheme) => scheme.name === selectedSchemeName,
   );
 
+  // Update Jean Grey's disabled state for UI consistency
   const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-
-  if (jeanGreyCheckbox) {
-    // Always re-enable first, then disable only if the current scheme requires it
-    jeanGreyCheckbox.disabled = false; // Reset disabled state
-    jeanGreyCheckbox.disabled =
-      selectedScheme.name === "Transform Citizens Into Demons";
+  if (jeanGreyCheckbox && selectedScheme) {
+    jeanGreyCheckbox.disabled = selectedSchemeName === "Transform Citizens Into Demons";
   }
 
   // Get the selected set and team filters
@@ -2316,7 +2315,14 @@ function randomizeHero() {
 
   // Filter the hero checkboxes by the selected filters
   const filteredCheckboxes = Array.from(heroCheckboxes).filter((checkbox) => {
-    // Exclude disabled checkboxes from being selected
+    // EXCLUDE JEAN GREY BY NAME when the specific scheme is selected
+    // This is the key fix - we don't rely on disabled state alone
+    if (selectedSchemeName === "Transform Citizens Into Demons" && 
+        checkbox.value === "Jean Grey") {
+      return false;
+    }
+
+    // Also exclude disabled checkboxes from being selected
     if (checkbox.disabled) return false;
 
     const heroSet = checkbox.getAttribute("data-set");
@@ -2336,7 +2342,7 @@ function randomizeHero() {
   }
 
   // Randomly select 3 heroes from the filtered list
-  const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random()); // Shuffle the array
+  const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
   const selectedCheckboxes = shuffledCheckboxes.slice(0, 3); // Pick the first 3
 
   // Clear the previously selected hero groups
@@ -2535,113 +2541,105 @@ function randomizeAll() {
 function randomizeVillainWithRequirements(scheme) {
   // Clear all current checkbox selections before randomizing
   const villainCheckboxes = document.querySelectorAll(
-    '#villain-selection input[type="checkbox"]',
+    '#villain-selection input[type="checkbox"]'
   );
   villainCheckboxes.forEach((checkbox) => (checkbox.checked = false));
 
   // Get the selected filters
   const selectedFilters = Array.from(
-    document.querySelectorAll('#villainlist input[type="checkbox"]:checked'),
+    document.querySelectorAll('#villainlist input[type="checkbox"]:checked')
   ).map((cb) => cb.getAttribute("data-set"));
 
-  // Filter the villain checkboxes by the selected filters
-  const filteredCheckboxes = Array.from(villainCheckboxes).filter(
-    (checkbox) => {
-      const villainSet = checkbox.getAttribute("data-set");
-      return (
-        selectedFilters.length === 0 || selectedFilters.includes(villainSet)
-      );
-    },
-  );
-
-  // If no villains match the filters, reset image and return
-  if (filteredCheckboxes.length === 0) {
-    resetVillainImage();
-    return;
-  }
-
-  // Clear the previously selected villain groups
-  selectedVillainGroups = [];
-
-  // If the scheme has a specific villain requirement, ensure it's included
+  // Start with all villain checkboxes
+  const allCheckboxes = Array.from(villainCheckboxes);
+  
+  // Arrays to track required and available villains
+  let requiredCheckboxes = [];
+  let availableCheckboxes = [];
+  
+  // If the scheme has specific villain requirements, handle them first
   if (scheme.specificVillainRequirement) {
     // Convert to array if it's a single string
     const requiredVillains = Array.isArray(scheme.specificVillainRequirement)
       ? scheme.specificVillainRequirement
       : [scheme.specificVillainRequirement];
-
-    let allRequiredVillainsFound = true;
-    const foundRequiredVillains = [];
-
-    // Check if all required villains are available
-    for (const requiredVillain of requiredVillains) {
-      const requiredCheckbox = filteredCheckboxes.find(
-        (checkbox) => checkbox.value === requiredVillain,
-      );
-      if (requiredCheckbox) {
-        foundRequiredVillains.push(requiredCheckbox);
-      } else {
-        allRequiredVillainsFound = false;
-        console.error(
-          `Required villain "${requiredVillain}" not found in the filtered list.`,
-        );
-      }
+    
+    // Find all required villains (from ALL villains, not filtered)
+    requiredCheckboxes = requiredVillains
+      .map(requiredVillain => 
+        allCheckboxes.find(checkbox => checkbox.value === requiredVillain)
+      )
+      .filter(checkbox => checkbox !== undefined); // Remove any not found
+    
+    if (requiredCheckboxes.length === 0) {
+      console.error("No required villains found in the villain pool.");
     }
-
-    if (allRequiredVillainsFound) {
-      // Select all required villains
-      foundRequiredVillains.forEach((requiredCheckbox) => {
-        requiredCheckbox.checked = true;
-        const requiredVillainGroup = villains.find(
-          (villainGroup) => villainGroup.name === requiredCheckbox.value,
-        );
-        selectedVillainGroups.push(requiredVillainGroup);
-      });
-
-      // Remove the required villains from the pool of available villains
-      const remainingCheckboxes = filteredCheckboxes.filter(
-        (checkbox) => !foundRequiredVillains.includes(checkbox),
+    
+    // Now get the pool of available villains (excluding already selected required ones)
+    // First get villains that match filters
+    const filteredCheckboxes = allCheckboxes.filter((checkbox) => {
+      const villainSet = checkbox.getAttribute("data-set");
+      return (
+        selectedFilters.length === 0 || selectedFilters.includes(villainSet)
       );
-
-      // Randomly select the remaining villains (if any are needed)
-      const requiredVillainCount = requiredVillains.length;
-      const remainingSlots = scheme.requiredVillains - requiredVillainCount;
-      if (remainingSlots > 0 && remainingCheckboxes.length > 0) {
-        const shuffledCheckboxes = remainingCheckboxes.sort(
-          () => 0.5 - Math.random(),
-        ); // Shuffle the array
-        const selectedCheckboxes = shuffledCheckboxes.slice(0, remainingSlots); // Pick the required number
-
-        // Add the selected villain groups
-        selectedCheckboxes.forEach((checkbox) => {
-          checkbox.checked = true;
-          const villainGroup = villains.find(
-            (villainGroup) => villainGroup.name === checkbox.value,
-          );
-          selectedVillainGroups.push(villainGroup);
-        });
-      }
-    } else {
-      console.error("Not all required villains were found.");
-    }
+    });
+    
+    // Remove required villains from filtered list (if they're there) to avoid duplicates
+    availableCheckboxes = filteredCheckboxes.filter(
+      checkbox => !requiredCheckboxes.includes(checkbox)
+    );
   } else {
-    // If no specific villain is required, randomly select the required number of villains
-    const shuffledCheckboxes = filteredCheckboxes.sort(
-      () => 0.5 - Math.random(),
-    ); // Shuffle the array
-    const selectedCheckboxes = shuffledCheckboxes.slice(
-      0,
-      scheme.requiredVillains,
-    ); // Pick the required number
+    // No required villains, just filter normally
+    availableCheckboxes = allCheckboxes.filter((checkbox) => {
+      const villainSet = checkbox.getAttribute("data-set");
+      return (
+        selectedFilters.length === 0 || selectedFilters.includes(villainSet)
+      );
+    });
+  }
 
-    // Add the selected villain groups
+  // Clear the previously selected villain groups
+  selectedVillainGroups = [];
+
+  // Select all required villains first
+  requiredCheckboxes.forEach((requiredCheckbox) => {
+    requiredCheckbox.checked = true;
+    const requiredVillainGroup = villains.find(
+      (villainGroup) => villainGroup.name === requiredCheckbox.value
+    );
+    if (requiredVillainGroup) {
+      selectedVillainGroups.push(requiredVillainGroup);
+    }
+  });
+
+  // Determine how many more villains we need
+  const selectedCount = selectedVillainGroups.length;
+  const remainingSlots = Math.max(0, scheme.requiredVillains - selectedCount);
+
+  // Select remaining villains from available pool
+  if (remainingSlots > 0 && availableCheckboxes.length > 0) {
+    const shuffledCheckboxes = [...availableCheckboxes].sort(
+      () => 0.5 - Math.random()
+    );
+    const selectedCheckboxes = shuffledCheckboxes.slice(0, remainingSlots);
+
     selectedCheckboxes.forEach((checkbox) => {
       checkbox.checked = true;
       const villainGroup = villains.find(
-        (villainGroup) => villainGroup.name === checkbox.value,
+        (villainGroup) => villainGroup.name === checkbox.value
       );
-      selectedVillainGroups.push(villainGroup);
+      if (villainGroup) {
+        selectedVillainGroups.push(villainGroup);
+      }
     });
+  } else if (remainingSlots > 0 && availableCheckboxes.length === 0) {
+    console.error("Not enough villains available after selecting required ones.");
+  }
+
+  // If no villains were selected at all, reset image and return
+  if (selectedVillainGroups.length === 0) {
+    resetVillainImage();
+    return;
   }
 
   // Set the image to the first villain in the list
@@ -2651,13 +2649,11 @@ function randomizeVillainWithRequirements(scheme) {
 
   // Scroll to the first selected villain checkbox
   const villainContainer = document.querySelector(
-    "#villain-section .scrollable-list",
+    "#villain-section .scrollable-list"
   );
   if (villainContainer && selectedVillainGroups.length > 0) {
-    // Convert villainCheckboxes to an array to use .find()
-    const villainCheckboxesArray = Array.from(villainCheckboxes);
-    const firstVillainCheckbox = villainCheckboxesArray.find(
-      (checkbox) => checkbox.value === selectedVillainGroups[0].name,
+    const firstVillainCheckbox = allCheckboxes.find(
+      (checkbox) => checkbox.value === selectedVillainGroups[0].name
     );
     if (firstVillainCheckbox) {
       const villainPosition =
@@ -2799,16 +2795,13 @@ function randomizeHeroWithRequirements(scheme) {
     "#scheme-section input[type=radio]:checked",
   ).value;
   const selectedScheme = schemes.find(
-    (scheme) => scheme.name === selectedSchemeName,
+    (schemeItem) => schemeItem.name === selectedSchemeName,
   );
 
+  // Update Jean Grey's disabled state for UI consistency
   const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-
-  if (jeanGreyCheckbox) {
-    // Always re-enable first, then disable only if the current scheme requires it
-    jeanGreyCheckbox.disabled = false; // Reset disabled state
-    jeanGreyCheckbox.disabled =
-      selectedScheme.name === "Transform Citizens Into Demons";
+  if (jeanGreyCheckbox && selectedScheme) {
+    jeanGreyCheckbox.disabled = selectedSchemeName === "Transform Citizens Into Demons";
   }
 
   // Get the selected set and team filters
@@ -2821,6 +2814,12 @@ function randomizeHeroWithRequirements(scheme) {
 
   // Filter the hero checkboxes by the selected filters
   const filteredCheckboxes = Array.from(heroCheckboxes).filter((checkbox) => {
+    // EXCLUDE JEAN GREY BY NAME when the specific scheme is selected
+    if (selectedSchemeName === "Transform Citizens Into Demons" && 
+        checkbox.value === "Jean Grey") {
+      return false;
+    }
+
     if (checkbox.disabled) return false;
     const heroSet = checkbox.getAttribute("data-set");
     const heroTeam = checkbox.getAttribute("data-team");
@@ -2839,8 +2838,8 @@ function randomizeHeroWithRequirements(scheme) {
   }
 
   // Randomly select the required number of heroes
-  const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random()); // Shuffle the array
-  const selectedCheckboxes = shuffledCheckboxes.slice(0, scheme.requiredHeroes); // Pick the required number
+  const shuffledCheckboxes = filteredCheckboxes.sort(() => 0.5 - Math.random());
+  const selectedCheckboxes = shuffledCheckboxes.slice(0, scheme.requiredHeroes);
 
   // Clear the previously selected hero groups
   selectedHeroGroups = [];
@@ -3043,6 +3042,10 @@ function loadLastGameSetup() {
 
   try {
     const gameSettings = JSON.parse(saved);
+    
+    // DEBUG: Log what's in overallSet
+    console.log("Loaded overallSet values:", gameSettings.overallSet);
+    console.log("Full gameSettings:", gameSettings);
 
     // Restore radio buttons (single selection)
     restoreRadioButton("#scheme-section", gameSettings.scheme);
@@ -3054,6 +3057,10 @@ function loadLastGameSetup() {
     restoreCheckboxes("#hero-selection", gameSettings.heroes);
     restoreCheckboxes("#bystander-selection", gameSettings.bystanders);
     restoreCheckboxes("#sidekick-selection", gameSettings.sidekicks);
+
+    restoreCheckboxes("#overall-set-filters", gameSettings.overallSet);
+
+    updateSelectedFiltersAll();
 
     // Restore final blow checkbox
     if (gameSettings.finalBlow !== undefined) {
@@ -3161,11 +3168,10 @@ function updateAllImagesAndScroll(gameSettings) {
   const selectedScheme = schemes.find(
     (scheme) => scheme.name === gameSettings.scheme,
   );
-  const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
-  if (jeanGreyCheckbox && selectedScheme) {
-    jeanGreyCheckbox.disabled =
-      selectedScheme.name === "Transform Citizens Into Demons";
-  }
+const jeanGreyCheckbox = document.querySelector('input[value="Jean Grey"]');
+if (jeanGreyCheckbox && selectedScheme) {
+  jeanGreyCheckbox.disabled = selectedScheme.name === "Transform Citizens Into Demons";
+}
 }
 
 // NEW FUNCTION: Scroll to radio button selection
@@ -3231,6 +3237,8 @@ function restoreRadioButton(sectionSelector, value) {
 function restoreCheckboxes(sectionSelector, values) {
   if (!values || !Array.isArray(values)) return;
 
+  console.log(`Restoring checkboxes in ${sectionSelector} with values:`, values);
+
   // Uncheck all checkboxes in this section first
   document
     .querySelectorAll(`${sectionSelector} input[type="checkbox"]`)
@@ -3240,15 +3248,38 @@ function restoreCheckboxes(sectionSelector, values) {
 
   // Check the saved ones
   values.forEach((value) => {
-    const checkboxToCheck = document.querySelector(
-      `${sectionSelector} input[value="${value}"]`,
-    );
-    if (checkboxToCheck) {
-      checkboxToCheck.checked = true;
-    } else {
-      console.warn(
-        `Could not find checkbox with value: ${value} in ${sectionSelector}`,
+    // Skip "on" value as it's likely incorrect
+    if (value === "on") {
+      console.warn(`Skipping invalid value "on" in ${sectionSelector}`);
+      return;
+    }
+    
+    // For overall-set-filters, look for data-set attribute
+    if (sectionSelector === "#overall-set-filters") {
+      const checkboxToCheck = document.querySelector(
+        `${sectionSelector} input[data-set="${value}"]`,
       );
+      if (checkboxToCheck) {
+        checkboxToCheck.checked = true;
+        console.log(`Checked checkbox with data-set="${value}"`);
+      } else {
+        console.warn(
+          `Could not find checkbox with data-set: ${value} in ${sectionSelector}`,
+        );
+      }
+    } 
+    // For other sections, look for value attribute
+    else {
+      const checkboxToCheck = document.querySelector(
+        `${sectionSelector} input[value="${value}"]`,
+      );
+      if (checkboxToCheck) {
+        checkboxToCheck.checked = true;
+      } else {
+        console.warn(
+          `Could not find checkbox with value: ${value} in ${sectionSelector}`,
+        );
+      }
     }
   });
 }
@@ -3346,8 +3377,14 @@ async function onBeginGame(e) {
         '#sidekick-selection input[name="sidekick"]:checked',
       ),
     ).map((cb) => cb.value);
+    const overallSetFilters = Array.from(
+  document.querySelectorAll(
+    "#overall-set-filters input[type=checkbox]:checked",
+  ),
+).map((cb) => cb.dataset.set);  // Changed from cb.value to cb.dataset.set
 
     finalBlowEnabled = document.getElementById("final-blow-checkbox").checked;
+
     const selectedScheme = schemes.find(
       (scheme) => scheme.name === selectedSchemeName,
     );
@@ -3371,6 +3408,7 @@ async function onBeginGame(e) {
       bystanders: selectedBystanders,
       sidekicks: selectedSidekicks,
       finalBlow: finalBlowEnabled,
+      overallSet: overallSetFilters,
       timestamp: new Date().toISOString(), // Optional: when was this saved?
     };
 
@@ -3439,7 +3477,7 @@ function skipSplash() {
 
   expansionPopup.classList.add("hidden");
   expansionBackground.classList.add("hidden");
-  document.getElementById("intro-popup-container").style.display = "flex";
+  document.getElementById("intro-popup-container").style.display = "none";
   expansionPopup.style.display = "none";
 
   // Optional: Remove the element from DOM after fade completes
@@ -3819,6 +3857,7 @@ function generateVillainDeck(
         // Copy all original properties
         id: hero.id,
         name: hero.name,
+        heroName: hero.heroName,
         type: "Villain", // Changed to Villain
         rarity: hero.rarity,
         team: hero.team,
@@ -4303,6 +4342,8 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
 
   const mastermindCell = document.getElementById("mastermind");
 
+  const mastermindImagePlaceholder = document.getElementById("mastermind-image-placeholder");
+
   // Create an image element
   const mastermindImage = document.createElement("img");
   mastermindImage.src = mastermind.image; // Use the image property from the mastermind object
@@ -4310,7 +4351,7 @@ async function initGame(heroes, villains, henchmen, mastermindName, scheme) {
   mastermindImage.classList.add("card-image"); // Add a class for styling if needed
 
   // Append the image to the mastermind cell
-  mastermindCell.appendChild(mastermindImage);
+  mastermindImagePlaceholder.appendChild(mastermindImage);
 
   console.log("Selected Mastermind:", mastermind);
   console.log("Mastermind Deck:", mastermindDeck);
@@ -4489,9 +4530,9 @@ let isFirstTurn = true;
 // Draw villain card(s) entry point (unchanged logic)
 // ---------------------------------
 async function drawVillainCard() {
-if (realityGemVillainDraw) {
-  await realityGemVillainChoice();
-}
+if (playerArtifacts.filter((card) => card.name === "Reality Gem").length > 0) {
+        await realityGemVillainChoice();
+        }
 
   if (destroyedSpaces[4] === true) {
     onscreenConsole.log(
@@ -4595,7 +4636,7 @@ async function processRegularVillainCard(villainCard) {
         );
       } else {
         await ambushEffectFunction(villainCard);
-        if (rocketRacoonShardBonus) {
+        if (playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector").length > 0) {
         await rocketRaccoonIncomingDetectorDecision();
         }
       }
@@ -4833,11 +4874,13 @@ function updateMastermindOverlay() {
 
   const mastermindAttack = recalculateMastermindAttack(mastermind);
 
+  const mastermindImagePlaceholder = document.getElementById("mastermind-image-placeholder");
+
   if (mastermindAttack !== mastermind.attack) {
     const villainOverlayAttack = document.createElement("div");
     villainOverlayAttack.className = "mastermind-attack-overlay";
     villainOverlayAttack.innerHTML = mastermindAttack;
-    mastermindCard.appendChild(villainOverlayAttack);
+    mastermindImagePlaceholder.appendChild(villainOverlayAttack);
   }
 
   if (darkPortalMastermind && !darkPortalMastermindRendered) {
@@ -4865,17 +4908,16 @@ function updateMastermindOverlay() {
         mastermindCard.appendChild(shardsOverlay);
   }
 
-   const existingBoundSoulsPile =
-    mastermindCard.querySelector(".bound-souls-pile");
-  if (existingBoundSoulsPile) existingBoundSoulsPile.remove();
-  if (boundSouls && boundSouls.length >= 1) {
-    const boundSoulsPile = document.createElement("div");
-      boundSoulsPile.classList.add("bound-souls-pile");
-      boundSoulsPile.innerHTML = `<span class="villain-shards-count">${boundSouls.length} ${boundSouls.length === 1 
-    ? 'Bound Soul' : 'Bound Souls'}</span><img src="Visual Assets/CardBack.webp" alt="Card Back" class="bound-souls-card-back">`;
-        // Add to the card
-        mastermindCard.appendChild(boundSoulsPile);
-  }
+ if (boundSouls && boundSouls.length >= 1) {
+  document.getElementById('stacked-mastermind-cards-right').style.display = "flex";
+  document.getElementById('stacked-mastermind-cards-right-label').style.display = "flex";
+  document.getElementById('stacked-mastermind-cards-right-label').innerHTML = `${boundSouls.length} ${boundSouls.length === 1 
+    ? 'Soul' : 'Souls'}`;
+  document.getElementById('stacked-mastermind-cards-right').style.backgroundImage = `url('${boundSouls[boundSouls.length - 1].image}')`;
+} else {
+  document.getElementById('stacked-mastermind-cards-right').style.display = "none";
+  document.getElementById('stacked-mastermind-cards-right-label').style.display = "none";
+}
 
   // XCutioner Heroes section
   if (mastermind.XCutionerHeroes && mastermind.XCutionerHeroes.length > 0) {
@@ -5042,9 +5084,9 @@ function handleMasterStrike(masterStrikeCard) {
     // Then always handle the Master Strike effect
     await handleMasterStrikeEffect(masterStrikeCard);
 
-    if (rocketRacoonShardBonus) {
-  await rocketRaccoonIncomingDetectorDecision();
-}
+    if (playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector").length > 0) {
+        await rocketRaccoonIncomingDetectorDecision();
+        }
 
     resolve();
   });
@@ -5276,6 +5318,13 @@ async function defaultWoundDraw() {
 }
 
 function handleVillainEscape(escapedVillain) {
+
+      const selectedSchemeName = document.querySelector(
+    "#scheme-section input[type=radio]:checked",
+  ).value;
+  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
+
+
   if (escapedVillain) {
     // If the villain has bystanders attached, move them as well
     if (escapedVillain.bystander && escapedVillain.bystander.length > 0) {
@@ -5316,6 +5365,12 @@ function handleVillainEscape(escapedVillain) {
     if (escapedVillain.skrulled === true) {
       escapedVillain.type = "Hero";
     }
+
+    if (scheme.name === "Organized Crime Wave" && 
+    escapedVillain.name === "Maggia Goons" && 
+    (!escapedVillain.ambushEffect || escapedVillain.ambushEffect === "none")) {
+  escapedVillain.ambushEffect = "organizedCrimeAmbush";
+}
 
     // Move the villain itself to the Escaped Villains deck
     escapedVillainsDeck.push(escapedVillain);
@@ -7304,6 +7359,31 @@ function updateGameBoard() {
     document.getElementById('player-shard-counter').style.display = "none";
   }
 
+  if (throgRecruit && cumulativeRecruitPoints >= 6) {
+onscreenConsole.log(
+      `You have made at least 6 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> this turn. +2<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> gained.`,
+    );
+totalAttackPoints += 2;
+cumulativeAttackPoints += 2;
+throgRecruit = false;
+}
+
+  if (playerArtifacts.some(card => card.artifactAbilityUsed !== true)) {
+  document.getElementById('artifact-deck-image').style.animation = "pulseGlowArtifact 2s infinite ease-in-out";
+  document.getElementById('artifact-deck-image').style.border = "3px solid rgb(92, 60, 159)";
+} else {
+  document.getElementById('artifact-deck-image').style.animation = "none";
+  document.getElementById('artifact-deck-image').style.border = "none";
+}
+
+  if (cardsPlayedThisTurn.some(card => card.keywords.includes("Focus"))) {
+  document.getElementById('played-cards-deck-pile').style.animation = "pulseGlowFocus 2s infinite ease-in-out";
+  document.getElementById('played-cards-deck-pile').style.border = "3px solid #06a2d2";
+} else {
+  document.getElementById('played-cards-deck-pile').style.animation = "none";
+  document.getElementById('played-cards-deck-pile').style.border = "none";
+}
+
     for (let i = 0; i < hq.length; i++) {
     const hqCell = document.querySelector(`#hq-${i + 1}`);
     const recruitButtonContainer = document.querySelector(
@@ -8633,7 +8713,7 @@ if (selectedSchemeEndGame) {
           if (playerArtifacts.filter(
               (card) => card.team === "Infinity Gems").length >= 4) {
             finalTwist = true;
-            document.getElementById("end-game-title").innerHTML = `YOU WIN...`;
+            document.getElementById("evil-wins-title").innerHTML = `YOU WIN...`;
             document.getElementById("defeat-context").innerHTML =
               `You control 4 Infinity Gems. Corrupted by power, you complete the Gauntlet with your own hands. You betray your allies and claim the universe for yourself. Evil wins... through you.`;
             showDefeatPopup();
@@ -8864,7 +8944,7 @@ function applyCardOverlays(cardContainer, card, index, location = "hq") {
       const allRevealableCosmicThreatCards = [
         ...playerHand,
         ...cardsPlayedThisTurn.filter(
-          (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+          (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
         ),
       ];
 
@@ -10020,9 +10100,15 @@ async function confirmActions() {
           return;
         }
 
-        if (card.keywords && card.keywords.includes("Artifact")) {
+        if (card.keywords && card.keywords.includes("Artifact") && (card.name !== "Rocket Raccoon - Incoming Detector" && card.name !== "Reality Gem")) {
+          card.artifactAbilityUsed = false;
           await playedArtifact(card);
           return;
+        }
+
+        if (card.keywords && card.keywords.includes("Artifact") && (card.name === "Rocket Raccoon - Incoming Detector" || card.name === "Reality Gem")) {
+          card.artifactAbilityUsed = true;
+          await playedArtifact(card);
         }
 
         cardsPlayedThisTurn.push(card);
@@ -10314,6 +10400,28 @@ async function endTurn() {
       delete card.isCopied;
     }
   });
+ 
+  // 1. Remove all simulated cards marked for deletion
+  const beforeCount = cardsPlayedThisTurn.length;
+  cardsPlayedThisTurn = cardsPlayedThisTurn.filter(card => {
+    if (card.markedForDeletion || card.isSimulation) {
+      console.log(`Removing simulated card: ${card.name}`);
+      return false;
+    }
+    return true;
+  });
+  const afterCount = cardsPlayedThisTurn.length;
+  console.log(`Removed ${beforeCount - afterCount} simulated cards`);
+  
+  // 2. Revert any transformed cards (for Copy Powers)
+  cardsPlayedThisTurn.forEach((card, index) => {
+    if (card.originalAttributes) {
+      console.log(`Reverting ${card.name} back to ${card.originalAttributes.name}`);
+      Object.assign(card, card.originalAttributes);
+      delete card.originalAttributes;
+    }
+  });
+
 
   // Iterate through the cardsPlayedThisTurn array
   for (let i = cardsPlayedThisTurn.length - 1; i >= 0; i--) {
@@ -10430,7 +10538,10 @@ if (card.temporaryTeleport === true) {
   jeanGreyBystanderAttack = 0;
   sewerRooftopDefeats = 0;
   sewerRooftopBonusRecruit = 0;
+  extraThreeRecruitAvailable = 0;
   thingCrimeStopperRescue = false;
+  spiderWomanArachnoRecruit = false;
+  throgRecruit = false;
   bystandersRescuedThisTurn = 0;
   mastermindCosmicThreatResolved = false;
   galactusDestroyedCityDelay = false;
@@ -10465,7 +10576,6 @@ if (card.temporaryTeleport === true) {
   shardsForRecruitEnabled = false;
   gamoraGodslayerOne = false;
   gamoraGodslayerTwo = false;
-  realityGemVillainDraw = false;
 
   playerHand.forEach((card) => {
     if (card.temporaryTeleport === true) {
@@ -10475,8 +10585,8 @@ if (card.temporaryTeleport === true) {
   });
 
   playerArtifacts.forEach(card => {
-    // Reset all cards except Time Gem
-    if (card.name !== "Time Gem") {
+    // Reset all cards except Time Gem and Rocket
+    if (card.name !== "Time Gem" && card.name !== "Rocket Raccoon - Incoming Detector" && card.name !== "Reality Gem") {
       card.artifactAbilityUsed = false;
     }
   });
@@ -10586,7 +10696,7 @@ function isVillainConditionMet(villainCard) {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation
     ),
   ];
 
@@ -11335,6 +11445,7 @@ function createVillainCopy(villainCard) {
     id: villainCard.id,
     persistentId: villainCard.persistentId,
     name: villainCard.name,
+    heroName: villainCard.heroName,
     type: villainCard.type,
     rarity: villainCard.rarity,
     team: villainCard.team,
@@ -11651,6 +11762,11 @@ async function handlePostDefeat(
   isInstantDefeat = false,
 ) {
 
+    const selectedSchemeName = document.querySelector(
+    "#scheme-section input[type=radio]:checked",
+  ).value;
+  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
+
   if (villainCard.shards && villainCard.shards > 0) {
     playSFX("shards");
     villainCard.shards -= 1;
@@ -11720,6 +11836,12 @@ async function handlePostDefeat(
     villainCard.cost = 0;
   }
 
+  if (scheme.name === "Organized Crime Wave" && 
+    villainCard.name === "Maggia Goons" && 
+    (!villainCard.ambushEffect || villainCard.ambushEffect === "none")) {
+  villainCard.ambushEffect = "organizedCrimeAmbush";
+}
+
   const burrowingVillain =
     villainCard.keywords && villainCard.keywords.includes("Burrow");
 
@@ -11739,6 +11861,7 @@ if (infinityGemVillain) {
     `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
   );
 } 
+
 // Burrow logic
 else if (burrowingVillain) {
   if (inStreetsNow) {
@@ -11852,11 +11975,6 @@ if (sewerRooftopDefeats > 0 && (cityIndex === 2 || cityIndex === 4)) {
     );
     await chameleonFight(hq[cityIndex]);
   }
-
-  const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
 
   if (scheme.name === "Weave a Web of Lies") {
     await weaveAWebOfLiesBystanderRescue();
@@ -12173,7 +12291,7 @@ async function showGalactusClassChoicePopup() {
   // --- Build the same pool & counting logic you use elsewhere
   const cardsPool = [
     ...playerHand,
-    ...cardsPlayedThisTurn.filter((c) => !c?.isCopied && !c?.sidekickToDestroy),
+    ...cardsPlayedThisTurn.filter((c) => !c?.isCopied && !c?.sidekickToDestroy && !c?.markedForDeletion && !c?.isSimulation),
   ];
 
   const cardHasClass = (card, cls) =>
@@ -14190,7 +14308,7 @@ document
   .getElementById("defeat-return-home-button")
   .addEventListener("click", () => {
     closeDefeatPopup();
-    document.getElementById("end-game-title").innerHTML = `EVIL WINS!`;
+    document.getElementById("evil-wins-title").innerHTML = `EVIL WINS!`;
     returnHome();
   });
 
@@ -15016,7 +15134,7 @@ function openPlayedCardsPopup() {
     imgElement.classList.add("pile-card-image");
 
     // Apply visual effects for special states
-    if (card.markedToDestroy || card.sidekickToDestroy || card.isCopied) {
+    if (card.markedToDestroy || card.sidekickToDestroy || card.isCopied || card.markedForDeletion || card.isSimulation) {
       imgElement.style.opacity = "0.5";
     }
 
@@ -15134,6 +15252,10 @@ function openPlayedCardsPopup() {
       imgElement.classList.add("clickable-card", "telepathic-probe-active");
       imgElement.style.cursor = "pointer";
       imgElement.style.border = "3px solid rgb(198 169 104);";
+
+  imgElement.style.animation = "pulseGlowFocus 2s infinite ease-in-out";
+  imgElement.style.border = "3px solid #06a2d2";
+
 
       // Get focus details using the switch-based function
       const { focusCost, focusFunction } = getFocusDetails(card);
@@ -16074,10 +16196,31 @@ async function recruitHeroConfirmed(hero, hqIndex) {
   }
 
   // Decide destination + move card to its game zone
-  let destinationElement;
+   let destinationElement;
   let destinationId = "";
 
-  if (hero.saveHumanityBystander === true) {
+  const previousCards = cardsPlayedThisTurn.slice(0, -1);
+  const cardsYouHave = [
+    ...previousCards.filter(
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation
+    ),
+  ]; 
+  const spiderFriends = cardsYouHave.filter(
+    (item) => item.team === "Spider Friends",
+  );
+
+  // Handle HIGHEST PRIORITY: Cards that go to HAND
+  if (silentMeditationRecruit === true) {
+    // Goes to hand (highest priority - can't be redirected)
+    destinationId = "player-card-zone";
+    playerHand.push(hero);
+    silentMeditationRecruit = false;
+    onscreenConsole.log(
+      `Hero recruited! <span class="console-highlights">${hero.name}</span> has been added to your hand.`,
+    );
+    
+  // Handle Save Humanity Bystander (goes to victory pile)
+  } else if (hero.saveHumanityBystander === true) {
     destinationId = "victory-pile-button";
     victoryPile.push(hero);
     onscreenConsole.log(
@@ -16085,13 +16228,41 @@ async function recruitHeroConfirmed(hero, hqIndex) {
     );
     bystanderBonuses();
     await rescueBystanderAbility(hero);
-  } else if (silentMeditationRecruit === true) {
-    destinationId = "player-card-zone";
-    playerHand.push(hero);
-    silentMeditationRecruit = false;
-    onscreenConsole.log(
-      `Hero recruited! <span class="console-highlights">${hero.name}</span> has been added to your hand.`,
-    );
+    
+  // Handle CARDS WITH WALL-CRAWL (player chooses deck or discard)
+  } else if (hero.keywords.includes("Wall-Crawl")) {
+    // Wall-Crawl gives player choice, overriding other effects
+    const result = await wallCrawlRecruit(hero);
+    destinationId = result.destinationId;
+    
+    // Update card location based on result
+    if (result.location === "deck") {
+      playerDeck.push(hero);
+      hero.revealed = true;
+      // Still apply any deck-related bonuses
+      if (stingOfTheSpider) {
+        await scarletSpiderStingOfTheSpiderDrawChoice(hero);
+      }
+    } else if (result.location === "discard") {
+      playerDiscardPile.push(hero);
+    }
+    
+    // Reset any other recruit flags since Wall-Crawl takes precedence
+    if (spiderWomanArachnoRecruit) {
+      spiderWomanArachnoRecruit = false;
+      // Log appropriate message based on spiderFriends
+      if (result.location === "deck" && spiderFriends.length > 0) {
+        onscreenConsole.log(
+          `<img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+        );
+      }
+    }
+    if (backflipRecruit) backflipRecruit = false;
+    
+    // Small delay for DOM updates
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    
+  // Handle BACKFLIP (goes to deck top)
   } else if (backflipRecruit === true) {
     destinationId = "player-deck-cell";
     playerDeck.push(hero);
@@ -16103,9 +16274,35 @@ async function recruitHeroConfirmed(hero, hqIndex) {
     if (stingOfTheSpider) {
       await scarletSpiderStingOfTheSpiderDrawChoice(hero);
     }
-  } else if (hero.keywords.includes("Wall-Crawl")) {
-    destinationId = await wallCrawlRecruit(hero);
+    
+  // Handle SPIDER-WOMAN: Arachno-synthesis
+  } else if (spiderWomanArachnoRecruit) {
+    if (spiderFriends.length > 0) {
+      // With Spider Friends: deck top with reveal
+      destinationId = "player-deck-cell";
+      playerDeck.push(hero);
+      hero.revealed = true;
+      onscreenConsole.log(
+        `<img src="Visual Assets/Icons/Spider Friends.svg" alt="Spider Friends Icon" class="console-card-icons"> Hero played. Superpower Ability activated.`,
+      );
+      onscreenConsole.log(
+        `Hero recruited for free! <span class="console-highlights">${hero.name}</span> has been added to the top of your deck.`,
+      );
+      if (stingOfTheSpider) {
+        await scarletSpiderStingOfTheSpiderDrawChoice(hero);
+      }
+    } else {
+      // No Spider Friends: discard pile
+      destinationId = "discard-pile-cell";
+      playerDiscardPile.push(hero);
+      onscreenConsole.log(
+        `Hero recruited for free! <span class="console-highlights">${hero.name}</span> has been added to your discard pile.`,
+      );
+    }
+    spiderWomanArachnoRecruit = false;
+    
   } else {
+    // DEFAULT: discard pile
     destinationId = "discard-pile-cell";
     playerDiscardPile.push(hero);
     onscreenConsole.log(
@@ -17981,6 +18178,33 @@ function closeCardChoicePopup() {
   }
 }
 
+function resetPopupButtonStyles() {
+  // Reset by IDs (most common patterns)
+  const buttonSelectors = [
+    '#info-or-choice-popup-confirm',
+    '#info-or-choice-popup-nothanks',
+    '#info-or-choice-popup-otherchoice'
+  ];
+    
+  // Check individual button selectors
+  buttonSelectors.forEach(selector => {
+    const button = document.querySelector(selector);
+    if (button) {
+      resetButton(button);
+    }
+  });
+  
+  // Helper function to reset a single button
+  function resetButton(button) {
+    button.disabled = false;
+    button.style.opacity = "1";
+    button.style.cursor = "pointer";
+    
+    // Remove any "disabled" classes that might be visually styling the button
+    button.classList.remove('disabled', 'btn-disabled', 'is-disabled');
+  }
+}
+
 function closeInfoChoicePopup() {
   const infochoicepopup = document.querySelector(".info-or-choice-popup");
   const minimise = document.querySelector(
@@ -18003,12 +18227,15 @@ function closeInfoChoicePopup() {
   if (otherChoice) otherChoice.onclick = null;
   if (nothanks) nothanks.onclick = null;
 
+  resetPopupButtonStyles();
+
   if (infochoicepopup) infochoicepopup.style.display = "none";
   if (close) close.style.display = "block";
   if (title) title.textContent = "POPUP TITLE";
   if (instructions) instructions.textContent = "INSTRUCTIONS";
   if (preview) preview.innerHTML = "";
   if (preview) preview.style.backgroundColor = `var(--accent)`;
+  if (preview) preview.style.backgroundImage = `none`;
   if (preview) preview.style.border = `0.5vh solid var(--accent)`;
   if (confirm) confirm.style.display = "block";
   if (confirm) confirm.innerHTML = "CONFIRM";

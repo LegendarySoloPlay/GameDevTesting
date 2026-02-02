@@ -1,5 +1,5 @@
 // Card Abilities for Dark City
-//19.01.26 20:00
+//03.02.26 10:30
 
 async function angelDivingCatch(card) {
   return new Promise((resolve) => {
@@ -2829,7 +2829,7 @@ function ironfistFocusChi() {
     ...playerHand, // Include all cards from hand
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -2867,7 +2867,7 @@ function ironfistWieldTheIronFist() {
     ...playerHand, // Include all cards from hand
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -7225,7 +7225,7 @@ async function PhalanxTechOrKOAttack() {
           card.classes &&
           card.classes.includes("Tech") &&
           card.isCopied !== true &&
-          card.sidekickToDestroy !== true,
+          card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
       ) ||
       playerArtifacts.some(
         (card) =>
@@ -7260,7 +7260,7 @@ function handlePhalanxNoTechRevealed() {
     );
     const playedAttackCards = cardsPlayedThisTurn.filter(
       (card) =>
-        card.attackIcon === true && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+        card.attackIcon === true && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     );
 
     // Check if there are any Attack cards available
@@ -7637,7 +7637,7 @@ function bystanderRadiationScientist() {
     );
     const playedHeroes = cardsPlayedThisTurn.filter(
       (card) =>
-        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+        card.type === "Hero" && !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     );
 
     const artifactHeroes = playerArtifacts.filter((card) => card.type === "Hero");
@@ -8386,7 +8386,7 @@ function warFight() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -8462,7 +8462,7 @@ function warEscape() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -8538,7 +8538,7 @@ function famineFight() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -8615,7 +8615,7 @@ function famineEscape() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -8844,7 +8844,7 @@ function deathFight() {
         item.card.isCopied !== true && 
         item.card.sidekickToDestroy !== true && 
         item.card.cost >= 1 && 
-        !item.card.markedToDestroy
+        !item.card.markedToDestroy && !item.card.markedForDeletion && !item.card.isSimulation,
       );
 
     // Combine all arrays
@@ -9168,7 +9168,7 @@ function deathEscape() {
         item.card.isCopied !== true && 
         item.card.sidekickToDestroy !== true && 
         item.card.cost >= 1 && 
-        !item.card.markedToDestroy
+        !item.card.markedToDestroy && !item.card.markedForDeletion && !item.card.isSimulation,
       );
 
     // Combine both arrays
@@ -10293,7 +10293,7 @@ function tombstoneEscape() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -10380,7 +10380,7 @@ function hammerheadFight() {
         card.isCopied !== true &&
         card.sidekickToDestroy !== true &&
         card.recruitIcon === true &&
-        !card.markedToDestroy, // Exclude already marked cards
+        !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation, // Exclude already marked cards
     );
 
     // Check if there are any heroes available
@@ -11005,7 +11005,7 @@ function bullseyeFight() {
     const handCards = playerHand.map((card) => ({ card, source: "hand" }));
     
     const playedCards = cardsPlayedThisTurn
-      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy)
+      .filter((card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation)
       .map((card) => ({ card, source: "played" }));
 
     // Combine all cards
@@ -11545,7 +11545,7 @@ async function blackheartFunctions() {
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -12141,7 +12141,7 @@ async function kingpinStrike() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -12270,7 +12270,7 @@ async function mephistoStrike() {
     ...cardsPlayedThisTurn.filter(
       (card) =>
         !card.isCopied && // Exclude copied cards
-        !card.sidekickToDestroy && !card.markedToDestroy, // Exclude sidekicks marked for destruction
+        !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation, // Exclude sidekicks marked for destruction
     ),
   ];
 
@@ -12357,7 +12357,7 @@ async function mrSinisterStrike() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+      (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -12766,7 +12766,7 @@ async function stryfeStrike() {
       ...playerHand,
       ...playerArtifacts,
       ...cardsPlayedThisTurn.filter(
-        (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy,
+        (card) => !card.isCopied && !card.sidekickToDestroy && !card.markedToDestroy && !card.markedForDeletion && !card.isSimulation,
       ),
     ].filter((card) => card.team === "X-Force");
 
@@ -13402,7 +13402,7 @@ async function stryfeTideOfRetribution() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
@@ -15847,7 +15847,7 @@ async function strengthOrKOTop() {
       ...playerHand,
       ...playerArtifacts,
       ...cardsPlayedThisTurn.filter(
-        (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+        (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
       ),
     ];
 
@@ -16055,7 +16055,7 @@ async function KOAllHQBystanders() {
     ...playerHand,
     ...playerArtifacts,
     ...cardsPlayedThisTurn.filter(
-      (card) => card.isCopied !== true && card.sidekickToDestroy !== true,
+      (card) => card.isCopied !== true && card.sidekickToDestroy !== true && !card.markedForDeletion && !card.isSimulation,
     ),
   ];
 
