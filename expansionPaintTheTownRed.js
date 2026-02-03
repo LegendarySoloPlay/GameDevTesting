@@ -1,5 +1,5 @@
 // Paint the Town Red Expansion
-//03.02.26 10:30
+//03.02.26 20:45
 
 //Schemes
 
@@ -1580,150 +1580,43 @@ async function shriekEscape() {
 
 async function chameleonFight(card) {
   return new Promise((resolve) => {
+    // Create a clean copy of the card
     const cardCopy = JSON.parse(JSON.stringify(card));
-
+    
+    // Remove any transformation properties from the copy
+    delete cardCopy.originalAttributes;
+    delete cardCopy.isCopied;
+    delete cardCopy.markedToDestroy;
+    
+    // Mark for cleanup and add to played cards
+    cardCopy.markedForDeletion = true;
+    cardCopy.isSimulation = true;
     cardsPlayedThisTurn.push(cardCopy);
-    cardCopy.markedToDestroy = true;
 
+    // Apply the card's stats
     totalAttackPoints += cardCopy.attack || 0;
     totalRecruitPoints += cardCopy.recruit || 0;
-
     cumulativeAttackPoints += cardCopy.attack || 0;
     cumulativeRecruitPoints += cardCopy.recruit || 0;
 
-    console.log("Chameleon Copy Called:", cardCopy);
+    console.log("Chameleon Copy Called:", cardCopy.name);
 
-    // Handle unconditional ability
-    let abilityPromise = Promise.resolve();
-    if (
-      cardCopy.unconditionalAbility &&
-      cardCopy.unconditionalAbility !== "None"
-    ) {
-      const abilityFunction = window[cardCopy.unconditionalAbility];
-      if (typeof abilityFunction === "function") {
-        abilityPromise = new Promise((resolveAbility, rejectAbility) => {
-          try {
-            const result = abilityFunction(cardCopy);
-            resolveAbility(result);
-          } catch (error) {
-            rejectAbility(error);
-          }
-        });
-      } else {
-        console.error(
-          `Unconditional ability function ${cardCopy.unconditionalAbility} not found`,
-        );
-      }
-    }
-
-    // Handle conditional ability
-    abilityPromise
-      .then(() => {
-        if (
-          cardCopy.conditionalAbility &&
-          cardCopy.conditionalAbility !== "None"
-        ) {
-          const { conditionType, condition } = cardCopy;
-          if (isConditionMet(conditionType, condition)) {
-            if (autoSuperpowers) {
-              const conditionalAbilityFunction =
-                window[cardCopy.conditionalAbility];
-              if (typeof conditionalAbilityFunction === "function") {
-                return new Promise((resolveConditional, rejectConditional) => {
-                  try {
-                    const result = conditionalAbilityFunction(cardCopy);
-                    resolveConditional(result);
-                  } catch (error) {
-                    rejectConditional(error);
-                  }
-                });
-              } else {
-                console.error(
-                  `Conditional ability function ${cardCopy.conditionalAbility} not found`,
-                );
-                return Promise.resolve();
-              }
-            } else {
-              return new Promise((resolveConditional, rejectConditional) => {
-                setTimeout(() => {
-                  const { confirmButton, denyButton } = showHeroAbilityMayPopup(
-                    `DO YOU WISH TO ACTIVATE <span class="console-highlights">${cardCopy.name}</span><span class="bold-spans">'s</span> ABILITY?`,
-                    "Yes",
-                    "No",
-                  );
-
-                  // Update title
-                  document.querySelector(
-                    ".info-or-choice-popup-title",
-                  ).innerHTML = "CONFIRM";
-
-                  // Hide close button
-                  document.querySelector(
-                    ".info-or-choice-popup-closebutton",
-                  ).style.display = "none";
-
-                  // Use preview area for image
-                  const previewArea = document.querySelector(
-                    ".info-or-choice-popup-preview",
-                  );
-                  if (previewArea) {
-                    previewArea.style.backgroundImage = `url('${cardCopy.image}')`;
-                    previewArea.style.backgroundSize = "contain";
-                    previewArea.style.backgroundRepeat = "no-repeat";
-                    previewArea.style.backgroundPosition = "center";
-                    previewArea.style.display = "block";
-                  }
-
-                  const cleanup = () => {
-                    closeInfoChoicePopup();
-                    resolveConditional();
-                  };
-
-                  confirmButton.onclick = () => {
-                    try {
-                      cleanup();
-                      const conditionalAbilityFunction =
-                        window[cardCopy.conditionalAbility];
-                      if (typeof conditionalAbilityFunction === "function") {
-                        const result = conditionalAbilityFunction(cardCopy);
-                        resolveConditional(result);
-                      } else {
-                        console.error(
-                          `Conditional ability function ${cardCopy.conditionalAbility} not found`,
-                        );
-                        resolveConditional();
-                      }
-                    } catch (error) {
-                      rejectConditional(error);
-                    }
-                  };
-
-                  denyButton.onclick = () => {
-                    onscreenConsole.log(
-                      `You have chosen not to activate <span class="console-highlights">${cardCopy.name}</span><span class="bold-spans">'s</span> ability.`,
-                    );
-                    cleanup();
-                  };
-                }, 10);
-              });
-            }
-          } else {
-            console.log(`Unable to use conditional ability.`);
-            return Promise.resolve();
-          }
-        }
-        return Promise.resolve();
-      })
+    // Execute abilities using the helper - NO POPUP, auto-execute
+    executeAbilityWithSpecialCases(cardCopy, "chameleon", {
+      skipStats: true, // Stats already added above
+      autoActivate: true // Always auto-activate for Chameleon
+    })
       .then(() => {
         updateGameBoard();
+        addHRToTopWithInnerHTML();
         resolve();
       })
-      .catch((err) => {
-        console.error("Error during chameleon copy:", err);
+      .catch((error) => {
+        console.error("Error in chameleonFight:", error);
+        updateGameBoard();
+        addHRToTopWithInnerHTML();
         resolve();
       });
-
-    addHRToTopWithInnerHTML();
   });
 }
 

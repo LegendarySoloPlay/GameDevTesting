@@ -1,5 +1,5 @@
 // Core Mechanics
-//03.02.26 10:30
+//03.02.26 20:45
 
 console.log("Script loaded");
 console.log(window.henchmen);
@@ -3061,6 +3061,7 @@ function loadLastGameSetup() {
     restoreCheckboxes("#overall-set-filters", gameSettings.overallSet);
 
     updateSelectedFiltersAll();
+    filterAll();
 
     // Restore final blow checkbox
     if (gameSettings.finalBlow !== undefined) {
@@ -4636,9 +4637,10 @@ async function processRegularVillainCard(villainCard) {
         );
       } else {
         await ambushEffectFunction(villainCard);
-        if (playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector").length > 0) {
-        await rocketRaccoonIncomingDetectorDecision();
-        }
+        const incomingDetectors = playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector");
+for (let i = 0; i < incomingDetectors.length; i++) {
+    await rocketRaccoonIncomingDetectorDecision();
+}
       }
     }
     addHRToTopWithInnerHTML();
@@ -5084,9 +5086,10 @@ function handleMasterStrike(masterStrikeCard) {
     // Then always handle the Master Strike effect
     await handleMasterStrikeEffect(masterStrikeCard);
 
-    if (playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector").length > 0) {
-        await rocketRaccoonIncomingDetectorDecision();
-        }
+    const incomingDetectors = playerArtifacts.filter((card) => card.name === "Rocket Raccoon - Incoming Detector");
+for (let i = 0; i < incomingDetectors.length; i++) {
+    await rocketRaccoonIncomingDetectorDecision();
+}
 
     resolve();
   });
@@ -5192,7 +5195,7 @@ function handleSchemeTwist(schemeTwistCard) {
   updateGameBoard();
   return new Promise(async (resolve) => {
     const selectedScheme = getSelectedScheme();
-    if (selectedScheme.name !== "Replace Earth's Leaders with Killbots" || selectedScheme.name !== "The Kree-Skrull War") {
+    if (selectedScheme.name !== "Replace Earth's Leaders with Killbots" && selectedScheme.name !== "The Kree-Skrull War") {
       koPile.push(schemeTwistCard);
     }
     if (selectedScheme.name === "Intergalactic Kree Nega-Bomb") {
@@ -11849,21 +11852,8 @@ async function handlePostDefeat(
   const streetsFree =
     (city[1] === "" || city[1] === null) && destroyedSpaces[1] === false;
 
-const infinityGemVillain = villainCard.team === "Infinity Gems";
-
-// Infinity Gem logic - skip all other options
-if (infinityGemVillain) {
-  villainCard.type = "Artifact";
-  playerDiscardPile.push(villainCard);
-  villainCard.originalAttack = villainCard.attack;
-  villainCard.attack = 0;
-  onscreenConsole.log(
-    `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
-  );
-} 
-
 // Burrow logic
-else if (burrowingVillain) {
+if (burrowingVillain) {
   if (inStreetsNow) {
     victoryPile.push(villainCard);
     onscreenConsole.log(
@@ -11981,9 +11971,24 @@ if (sewerRooftopDefeats > 0 && (cityIndex === 2 || cityIndex === 4)) {
   }
 
   // Professor X Mind Control
-  if (hasProfessorXMindControl) {
-    await professorXMindControlGainVillain(villainCard);
-  }
+let professorXSuccess = false;
+if (hasProfessorXMindControl) {
+  professorXSuccess = await professorXMindControlGainVillain(villainCard);
+}
+
+    const infinityGemVillain = villainCard.team === "Infinity Gems";
+
+  if (infinityGemVillain && !professorXSuccess) {
+  villainCard.type = "Artifact";
+  villainCard.originalAttack = villainCard.attack;
+  villainCard.attack = 0;
+  playerDiscardPile.push(villainCard);
+  onscreenConsole.log(
+    `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
+  );
+} else if (infinityGemVillain && professorXSuccess) {
+  villainCard.unconditionalAbility = "None";
+}
 
   if (villainCard.bystander) {
     villainCard.bystander = [];
@@ -12087,18 +12092,6 @@ async function handleHQPostDefeat(
     villainCard.cost = 0;
   }
 
-  const infinityGemVillain = villainCard.team === "Infinity Gems";
-
-  if (infinityGemVillain) {
-  villainCard.type = "Artifact";
-  villainCard.originalAttack = villainCard.attack;
-  villainCard.attack = 0;
-  playerDiscardPile.push(villainCard);
-  onscreenConsole.log(
-    `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
-  );
-} 
-
   const burrowingVillain =
     villainCard.keywords && villainCard.keywords.includes("Burrow");
 
@@ -12180,9 +12173,26 @@ if (soulGem) {
   }
 
   // Professor X Mind Control
-  if (hasProfessorXMindControl) {
-    await professorXMindControlGainVillain(villainCard);
-  }
+let professorXSuccess = false;
+if (hasProfessorXMindControl) {
+  professorXSuccess = await professorXMindControlGainVillain(villainCard);
+}
+
+    const infinityGemVillain = villainCard.team === "Infinity Gems";
+
+  if (infinityGemVillain && !professorXSuccess) {
+  villainCard.type = "Artifact";
+  villainCard.originalAttack = villainCard.attack;
+  villainCard.attack = 0;
+  playerDiscardPile.push(villainCard);
+  onscreenConsole.log(
+    `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
+  );
+} else if (infinityGemVillain && professorXSuccess) {
+  villainCard.unconditionalAbility = "None";
+}
+
+
 
   // Final cleanup
   defeatBonuses();
@@ -16326,6 +16336,10 @@ async function recruitHeroConfirmed(hero, hqIndex) {
     );
   }
 
+  if (grootRecruitBonus) {
+  grootRecruitShards(hero);
+  }
+
   // Animate if we have a visual card; otherwise just update board
   if (cardElement) {
     animateCardToDestination(cardElement, destinationElement, {
@@ -17721,6 +17735,7 @@ function generateStatsScreen() {
     ...cardsPlayedThisTurn,
     ...playerDiscardPile,
     ...playerHand,
+    ...playerArtifacts,
   ];
 
   // Categorize cards

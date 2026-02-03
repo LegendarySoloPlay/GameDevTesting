@@ -1,5 +1,5 @@
 // Card Abilities for Sidekicks
-//03.02.26 10:30
+//03.02.26 20:45
 
 function returnToSidekickDeck(card) {
   if (!card) {
@@ -1127,7 +1127,7 @@ function boomboomMeltdown() {
   }
 
   // Skip card movement if this is a Prodigy copy
-  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  !playedSidekick.markedForDeletion || !playedSidekick.isSimulation) {
+  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  playedSidekick.markedForDeletion || playedSidekick.isSimulation) {
     totalAttackPoints += 4;
     cumulativeAttackPoints += 4;
     drawWound();
@@ -1172,7 +1172,7 @@ function boomboomBoomer() {
   }
 
   // Skip card movement if this is a Prodigy copy
-  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  !playedSidekick.markedForDeletion || !playedSidekick.isSimulation) {
+  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  playedSidekick.markedForDeletion || playedSidekick.isSimulation) {
     totalAttackPoints += 3;
     cumulativeAttackPoints += 3;
 
@@ -1212,7 +1212,7 @@ async function boomboomTimeBomb() {
   }
 
   // Skip card movement if this is a Prodigy copy
-  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  !playedSidekick.markedForDeletion || !playedSidekick.isSimulation) {
+  if (playedSidekick.isCopied || playedSidekick.name !== "Boom-Boom" ||  playedSidekick.markedForDeletion || playedSidekick.isSimulation) {
     totalAttackPoints += 1;
     cumulativeAttackPoints += 1;
 
@@ -1302,7 +1302,9 @@ async function prodigyCopyPowers() {
   card.type === "Hero" && 
   card.cost <= 6 &&
   !card.isSimulation &&        // NEW: Exclude simulated cards
-  !card.markedForDeletion      // NEW: Exclude cards marked for deletion
+  !card.markedForDeletion &&
+  !card.isCopied &&
+  !card.markedToDestroy      // NEW: Exclude cards marked for deletion
 );
 
     if (heroesToCopy.length === 0) {
@@ -1603,33 +1605,21 @@ async function prodigyCopyPowers() {
           `Copied <span class="console-highlights">${hero.name}</span>. Gained +${prodigyCard.attack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${prodigyCard.recruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
         );
 
-        // Trigger unconditional ability if present
-if (
-  hero.unconditionalAbility &&  // Use the ORIGINAL hero's ability
-  hero.unconditionalAbility !== "None"
-) {
-  const abilityFn = window[hero.unconditionalAbility];
-  if (typeof abilityFn === "function") {
-    // Temporarily swap the last card to be the original hero for the ability execution
-    const originalLastCard = cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1];
-    cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = hero;
-    
-    await abilityFn(hero);  // Pass the original hero
-    
-    // Restore the last card
-    cardsPlayedThisTurn[cardsPlayedThisTurn.length - 1] = originalLastCard;
-  } else {
-    console.error(
-      `Ability function ${hero.unconditionalAbility} not found`,
-    );
-  }
-}
-
         // Apply gains
         totalAttackPoints += prodigyCard.attack;
         totalRecruitPoints += prodigyCard.recruit;
         cumulativeAttackPoints += prodigyCard.attack;
         cumulativeRecruitPoints += prodigyCard.recruit;
+
+
+        // Trigger unconditional ability if present
+ await executeAbilityWithSpecialCases(hero, "copy");
+
+        prodigyCard.conditionalAbility = "None";
+prodigyCard.conditionType = "None";
+prodigyCard.condition = "None";
+prodigyCard.isCopied = true;
+
 
         updateGameBoard();
         closeCardChoicePopup();

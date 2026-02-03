@@ -1,5 +1,5 @@
 // cardAbilities.js
-//03.02.26 10:30
+//03.02.26 20:45
 
 function koBonuses() {
   playSFX("ko");
@@ -2841,33 +2841,11 @@ function RogueStealAbilities() {
         `Gained +${cardAttack}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${cardRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`
       );
     }
-    
-    // 9. Execute the card's unconditional ability (if any)
-    let abilityPromise = Promise.resolve();
-    if (topCard.unconditionalAbility && topCard.unconditionalAbility !== "None") {
-      const abilityFunction = window[topCard.unconditionalAbility];
-      if (typeof abilityFunction === "function") {
-        // Important: Pass the ORIGINAL card, not the simulation
-        abilityPromise = Promise.resolve().then(() => abilityFunction(topCard));
-      } else {
-        console.error(`Ability function ${topCard.unconditionalAbility} not found`);
-      }
-    }
-    
-    // 10. Execute conditional ability (if condition met)
-    abilityPromise
+   
+// 9. Execute all abilities (unconditional + conditional) with special case handling
+    executeAbilityWithSpecialCases(topCard, "steal")
       .then(() => {
-        if (topCard.conditionalAbility && topCard.conditionalAbility !== "None") {
-          if (isConditionMet(topCard.conditionType, topCard.condition)) {
-            const conditionalAbilityFunction = window[topCard.conditionalAbility];
-            if (typeof conditionalAbilityFunction === "function") {
-              return conditionalAbilityFunction(topCard);
-            }
-          }
-        }
-      })
-      .then(() => {
-        // 11. Update UI and resolve
+        // 10. Update UI and resolve
         updateGameBoard();
         resolve();
       })
@@ -2916,6 +2894,61 @@ function createCleanSimulatedCard(originalCard) {
   }
   
   return simulatedCard;
+}
+
+// Shared helper for executing abilities with special cases
+async function executeAbilityWithSpecialCases(card, context = "steal", options = {}) {
+  const {
+    skipConditionCheck = false,      // Skip condition check for unconditional execution
+    autoActivate = true,             // Auto-activate conditional abilities (true by default)
+    skipStats = false                // Skip adding attack/recruit stats
+  } = options;
+  
+  const cardName = card.name;
+  
+  // Handle special cases first
+  switch(cardName) {
+    case "Lockjaw":
+      console.log(`${context} copying Lockjaw's +2 attack`);
+      if (!skipStats) {
+        totalAttackPoints += 2;
+        cumulativeAttackPoints += 2;
+      }
+      onscreenConsole.log(`Copied <span class="console-highlights">Lockjaw</span>: +2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`);
+      return;
+      
+    case "Gamora - Godslayer Blade":
+      console.log(`${context} copying Gamora Godslayer Blade`);
+      await gamoraGodslayerBladeCopy(card);
+      return;
+      
+    default:
+      // Standard unconditional ability
+      if (card.unconditionalAbility && card.unconditionalAbility !== "None") {
+        const abilityFunction = window[card.unconditionalAbility];
+        if (typeof abilityFunction === "function") {
+          await abilityFunction(card);
+        } else {
+          console.error(`Ability function ${card.unconditionalAbility} not found`);
+        }
+      }
+      
+      // Standard conditional ability - ALWAYS execute if condition met (no popup)
+      if (card.conditionalAbility && card.conditionalAbility !== "None") {
+        const conditionMet = skipConditionCheck || isConditionMet(card.conditionType, card.condition);
+        
+        if (conditionMet) {
+          const conditionalAbilityFunction = window[card.conditionalAbility];
+          if (typeof conditionalAbilityFunction === "function") {
+            await conditionalAbilityFunction(card);
+          } else {
+            console.error(`Conditional ability function ${card.conditionalAbility} not found`);
+          }
+        } else {
+          console.log(`Condition not met for ${card.name}'s ability`);
+        }
+      }
+  }
 }
 
 function findCardsWithBystanders() {
@@ -7392,12 +7425,12 @@ function RogueCopyPowers() {
     
     // Filter out simulated cards
     const realCardsOnly = eligibleCards.filter(card => 
-      !card.isSimulation && !card.markedForDeletion
+      !card.isSimulation && !card.markedForDeletion && !card.markedToDestroy && !card.isCopied
     );
     
     if (realCardsOnly.length === 0) {
       console.log("No real heroes have been played yet to copy.");
-      onscreenConsole.log("No real Heroes have been played this turn. There are no powers to copy.");
+      onscreenConsole.log("No Heroes available to copy.");
       resolve(false);
       return;
     }
@@ -7432,7 +7465,7 @@ function RogueCopyPowers() {
     previewElement.style.backgroundColor = "var(--panel-backgrounds)";
     
     // Filter and sort eligible heroes
-    const heroesToCopy = [...eligibleCards];
+    const heroesToCopy = [...realCardsOnly];
     genericCardSort(heroesToCopy);
     
     let selectedHero = null;
@@ -7653,19 +7686,13 @@ function RogueCopyPowers() {
           `Copied <span class="console-highlights">${selectedHero.name}</span>. Gained +${selectedHero.attack || 0}<img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and +${selectedHero.recruit || 0}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`
         );
         
-        // 7. Execute the copied ability (if any)
-        if (selectedHero.name !== "Lockjaw") {
-        if (selectedHero.unconditionalAbility && selectedHero.unconditionalAbility !== "None") {
-          const abilityFunction = window[selectedHero.unconditionalAbility];
-          if (typeof abilityFunction === "function") {
-            // Pass the ORIGINAL selectedHero, not the transformed rogueCard
-            await abilityFunction(selectedHero);
-          }
-        }
-      } else {
-        totalAttackPoints += 2;
-        cumulativeAttackPoints += 2;
-      }
+// 7. Execute the copied ability with special case handling
+  await executeAbilityWithSpecialCases(selectedHero, "copy");
+
+  rogueCard.conditionalAbility = "None";
+rogueCard.conditionType = "None";
+rogueCard.condition = "None";
+rogueCard.isCopied = true;
         
         // 8. Update UI and resolve
         updateGameBoard();

@@ -1,5 +1,5 @@
 /* Styles */
-/* //03.02.26 10:30 */
+/* //03.02.26 20:45 */
 
 body {
   font-family: Arial, sans-serif;
@@ -3672,6 +3672,34 @@ input:checked + .slider:before {
   width: 7vh;
   height: 7vh;
   background-color: var(--hoverAccent);
+  color: var(--contrastText);
+}
+
+.final-blow-popup-closebutton {
+  font-size: 4vh;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 7vh;
+  height: 7vh;
+  background-color: var(--accent);
+  border-bottom-left-radius: 1.5vh;
+  color: var(--buttonText);
+  cursor: pointer;
+  text-align: center;
+  align-content: center;
+  font-weight: bold;
+  font-family: Arial;
+}
+
+.final-blow-popup-closebutton:hover {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 7vh;
+  height: 7vh;
+  background-color: var(--hoverAccent);
+  border-bottom-left-radius: 1.5vh;
   color: var(--contrastText);
 }
 
@@ -8554,7 +8582,7 @@ div.screws:nth-of-type(4) {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: 30%;
+    top: 24%;
     z-index: 1;
 }
 
@@ -8571,6 +8599,10 @@ div.screws:nth-of-type(4) {
     height: 1.2vw;
     font-family: var(--heading-font);
     z-index: 996;
+}
+
+.artifacts-card-container {
+  position: relative;
 }
 
 #player-artifact-zone {

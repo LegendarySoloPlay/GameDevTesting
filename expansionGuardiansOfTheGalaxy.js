@@ -1,5 +1,5 @@
 // Expansion - Guardians of the Galaxy
-//03.02.26 10:30
+//03.02.26 20:45
 
 // Global Variables
 
@@ -89,6 +89,7 @@ useButton.addEventListener("click", async (e) => {
   if (typeof abilityFunctionName === "function") {
     // It's already a function
     try {
+      playSFX("focus");
       await closeArtifactsPopup();
       await abilityFunctionName(card);
       updateArtifactUsageState(card); // Use the helper
@@ -258,7 +259,6 @@ function shardsToAttack() {
           ".info-or-choice-popup-closebutton",
         );
         closeBtn.onclick = null;
-        closeBtn.style.display = "none";
         const minimizeBtn = document.querySelector(
           ".info-or-choice-popup-minimizebutton",
         );
@@ -350,7 +350,6 @@ if (choice === "recruit") {
     const closeBtn = document.querySelector(
       ".info-or-choice-popup-closebutton",
     );
-    closeBtn.style.display = "none";
     closeBtn.onclick = null;
     const minimizeBtn = document.querySelector(
       ".info-or-choice-popup-minimizebutton",
@@ -393,8 +392,11 @@ if (choice === "recruit") {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
       const currentAttack = totalAttackPoints;
       instrEl.innerHTML =
-        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. This will give you a total of ${currentAttack + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+        `You can spend a Shard to get +1 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?<br><br>You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. This will give you a total of ${currentAttack + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
     }
+
+        // Initial update
+    updateQuantityText();
 
     // Button handlers
     confirmBtn.onclick = (e) => {
@@ -467,14 +469,13 @@ function shardsToRecruit() {
     const closeBtn = document.querySelector(
       ".info-or-choice-popup-closebutton",
     );
-    closeBtn.style.display = "none";
     closeBtn.onclick = null;
 
     closeBtn.onclick = (e) => {
-          e.stopPropagation();
-          closeInfoChoicePopup();
-          resolve();
-        }
+      e.stopPropagation();
+      closeInfoChoicePopup();
+      resolve();
+    };
 
     // Set popup content
     titleEl.textContent = "SHARDS";
@@ -490,8 +491,8 @@ function shardsToRecruit() {
       previewEl.style.backgroundPosition = "center";
     }
 
-    // PRESET TO MAXIMUM QUANTITY
-    let chosenQty = totalPlayerShards;
+    // PRESET TO 0
+    let chosenQty = 0;
 
     // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
     noThanksBtn.textContent = "+";
@@ -507,8 +508,11 @@ function shardsToRecruit() {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
       const currentRecruit = totalRecruitPoints;
       instrEl.innerHTML =
-        `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. This will give you a total of ${currentRecruit + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
+        `You can spend a Shard to get +1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?<br><br>You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. This will give you a total of ${currentRecruit + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
     }
+
+    // Initial update
+    updateQuantityText();
 
     // Button handlers
     confirmBtn.onclick = (e) => {
@@ -543,12 +547,12 @@ function shardsToRecruit() {
       
       onscreenConsole.log(`You spent ${chosenQty} Shard${chosenQty === 1 ? '' : 's'} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`);
 
-      // Reset button texts
+      // Reset button texts and visibility for future use
       noThanksBtn.textContent = "NO THANKS!";
       otherBtn.textContent = "OTHER";
       confirmBtn.textContent = "CONFIRM";
 
-      // Show all buttons
+      // Hide buttons that shouldn't be visible in normal mode
       confirmBtn.style.display = "inline-block";
       otherBtn.style.display = "none";
       noThanksBtn.style.display = "none";
@@ -873,6 +877,7 @@ async function forgeTheInfinityGauntletSingle() {
           if (cardIndex !== -1) {
             const chosenGem = playerArtifacts.splice(cardIndex, 1)[0];
             chosenGem.type = "Villain";
+            chosenGem.attack = chosenGem.originalAttack;
             villainDeck.push(chosenGem);
             await drawVillainCard();
             onscreenConsole.log(`${chosenGem.name} enters the city from your control!`);
@@ -1154,6 +1159,7 @@ return new Promise((resolve) => {
           if (indexInHand !== -1) {
             const chosenCard = playerArtifacts.splice(indexInHand, 1)[0];
             chosenCard.type = "Villain";
+            chosenCard.attack = chosenCard.originalAttack;
             villainDeck.push(chosenCard);
             await drawVillainCard();
             
@@ -2831,7 +2837,6 @@ const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
 onscreenConsole.log(`You gain +${soulGem.shards} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
 totalAttackPoints += soulGem.shards || 0;
 cumulativeAttackPoints += soulGem.shards || 0;
-soulGem.shards = 0;
 updateGameBoard();
 }
 
@@ -4575,6 +4580,10 @@ updateGameBoard();
       "card-choice-city-hq-popup-otherchoice",
     );
 
+    const denyButton = document.getElementById("card-choice-city-hq-popup-nothanks");
+
+    denyButton.style.display = "none";
+
     // Configure buttons
     confirmButton.disabled = true;
     confirmButton.textContent = "CONFIRM";
@@ -4622,6 +4631,7 @@ updateGameBoard();
     confirmButton.onclick = async (e) => {
       e.stopPropagation();
       e.preventDefault();
+      closeHQCityCardChoicePopup();
       
       if (selectedCityIndex === null && selectedHQIndex === null) return;
 
@@ -4648,8 +4658,7 @@ updateGameBoard();
           `<span class="console-highlights">${hq[selectedHQIndex].name}</span> gained a Shard.`,
         );
       }
-
-      closeHQCityCardChoicePopup();
+      
       modalOverlay.style.display = "none";
       updateGameBoard();
       originalResolve(true);
@@ -5257,6 +5266,7 @@ updateGameBoard();
 onscreenConsole.log(
     `<span class="console-highlights">${mastermind.name}</span> gains no <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> from Shards this turn.`,
   );
+  updateGameBoard();
 }});
 }
 
@@ -5282,6 +5292,74 @@ onscreenConsole.log(
   );
 
   gamoraGodslayerTwo = true;
+}
+
+async function gamoraGodslayerBladeCopy() {
+return new Promise((resolve) => {
+    setTimeout(() => {
+
+      totalPlayerShards += 2;
+      shardsGainedThisTurn += 2;
+      shardSupply -= 2;
+      onscreenConsole.log(`You gain 2 Shards.`);
+
+      if (totalPlayerShards < 5) {
+      onscreenConsole.log(`You do not have 5 Shards to exchange for +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">, as per <span class="console-highlights">Gamora - Godslayer Blade</span><span class="bold-spans">'s</span> second ability.`);
+      resolve();
+      return;
+      } else {
+
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `WOULD YOU LIKE TO SPEND 5 SHARDS FOR +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">?`,
+        "YES",
+        `NO THANKS!`,
+      );
+
+      // Update title
+      document.querySelector(".info-or-choice-popup-title").innerHTML =
+        "Gamora - Godslayer Blade";
+
+      // Hide close button
+      document.querySelector(
+        ".info-or-choice-popup-closebutton",
+      ).style.display = "none";
+
+      // Use preview area for images
+      const previewArea = document.querySelector(
+        ".info-or-choice-popup-preview",
+      );
+      if (previewArea) {
+        previewArea.style.backgroundImage = `url('Visual Assets/Heroes/GotG/GotG_Gamora_GodslayerBlade.webp')`;
+        previewArea.style.backgroundSize = "contain";
+        previewArea.style.backgroundRepeat = "no-repeat";
+        previewArea.style.backgroundPosition = "center";
+        previewArea.style.display = "block";
+      }
+        
+      // Add click handlers
+      confirmButton.onclick = async function () {
+          totalPlayerShards -= 5;
+          shardSupply += 5;
+          totalAttackPoints += 10;
+          cumulativeAttackPoints += 10;
+          onscreenConsole.log(`You spent 5 Shards to get +10 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons">.`);
+          updateGameBoard();
+          resetPopupButtonStyles();
+          closeInfoChoicePopup();
+          resolve();
+        }
+
+      denyButton.onclick = async function () {
+          onscreenConsole.log(`You chose not to spend any Shards.`);
+          updateGameBoard();
+          resetPopupButtonStyles();
+          closeInfoChoicePopup();
+          resolve();
+
+        }
+      };
+      }, 10);
+  });
 }
 
 async function gamoraGodslayerBlade() {
