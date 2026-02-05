@@ -1,5 +1,5 @@
 // Core Mechanics
-//03.02.26 20:45
+//06.02.26 9:30
 
 console.log("Script loaded");
 console.log(window.henchmen);
@@ -707,6 +707,7 @@ let silentMeditationRecruit = false;
 let backflipRecruit = false;
 let sewerRooftopDefeats = 0;
 let thingCrimeStopperRescue = false;
+let enterCityNotDraw = false;
 let spiderWomanArachnoRecruit = false;
 let throgRecruit = false;
 let bystandersRescuedThisTurn = 0;
@@ -4531,7 +4532,7 @@ let isFirstTurn = true;
 // Draw villain card(s) entry point (unchanged logic)
 // ---------------------------------
 async function drawVillainCard() {
-if (playerArtifacts.filter((card) => card.name === "Reality Gem").length > 0) {
+if (!enterCityNotDraw && playerArtifacts.filter((card) => card.name === "Reality Gem").length > 0) {
         await realityGemVillainChoice();
         }
 
@@ -4826,6 +4827,15 @@ async function attachBystanderToMastermind(bystanderCard) {
 function updateMastermindOverlay() {
   const mastermindCard = document.getElementById("mastermind");
   const overlay = mastermindCard.querySelector(".overlay");
+
+  const selectedScheme = schemes.find(
+    (s) =>
+      s.name ===
+      document.querySelector(
+        "#scheme-section input[type=radio]:checked",
+      ).value,
+  );
+
   let mastermind = getSelectedMastermind();
   const bystanderCount = mastermind.bystanders
     ? mastermind.bystanders.length
@@ -4894,21 +4904,31 @@ function updateMastermindOverlay() {
   }
 
 
-  const existingShardsOverlay =
-    mastermindCard.querySelector(".villain-shards-class");
-  if (existingShardsOverlay) existingShardsOverlay.remove();
+const existingShardsOverlay = mastermindCard.querySelector(".mastermind-shards-class");
+if (existingShardsOverlay) existingShardsOverlay.remove();
 
-  if (typeof mastermind.shards === 'undefined') {
-    mastermind.shards = 0;
-  }
+if (typeof mastermind.shards === 'undefined') {
+  mastermind.shards = 0;
+}
 
-  if (mastermind.shards && mastermind.shards >= 1) {
-    const shardsOverlay = document.createElement("div");
-      shardsOverlay.classList.add("villain-shards-class");
-      shardsOverlay.innerHTML = `<span class="villain-shards-count">${mastermind.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
-        // Add to the card
-        mastermindCard.appendChild(shardsOverlay);
+if (mastermind.shards && mastermind.shards >= 1) {
+  const shardsOverlay = document.createElement("div");
+  shardsOverlay.classList.add("mastermind-shards-class");
+  shardsOverlay.innerHTML = `<span class="mastermind-shards-count">${mastermind.shards}</span><img src="Visual Assets/Icons/Shards.svg" alt="Shards" class="villain-shards-overlay">`;
+  
+  // Add to the card
+  mastermindCard.appendChild(shardsOverlay);
+  
+  // Move the click handler assignment HERE, inside the same scope
+  if (selectedScheme.name === "Unite the Shards") {
+    shardsOverlay.style.cursor = "pointer";
+    shardsOverlay.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      uniteTheShardsMastermindRecruitShards();
+    }
   }
+}
 
  if (boundSouls && boundSouls.length >= 1) {
   document.getElementById('stacked-mastermind-cards-right').style.display = "flex";
@@ -11245,7 +11265,7 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
   updateReserveAttackAndRecruit();
 
   // Collect and execute operations (bystander rescues and fight effects)
-  const operations = await collectDefeatOperations(villainCopy);
+  const operations = await collectDefeatOperations(villainCopy, villainCard);
 
   // Let player choose order if there are multiple operations
   if (operations.length > 1) {
@@ -11317,7 +11337,7 @@ async function defeatVillain(cityIndex, isInstantDefeat = false) {
   updateReserveAttackAndRecruit();
 
   // Collect and execute operations (bystander rescues and fight effects)
-  const operations = await collectDefeatOperations(villainCopy);
+  const operations = await collectDefeatOperations(villainCopy, villainCard);
 
   // Let player choose order if there are multiple operations
   if (operations.length > 1) {
@@ -11418,7 +11438,7 @@ async function defeatHQVillain(index) {
   updateReserveAttackAndRecruit();
 
   // Collect and execute operations (bystander rescues and fight effects)
-  const operations = await collectDefeatOperations(villainCopy);
+  const operations = await collectDefeatOperations(villainCopy, villainCard);
 
   // Let player choose order if there are multiple operations
   if (operations.length > 1) {
@@ -11487,7 +11507,7 @@ function createVillainCopy(villainCard) {
 // ---------------------------------
 // Collect operations to run after defeat (unchanged)
 // ---------------------------------
-async function collectDefeatOperations(villainCopy) {
+async function collectDefeatOperations(villainCopy, villainCard) {
   const operations = [];
 
   // Bystander rescues
@@ -11524,7 +11544,7 @@ async function collectDefeatOperations(villainCopy) {
           new Promise(async (resolve) => {
             let negate = false;
             if (typeof promptNegateFightEffectWithMrFantastic === "function") {
-              negate = await promptNegateFightEffectWithMrFantastic();
+              negate = await promptNegateFightEffectWithMrFantastic(villainCopy, villainCard);
             }
             if (!negate) {
               await fightEffectFunction(villainCopy);
@@ -11764,255 +11784,517 @@ async function handlePostDefeat(
   cityIndex,
   isInstantDefeat = false,
 ) {
+  console.log("handlePostDefeat START", { 
+    villainName: villainCard?.name, 
+    cityIndex, 
+    isInstantDefeat 
+  });
 
-    const selectedSchemeName = document.querySelector(
-    "#scheme-section input[type=radio]:checked",
-  ).value;
-  const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
-
-  if (villainCard.shards && villainCard.shards > 0) {
-    playSFX("shards");
-    villainCard.shards -= 1;
-    totalPlayerShards += 1;
-    shardsGainedThisTurn += 1;
-    const shardCount = villainCard.shards;
-    shardSupply += villainCard.shards;
-    villainCard.shards -= shardCount;
-        onscreenConsole.log(
-      `${villainCard.shards === 1 ? `You take <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shard.` : `You take one of <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shards and return the rest to the supply.`}`,
-    );
-  }
-
-  // Handle Baby Hope first
-  if (villainCard.babyHope === true) {
-    delete villainCard.babyHope;
-    villainCard.attack = villainCard.originalAttack;
-    const BabyHopeCard = {
-      name: "Baby Hope",
-      type: "Baby",
-      victoryPoints: 6,
-      image: "Visual Assets/Other/BabyHope.webp",
-    };
-    victoryPile.push(BabyHopeCard);
-    updateGameBoard();
-  }
-
-  // Plutonium back into deck (shuffle)
-  if (
-    Array.isArray(villainCard.plutoniumCaptured) &&
-    villainCard.plutoniumCaptured.length
-  ) {
-    onscreenConsole.log(
-      `${villainCard.plutoniumCaptured.length} Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled into the Villain Deck.`,
-    );
-    for (const plutonium of villainCard.plutoniumCaptured) {
-      // Insert at a random position 0..villainDeck.length (0 = bottom, length = top)
-      const pos = Math.floor(Math.random() * (villainDeck.length + 1));
-      villainDeck.splice(pos, 0, plutonium);
-    }
-    villainCard.plutoniumCaptured.length = 0;
-  }
-
-  // X-Cutioner Heroes
-  if (
-    Array.isArray(villainCard.XCutionerHeroes) &&
-    villainCard.XCutionerHeroes.length > 0
-  ) {
-    for (const hero of villainCard.XCutionerHeroes) {
-      playerDiscardPile.push(hero);
-      onscreenConsole.log(
-        `You have rescued <span class="console-highlights">${hero.name}</span>. They have been added to your Discard pile.`,
-      );
-    }
-    villainCard.XCutionerHeroes.length = 0;
-  }
-
-  // Extra bystanders
-  if (rescueExtraBystanders > 0) {
-    for (let i = 0; i < rescueExtraBystanders; i++) {
-      await rescueBystander();
-    }
-  }
-
-  if (villainCard.name === "Dracula") {
-    villainCard.attack = 3;
-    villainCard.cost = 0;
-  }
-
-  if (scheme.name === "Organized Crime Wave" && 
-    villainCard.name === "Maggia Goons" && 
-    (!villainCard.ambushEffect || villainCard.ambushEffect === "none")) {
-  villainCard.ambushEffect = "organizedCrimeAmbush";
-}
-
-  const burrowingVillain =
-    villainCard.keywords && villainCard.keywords.includes("Burrow");
-
-  const inStreetsNow = cityIndex === 1;
-  const streetsFree =
-    (city[1] === "" || city[1] === null) && destroyedSpaces[1] === false;
-
-// Burrow logic
-if (burrowingVillain) {
-  if (inStreetsNow) {
-    victoryPile.push(villainCard);
-    onscreenConsole.log(
-      `<span class="console-highlights">${villainCard.name}</span> is in the Streets and cannot burrow. They have been defeated!`,
-    );
-  } else if (streetsFree) {
-    let negate = false;
-    if (typeof promptNegateFightEffectWithMrFantastic === "function") {
-      negate = await promptNegateFightEffectWithMrFantastic();
-    }
-    if (!negate) {
-      city[1] = villainCard;
-      playSFX("burrow");
-      onscreenConsole.log(
-        `<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`,
-      );
-    }
-  } else {
-    victoryPile.push(villainCard);
-    onscreenConsole.log(
-      `The Streets are ${destroyedSpaces[1] === false ? "occupied" : "destroyed"} so <span class="console-highlights">${villainCard.name}</span> cannot burrow and has been defeated!`,
-    );
-  }
-} else {
-  if (!villainCard.skrulled) {
-    victoryPile.push(villainCard);
-    onscreenConsole.log(
-      `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
-    );
-  }
-}
-
-const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
-if (soulGem) {
-
-        if (typeof soulGem.shards === 'undefined') {
-    soulGem.shards = 0;
-  } 
-  playSFX("shards");
-  soulGem.shards += 1;
-  shardSupply -= 1;
-  onscreenConsole.log(`<span class="console-highlights">Soul Gem</span> gains a Shard.`);
-}
-
-  if (villainCard.killbot === true) {
-    bystanderBonuses();
-  }
-  addHRToTopWithInnerHTML();
-
-  // Note: DO NOT clear city[cityIndex] here — it's already cleared in defeatVillain()
-
-  // Location bonuses
   try {
-    if (thingCrimeStopperRescue && cityIndex === 3) {
-      onscreenConsole.log(
-        `You defeated <span class="console-highlights">${villainCard.name}</span> in the Bank. Rescuing a Bystander.`,
-      );
-      await rescueBystander();
+    // 1. Scheme selection
+    console.log("1. Getting selected scheme...");
+    const selectedSchemeName = document.querySelector(
+      "#scheme-section input[type=radio]:checked",
+    )?.value;
+    console.log("Selected scheme name:", selectedSchemeName);
+    
+    if (!selectedSchemeName) {
+      console.error("No scheme selected!");
+      onscreenConsole.log("<span class='console-error'>Error: No scheme selected!</span>");
+      return;
+    }
+    
+    const scheme = schemes.find((scheme) => scheme.name === selectedSchemeName);
+    if (!scheme) {
+      console.error("Scheme not found:", selectedSchemeName);
+      onscreenConsole.log(`<span class='console-error'>Error: Scheme "${selectedSchemeName}" not found!</span>`);
+      return;
+    }
+    console.log("Scheme found:", scheme.name);
+
+    // 2. Shards handling
+    console.log("2. Checking shards...");
+    if (villainCard.shards && villainCard.shards > 0) {
+      console.log("Processing shards, count:", villainCard.shards);
+      try {
+        playSFX("shards");
+        villainCard.shards -= 1;
+        totalPlayerShards += 1;
+        shardsGainedThisTurn += 1;
+        const shardCount = villainCard.shards;
+        shardSupply += villainCard.shards;
+        villainCard.shards -= shardCount;
+        onscreenConsole.log(
+          `${villainCard.shards === 1 ? `You take <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shard.` : `You take one of <span class="console-highlights">${villainCard.name}</span><span class="bold-spans">'s</span> Shards and return the rest to the supply.`}`,
+        );
+      } catch (error) {
+        console.error("Error processing shards:", error);
+      }
     }
 
-if (sewerRooftopDefeats > 0 && (cityIndex === 2 || cityIndex === 4)) {
-  onscreenConsole.log(
-    `You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? "in the Sewers" : "on the Rooftops"}. Drawing ${sewerRooftopDefeats} cards.`,
-  );
-  for (let i = 0; i < sewerRooftopDefeats; i++) {
-    extraDraw();
-  }
-}
-
-    if (sewerRooftopBonusRecruit > 0 && (cityIndex === 2 || cityIndex === 4)) {
-      onscreenConsole.log(
-        `You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? "in the Sewers" : "on the Rooftops"}. +${sewerRooftopBonusRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
-      );
-      totalRecruitPoints += sewerRooftopBonusRecruit;
-      cumulativeRecruitPoints += sewerRooftopBonusRecruit;
+    // 3. Baby Hope handling
+    console.log("3. Checking Baby Hope...");
+    if (villainCard.babyHope === true) {
+      console.log("Processing Baby Hope...");
+      try {
+        delete villainCard.babyHope;
+        villainCard.attack = villainCard.originalAttack;
+        const BabyHopeCard = {
+          name: "Baby Hope",
+          type: "Baby",
+          victoryPoints: 6,
+          image: "Visual Assets/Other/BabyHope.webp",
+        };
+        victoryPile.push(BabyHopeCard);
+        updateGameBoard();
+      } catch (error) {
+        console.error("Error processing Baby Hope:", error);
+      }
     }
 
-    if (moonKnightLunarCommunionKO && cityIndex === 2) {
-      onscreenConsole.log(
-        `You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops. <span class="console-highlights">Moon Knight - Lunar Communion</span> allows you to KO.`,
-      );
-      await moonKnightLunarCommunionKOChoice();
+    // 4. Plutonium handling
+    console.log("4. Checking plutonium...");
+    if (
+      Array.isArray(villainCard.plutoniumCaptured) &&
+      villainCard.plutoniumCaptured.length
+    ) {
+      console.log("Processing plutonium, count:", villainCard.plutoniumCaptured.length);
+      try {
+        onscreenConsole.log(
+          `${villainCard.plutoniumCaptured.length} Plutonium from <span class="console-highlights">${villainCard.name}</span> shuffled into the Villain Deck.`,
+        );
+        for (const plutonium of villainCard.plutoniumCaptured) {
+          const pos = Math.floor(Math.random() * (villainDeck.length + 1));
+          villainDeck.splice(pos, 0, plutonium);
+        }
+        villainCard.plutoniumCaptured.length = 0;
+      } catch (error) {
+        console.error("Error processing plutonium:", error);
+      }
     }
-    if (moonKnightGoldenAnkhOfKhonshuBystanders && cityIndex === 2) {
-      onscreenConsole.log(
-        `You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops.`,
-      );
-      await moonKnightGoldenAnkhOfKhonshuBystanderCalculation(villainCard);
+
+    // 5. X-Cutioner Heroes
+    console.log("5. Checking X-Cutioner Heroes...");
+    if (
+      Array.isArray(villainCard.XCutionerHeroes) &&
+      villainCard.XCutionerHeroes.length > 0
+    ) {
+      console.log("Processing X-Cutioner Heroes, count:", villainCard.XCutionerHeroes.length);
+      try {
+        for (const hero of villainCard.XCutionerHeroes) {
+          playerDiscardPile.push(hero);
+          onscreenConsole.log(
+            `You have rescued <span class="console-highlights">${hero.name}</span>. They have been added to your Discard pile.`,
+          );
+        }
+        villainCard.XCutionerHeroes.length = 0;
+      } catch (error) {
+        console.error("Error processing X-Cutioner Heroes:", error);
+      }
     }
-  } catch (error) {
-    console.error("Error processing location bonuses:", error);
-  }
 
-  if (villainCard.name === "Carrion" && carrionHeroFeast) {
-    city[cityIndex] = villainCard;
-    const feastedHero = koPile[koPile.length - 1]
-    onscreenConsole.log(
-      `<span class="console-highlights">Carrion</span> feasted upon <span class="console-highlights">${feastedHero.name}</span>, KOing them. They cost 1 <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> or more so <span class="console-highlights">Carrion</span> has returned to the city! You'll have to fight them again!`,
-    );
-    carrionHeroFeast = false;
-  }
+    // 6. Extra bystanders
+    console.log("6. Checking extra bystanders...");
+    if (rescueExtraBystanders > 0) {
+      console.log("Rescuing extra bystanders, count:", rescueExtraBystanders);
+      try {
+        for (let i = 0; i < rescueExtraBystanders; i++) {
+          if (typeof rescueBystander === 'function') {
+            await rescueBystander();
+          } else {
+            console.error("rescueBystander function not found!");
+            break;
+          }
+        }
+      } catch (error) {
+        console.error("Error rescuing extra bystanders:", error);
+      }
+    }
 
-  if (villainCard.name === "Chameleon") {
-    onscreenConsole.log(
-      `Fight! <span class="console-highlights">Chameleon</span> lets you copy the effects of the Hero in the HQ space underneath, including its <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
-    );
-    onscreenConsole.log(
-      `You copy the effects of <span class="console-highlights">${hq[cityIndex].name}</span>.`,
-    );
-    await chameleonFight(hq[cityIndex]);
-  }
+    // 7. Dracula special case
+    console.log("7. Checking Dracula...");
+    if (villainCard.name === "Dracula") {
+      console.log("Processing Dracula...");
+      try {
+        villainCard.attack = 3;
+        villainCard.cost = 0;
+      } catch (error) {
+        console.error("Error processing Dracula:", error);
+      }
+    }
 
-  if (scheme.name === "Weave a Web of Lies") {
-    await weaveAWebOfLiesBystanderRescue();
-  }
+    // 8. Organized Crime Wave scheme
+    console.log("8. Checking Organized Crime Wave...");
+    if (scheme.name === "Organized Crime Wave" && 
+        villainCard.name === "Maggia Goons" && 
+        (!villainCard.ambushEffect || villainCard.ambushEffect === "none")) {
+      console.log("Setting organized crime ambush...");
+      try {
+        villainCard.ambushEffect = "organizedCrimeAmbush";
+      } catch (error) {
+        console.error("Error setting ambush effect:", error);
+      }
+    }
 
-  // Professor X Mind Control
-let professorXSuccess = false;
-if (hasProfessorXMindControl) {
-  professorXSuccess = await professorXMindControlGainVillain(villainCard);
-}
+    // 9. Burrow logic
+    console.log("9. Processing burrow logic...");
+    const burrowingVillain =
+      villainCard.keywords && villainCard.keywords.includes("Burrow");
+    const inStreetsNow = cityIndex === 1;
+    const streetsFree =
+      (city[1] === "" || city[1] === null) && destroyedSpaces[1] === false;
 
+    console.log("Burrow check:", { burrowingVillain, inStreetsNow, streetsFree });
+
+    if (burrowingVillain) {
+      console.log("Processing burrowing villain...");
+      try {
+        if (inStreetsNow) {
+          victoryPile.push(villainCard);
+          onscreenConsole.log(
+            `<span class="console-highlights">${villainCard.name}</span> is in the Streets and cannot burrow. They have been defeated!`,
+          );
+        } else if (streetsFree) {
+          let negate = false;
+          if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+            negate = await promptNegateFightEffectWithMrFantastic();
+          }
+          if (!negate) {
+            city[1] = villainCard;
+            playSFX("burrow");
+            onscreenConsole.log(
+              `<span class="console-highlights">${villainCard.name}</span> was defeated but has burrowed to the Streets! You'll have to fight them again!`,
+            );
+          }
+        } else {
+          victoryPile.push(villainCard);
+          onscreenConsole.log(
+            `The Streets are ${destroyedSpaces[1] === false ? "occupied" : "destroyed"} so <span class="console-highlights">${villainCard.name}</span> cannot burrow and has been defeated!`,
+          );
+        }
+      } catch (error) {
+        console.error("Error processing burrow logic:", error);
+      }
+    } else {
+      console.log("Processing non-burrowing villain...");
+      try {
+        if (!villainCard.skrulled && villainCard.team !== "Infinity Gems") {
+          victoryPile.push(villainCard);
+          onscreenConsole.log(
+            `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
+          );
+        }
+      } catch (error) {
+        console.error("Error processing non-burrowing villain:", error);
+      }
+    }
+
+    // 10. Soul Gem handling
+    console.log("10. Checking Soul Gem...");
+    const soulGem = playerArtifacts.find(card => card && card.name === "Soul Gem");
+    if (soulGem) {
+      console.log("Processing Soul Gem...");
+      try {
+        if (typeof soulGem.shards === 'undefined') {
+          soulGem.shards = 0;
+        } 
+        playSFX("shards");
+        soulGem.shards += 1;
+        shardSupply -= 1;
+        onscreenConsole.log(`<span class="console-highlights">Soul Gem</span> gains a Shard.`);
+      } catch (error) {
+        console.error("Error processing Soul Gem:", error);
+      }
+    }
+
+    // 11. Killbot handling
+    console.log("11. Checking killbot...");
+    if (villainCard.killbot === true) {
+      console.log("Processing killbot...");
+      try {
+        if (typeof bystanderBonuses === 'function') {
+          bystanderBonuses();
+        } else {
+          console.error("bystanderBonuses function not found!");
+        }
+      } catch (error) {
+        console.error("Error processing killbot:", error);
+      }
+    }
+
+    console.log("12. Adding HR...");
+    try {
+      addHRToTopWithInnerHTML();
+    } catch (error) {
+      console.error("Error adding HR:", error);
+    }
+
+    // 13. Location bonuses
+    console.log("13. Processing location bonuses...");
+    try {
+      if (thingCrimeStopperRescue && cityIndex === 3) {
+        console.log("Thing Crime Stopper rescue triggered...");
+        onscreenConsole.log(
+          `You defeated <span class="console-highlights">${villainCard.name}</span> in the Bank. Rescuing a Bystander.`,
+        );
+        if (typeof rescueBystander === 'function') {
+          await rescueBystander();
+        }
+      }
+
+      if (sewerRooftopDefeats > 0 && (cityIndex === 2 || cityIndex === 4)) {
+        console.log("Sewer/Rooftop defeats triggered:", sewerRooftopDefeats);
+        onscreenConsole.log(
+          `You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? "in the Sewers" : "on the Rooftops"}. Drawing ${sewerRooftopDefeats} cards.`,
+        );
+        for (let i = 0; i < sewerRooftopDefeats; i++) {
+          if (typeof extraDraw === 'function') {
+            extraDraw();
+          }
+        }
+      }
+
+      if (sewerRooftopBonusRecruit > 0 && (cityIndex === 2 || cityIndex === 4)) {
+        console.log("Sewer/Rooftop bonus recruit triggered:", sewerRooftopBonusRecruit);
+        onscreenConsole.log(
+          `You defeated <span class="console-highlights">${villainCard.name}</span> ${cityIndex === 4 ? "in the Sewers" : "on the Rooftops"}. +${sewerRooftopBonusRecruit}<img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> gained.`,
+        );
+        totalRecruitPoints += sewerRooftopBonusRecruit;
+        cumulativeRecruitPoints += sewerRooftopBonusRecruit;
+      }
+
+      if (moonKnightLunarCommunionKO && cityIndex === 2) {
+        console.log("Moon Knight Lunar Communion KO triggered...");
+        onscreenConsole.log(
+          `You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops. <span class="console-highlights">Moon Knight - Lunar Communion</span> allows you to KO.`,
+        );
+        if (typeof moonKnightLunarCommunionKOChoice === 'function') {
+          await moonKnightLunarCommunionKOChoice();
+        } else {
+          console.error("moonKnightLunarCommunionKOChoice function not found!");
+        }
+      }
+      
+      if (moonKnightGoldenAnkhOfKhonshuBystanders && cityIndex === 2) {
+        console.log("Moon Knight Golden Ankh bystanders triggered...");
+        onscreenConsole.log(
+          `You defeated <span class="console-highlights">${villainCard.name}</span> on the Rooftops.`,
+        );
+        if (typeof moonKnightGoldenAnkhOfKhonshuBystanderCalculation === 'function') {
+          await moonKnightGoldenAnkhOfKhonshuBystanderCalculation(villainCard);
+        } else {
+          console.error("moonKnightGoldenAnkhOfKhonshuBystanderCalculation function not found!");
+        }
+      }
+    } catch (error) {
+      console.error("Error processing location bonuses:", error);
+    }
+
+    // 14. Carrion handling
+    console.log("14. Checking Carrion...");
+    if (villainCard.name === "Carrion" && carrionHeroFeast) {
+      console.log("Processing Carrion feast...");
+      try {
+        city[cityIndex] = villainCard;
+        const feastedHero = koPile[koPile.length - 1];
+        onscreenConsole.log(
+          `<span class="console-highlights">Carrion</span> feasted upon <span class="console-highlights">${feastedHero?.name || 'unknown hero'}</span>, KOing them. They cost 1 <img src="Visual Assets/Icons/Cost.svg" alt="Cost Icon" class="console-card-icons"> or more so <span class="console-highlights">Carrion</span> has returned to the city! You'll have to fight them again!`,
+        );
+        carrionHeroFeast = false;
+      } catch (error) {
+        console.error("Error processing Carrion:", error);
+      }
+    }
+
+    // 15. Chameleon handling
+    console.log("15. Checking Chameleon...");
+    if (villainCard.name === "Chameleon") {
+      console.log("Processing Chameleon...");
+      try {
+        onscreenConsole.log(
+          `Fight! <span class="console-highlights">Chameleon</span> lets you copy the effects of the Hero in the HQ space underneath, including its <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> and <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons">.`,
+        );
+        const hqCard = hq[cityIndex];
+        if (hqCard) {
+          onscreenConsole.log(
+            `You copy the effects of <span class="console-highlights">${hqCard.name}</span>.`,
+          );
+          if (typeof chameleonFight === 'function') {
+            console.log("Calling chameleonFight...");
+            await chameleonFight(hqCard);
+            console.log("chameleonFight completed");
+          } else {
+            console.error("chameleonFight function not found!");
+          }
+        } else {
+          console.error("No HQ card found at index:", cityIndex);
+        }
+      } catch (error) {
+        console.error("Error processing Chameleon:", error);
+      }
+    }
+
+    // 16. Weave a Web of Lies scheme
+    console.log("16. Checking Weave a Web of Lies...");
+    if (scheme.name === "Weave a Web of Lies") {
+      console.log("Processing Weave a Web of Lies...");
+      try {
+        if (typeof weaveAWebOfLiesBystanderRescue === 'function') {
+          await weaveAWebOfLiesBystanderRescue();
+        } else {
+          console.error("weaveAWebOfLiesBystanderRescue function not found!");
+        }
+      } catch (error) {
+        console.error("Error processing Weave a Web of Lies:", error);
+      }
+    }
+
+    // 17. Professor X Mind Control
+    console.log("17. Checking Professor X Mind Control...");
+    let professorXSuccess = false;
+    if (hasProfessorXMindControl) {
+      console.log("Processing Professor X Mind Control...");
+      try {
+        if (typeof professorXMindControlGainVillain === 'function') {
+          professorXSuccess = await professorXMindControlGainVillain(villainCard);
+          console.log("Professor X result:", professorXSuccess);
+        } else {
+          console.error("professorXMindControlGainVillain function not found!");
+        }
+      } catch (error) {
+        console.error("Error processing Professor X Mind Control:", error);
+      }
+    }
+
+    // 18. Infinity Gem handling
+    console.log("18. Checking Infinity Gem...");
     const infinityGemVillain = villainCard.team === "Infinity Gems";
+    console.log("Is Infinity Gem villain:", infinityGemVillain);
 
-  if (infinityGemVillain && !professorXSuccess) {
-  villainCard.type = "Artifact";
-  villainCard.originalAttack = villainCard.attack;
-  villainCard.attack = 0;
-  playerDiscardPile.push(villainCard);
-  onscreenConsole.log(
-    `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
-  );
-} else if (infinityGemVillain && professorXSuccess) {
-  villainCard.unconditionalAbility = "None";
-}
+    if (infinityGemVillain && !professorXSuccess && !villainCard.nullified) {
+      console.log("Processing Infinity Gem defeat...");
+      try {
+        villainCard.type = "Artifact";
+        villainCard.originalAttack = villainCard.attack;
+        villainCard.attack = 0;
+        playerDiscardPile.push(villainCard);
+        onscreenConsole.log(
+          `<span class="console-highlights">${villainCard.name}</span> has been put in your discard pile as an Artifact.`,
+        );
+      } catch (error) {
+        console.error("Error processing Infinity Gem:", error);
+      }
+    } else if (infinityGemVillain && professorXSuccess) {
+      console.log("Professor X succeeded on Infinity Gem...");
+      try {
+        villainCard.unconditionalAbility = "None";
+      } catch (error) {
+        console.error("Error setting Infinity Gem unconditional ability:", error);
+      }
+    }
 
-  if (villainCard.bystander) {
-    villainCard.bystander = [];
-  }
+    if (infinityGemVillain && villainCard.nullified) {
+      console.log("Processing nullified Infinity Gem...");
+      try {
+        villainCard.nullified = false;
+        victoryPile.push(villainCard);
+        onscreenConsole.log(
+          `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
+        );
+      } catch (error) {
+        console.error("Error processing nullified Infinity Gem:", error);
+      }
+    }
 
-  // Final cleanup
-  defeatBonuses();
-  currentVillainLocation = null;
-  removeCosmicThreatBuff(cityIndex);
+    // 19. Clear bystander array
+    console.log("19. Clearing bystander array...");
+    if (villainCard.bystander) {
+      try {
+        villainCard.bystander = [];
+      } catch (error) {
+        console.error("Error clearing bystander array:", error);
+      }
+    }
 
-  // Endless Armies of HYDRA: draw TWO villain cards serially (no race conditions)
-  if (villainCard.name === "Endless Armies of HYDRA") {
+    // 20. Final cleanup
+    console.log("20. Final cleanup...");
+    try {
+      if (typeof defeatBonuses === 'function') {
+        defeatBonuses();
+      }
+      currentVillainLocation = null;
+      removeCosmicThreatBuff(cityIndex);
+    } catch (error) {
+      console.error("Error in final cleanup:", error);
+    }
+
+    // 21. Endless Armies of HYDRA
+    console.log("21. Checking Endless Armies of HYDRA...");
+    if (villainCard.name === "Endless Armies of HYDRA") {
+      console.log("Processing Endless Armies of HYDRA...");
+      try {
+        onscreenConsole.log(
+          `Fight! <span class="console-highlights">Endless Armies of HYDRA</span> forces you to play the top two cards of the Villain Deck.`,
+        );
+        if (typeof drawVillainCardsSequential === 'function') {
+          await drawVillainCardsSequential(2);
+        } else {
+          console.error("drawVillainCardsSequential function not found!");
+        }
+      } catch (error) {
+        console.error("Error processing Endless Armies of HYDRA:", error);
+      }
+    }
+
+    // 22. Skrulled villain cleanup
+    console.log("22. Checking skrulled status...");
+    if (villainCard.wasSkrulled === true) {
+      console.log("Removing skrulled villain from victory pile...");
+      try {
+        const index = victoryPile.indexOf(villainCard);
+        if (index > -1) {
+          victoryPile.splice(index, 1);
+        }
+      } catch (error) {
+        console.error("Error removing skrulled villain:", error);
+      }
+    }
+
+    console.log(`handlePostDefeat: Villain fully processed. Now updating game board.`);
+
+    // 23. Final update
+    console.log("23. Updating game board...");
+    try {
+      updateGameBoard();
+      console.log("Game board updated successfully");
+    } catch (error) {
+      console.error("Error updating game board:", error);
+    }
+
+    console.log("handlePostDefeat COMPLETED SUCCESSFULLY");
+    
+  } catch (mainError) {
+    console.error("FATAL ERROR in handlePostDefeat:", mainError);
+    console.error("Error details:", {
+      message: mainError.message,
+      stack: mainError.stack,
+      villainName: villainCard?.name,
+      cityIndex
+    });
+    
     onscreenConsole.log(
-      `Fight! <span class="console-highlights">Endless Armies of HYDRA</span> forces you to play the top two cards of the Villain Deck.`,
+      `<span class="console-error">Error processing defeat: ${mainError.message}. Game may be in inconsistent state.</span>`
     );
-    await drawVillainCardsSequential(2);
+    
+    // Try to update game board anyway to prevent UI freeze
+    try {
+      updateGameBoard();
+    } catch (updateError) {
+      console.error("Could not update game board after error:", updateError);
+    }
+    
+    throw mainError; // Re-throw for calling code to handle
   }
-
-  if (villainCard.wasSkrulled === true) {
-    victoryPile.pop(villainCard);
-  }
-
-  // One redraw at the end of post-defeat processing
-  updateGameBoard();
 }
 
 async function handleHQPostDefeat(

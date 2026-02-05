@@ -1,5 +1,5 @@
 // Fantastic Four Expansion
-//03.02.26 10:30
+//05.02.26 8:30
 
 //Keywords
 
@@ -2638,7 +2638,9 @@ async function moleManMasterOfMonsters() {
     for (const villain of subterraneaVillains) {
       // Place on top (end) of deck, then draw normally
       villainDeck.push(villain);
+      enterCityNotDraw = true;
       await drawVillainCard(); // this should consume from the top
+      enterCityNotDraw = false;
     }
   }
 
@@ -4443,7 +4445,7 @@ function canRevealMrFantasticUltimateNullifier() {
   );
 }
 
-async function promptNegateFightEffectWithMrFantastic() {
+async function promptNegateFightEffectWithMrFantastic(villainCopy, villainCard) {
   const MR_FANTASTIC_IMAGE =
     "Visual Assets/Heroes/Fantastic Four/FantasticFour_MrFantastic_UltimateNullifier.webp";
 
@@ -4482,6 +4484,9 @@ async function promptNegateFightEffectWithMrFantastic() {
           `You used <span class="console-highlights">Mr. Fantastic – Ultimate Nullifier</span> to cancel a fight effect.`,
         );
         closeInfoChoicePopup();
+        if (villainCard.team === "Infinity Gems") {
+          villainCard.nullified = true;
+        }
         resolve(true); // negate
       };
 

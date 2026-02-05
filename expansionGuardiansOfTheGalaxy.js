@@ -1,5 +1,5 @@
 // Expansion - Guardians of the Galaxy
-//03.02.26 20:45
+//05.02.26 8:30
 
 // Global Variables
 
@@ -17,6 +17,74 @@ let kreeConquests = 0;
 let skrullConquests = 0;
 
 // Keywords and Other
+
+async function uniteTheShardsMastermindRecruitShards() {
+return new Promise((resolve) => {
+    setTimeout(() => {
+      const mastermind = getSelectedMastermind();
+
+if (totalRecruitPoints < 2) {
+        onscreenConsole.log(`You do not have enough <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to gain one of <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> Shards.`);
+        resolve();
+        return;
+      }
+
+if (!mastermind.shards || mastermind.shards === 0) {
+  onscreenConsole.log(`<span class="console-highlights">${mastermind.name}</span> has no Shards for you to gain.`);
+    resolve();
+    return;
+}
+
+      const { confirmButton, denyButton } = showHeroAbilityMayPopup(
+        `<span class="console-highlights">${mastermind.name}</span> HAS ${mastermind.shards} SHARDS. WOULD YOU LIKE TO SPEND 2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> TO GAIN ONE OF THEM?`,
+        "YES",
+        `NO THANKS!`,
+      );
+
+      // Update title
+      document.querySelector(".info-or-choice-popup-title").innerHTML =
+        "UNITE THE SHARDS";
+
+      // Hide close button
+      document.querySelector(
+        ".info-or-choice-popup-closebutton",
+      ).style.display = "none";
+
+      // Use preview area for images
+      const previewArea = document.querySelector(
+        ".info-or-choice-popup-preview",
+      );
+      if (previewArea) {
+        previewArea.style.backgroundImage = `url('${mastermind.image}')`;
+        previewArea.style.backgroundSize = "contain";
+        previewArea.style.backgroundRepeat = "no-repeat";
+        previewArea.style.backgroundPosition = "center";
+        previewArea.style.display = "block";
+      }
+
+     confirmButton.onclick = async function () {
+          closeInfoChoicePopup();
+          onscreenConsole.log(`You spent 2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to gain one of <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> Shards.`);
+          playSFX("shards");
+          totalPlayerShards += 1;
+          shardsGainedThisTurn += 1;
+          mastermind.shards -= 1;
+          totalRecruitPoints -= 2;
+          resolve();
+          updateGameBoard();
+          if (mastermind.shards && mastermind.shards > 0 && totalRecruitPoints >= 2) {
+            uniteTheShardsMastermindRecruitShards();
+          }
+      };
+
+      denyButton.onclick = async function () {
+          closeInfoChoicePopup();
+          onscreenConsole.log(`You chose not to spend 2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to gain one of <span class="console-highlights">${mastermind.name}</span><span class="bold-spans">'s</span> Shards.`);
+          resolve();
+      };
+    }, 10);
+  });
+}
 
 document
   .getElementById("player-artifact-zone")
@@ -879,7 +947,9 @@ async function forgeTheInfinityGauntletSingle() {
             chosenGem.type = "Villain";
             chosenGem.attack = chosenGem.originalAttack;
             villainDeck.push(chosenGem);
+            enterCityNotDraw = true;
             await drawVillainCard();
+            enterCityNotDraw = false;
             onscreenConsole.log(`${chosenGem.name} enters the city from your control!`);
           }
         } else if (gemsSource === "discard") {
@@ -892,7 +962,9 @@ async function forgeTheInfinityGauntletSingle() {
             chosenGem.type = "Villain";
             chosenGem.attack = chosenGem.originalAttack;
             villainDeck.push(chosenGem);
+            enterCityNotDraw = true;
             await drawVillainCard();
+            enterCityNotDraw = false;
             onscreenConsole.log(`${chosenGem.name} enters the city from your discard pile!`);
           }
         }
@@ -1161,7 +1233,9 @@ return new Promise((resolve) => {
             chosenCard.type = "Villain";
             chosenCard.attack = chosenCard.originalAttack;
             villainDeck.push(chosenCard);
+            enterCityNotDraw = true;
             await drawVillainCard();
+            enterCityNotDraw = false;
             
           } else {
             console.error("Selected card not found in player hand");
@@ -1177,7 +1251,9 @@ return new Promise((resolve) => {
             chosenCard.type = "Villain";
             chosenCard.attack = chosenCard.originalAttack;
             villainDeck.push(chosenCard);
+            enterCityNotDraw = true;
             await drawVillainCard();
+            enterCityNotDraw = false;
           } else {
             console.error("Selected card not found in played cards");
             onscreenConsole.log("Error: Selected card not found in played cards.");
@@ -2682,6 +2758,10 @@ async function thanosTheMadTitan() {
 }
 
 // Villains
+
+function genericGemFightEffect() {
+  //Simply so they have a fight effect that can be negated
+}
 
 function mindGemAmbush(gem) {
 
@@ -5397,6 +5477,15 @@ async function gamoraGodslayerBlade() {
         previewArea.style.backgroundPosition = "center";
         previewArea.style.display = "block";
       }
+
+      const closeButton = document.getElementById("info-or-choice-popup-close-button");
+    
+    closeButton.onclick = () => {
+      closeInfoChoicePopup();
+      updateGameBoard();
+      resolve();
+      return;
+      };
 
       // Disable ONLY the specific button that's already been used
       if (gamoraGodslayerOne) {

@@ -1,5 +1,5 @@
 // Card Database
-//03.02.26 10:30
+//06.02.26 9:30
 
 const bystanders = [
 { id: 1, name: 'Bystander', type: 'Bystander', victoryPoints: 1, classes: [], keywords: [], image: "Visual Assets/Other/Bystander.webp" },
@@ -610,6 +610,7 @@ const schemes = [
     variableTwist: false,
     twistText: `Stack this Twist next to the Scheme. Then for each Twist in that stack, the Mastermind gains a Shard.`,
     backingTrack: "Infinity Gems and Shards",
+    errata: "Unite the Shards",
     image: "Visual Assets/Schemes/GotG_uniteTheShards.webp",
   }
 
@@ -3158,7 +3159,7 @@ const villains = [
         victoryPoints: 0,
         ambushEffect: "mindGemAmbush",
         unconditionalAbility: "mindGemArtifact",
-        fightEffect: "None",
+        fightEffect: "genericGemFightEffect",
         escapeEffect: "None",
         fightCondition: "None",
         conditionType: "None",
@@ -3180,7 +3181,7 @@ const villains = [
         victoryPoints: 0,
         ambushEffect: "powerGemAmbush",
         unconditionalAbility: "powerGemArtifact",
-        fightEffect: "None",
+        fightEffect: "genericGemFightEffect",
         escapeEffect: "None",
         fightCondition: "None",
         conditionType: "None",
@@ -3202,7 +3203,7 @@ const villains = [
         victoryPoints: 0,
         ambushEffect: "realityGemAmbush",
         unconditionalAbility: "realityGemArtifact",
-        fightEffect: "None",
+        fightEffect: "genericGemFightEffect",
         escapeEffect: "None",
         fightCondition: "None",
         conditionType: "None",
@@ -3224,7 +3225,7 @@ const villains = [
         victoryPoints: 0,
         ambushEffect: "soulGemAmbush",
         unconditionalAbility: "soulGemArtifact",
-        fightEffect: "None",
+        fightEffect: "genericGemFightEffect",
         escapeEffect: "None",
         fightCondition: "None",
         conditionType: "None",
@@ -3246,7 +3247,7 @@ const villains = [
         victoryPoints: 0,
         ambushEffect: "spaceGemAmbush",
         unconditionalAbility: "spaceGemArtifact",
-        fightEffect: "None",
+        fightEffect: "genericGemFightEffect",
         escapeEffect: "None",
         fightCondition: "None",
         conditionType: "None",
@@ -3268,7 +3269,7 @@ const villains = [
         victoryPoints: 0,
         ambushEffect: "timeGemAmbush",
         unconditionalAbility: "timeGemArtifact",
-        fightEffect: "None",
+        fightEffect: "genericGemFightEffect",
         escapeEffect: "None",
         fightCondition: "None",
         conditionType: "None",
@@ -9854,6 +9855,7 @@ const keywordDescriptions = {
   "Mole Man": `Mole Man's abilities apply to whichever Villain Group you are using, as if they were Subterranea.`,
   "Invade the Daily Bugle News HQ": `Villains entering the HQ don't cause Ambush or Escape effects. Villains in the HQ aren't in any city space. For example, if Carrion is fought while in the HQ, he can't be “put back in the city space where he was.” If there is a Villain in the HQ space under Doppelganger, or if Doppelganger is in the HQ, then Doppelganger's <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> is 0.`,
   "Artifact": `When you gain a Hero Artifact, put it in your discard pile like any other Hero card (it still counts as a Hero card too). When you draw that Artifact later in the game, you may play it in front of you and use its effects. This means you “control” that Artifact. At end of turn, when you discard all the cards you played that turn, the Artifacts you control stay in front of you. Artifacts can be revealed as one of "your Heroes" or "Heroes you have" but are only counted as "played" on the turn you put it out. Artifacts do not have to be used each turn. They do not count as cards in your hand when discarding or targeted by card effects.`,
+  "Unite the Shards": `Click the Mastermind's Shards if you wish to spend 2 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="console-card-icons"> to gain one of them.`,
   "Thanos": (alwaysLeadsText) =>
     alwaysLeadsText === "Infinity Gems"
       ? `Thanos gets -2 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="console-card-icons"> for each Infinity Gem you control.`

@@ -1,5 +1,5 @@
 // Card Abilities for Dark City
-//03.02.26 10:30
+//05.02.26 8:30
 
 async function angelDivingCatch(card) {
   return new Promise((resolve) => {
@@ -9934,7 +9934,9 @@ function reignfireEscape() {
       );
 
       // Draw the top card of the villain deck
-      drawVillainCard()
+      enterCityNotDraw = true;
+      drawVillainCard();
+      enterCityNotDraw = false
         .then(() => {
           resolve(); // Resolve the promise after the card is drawn
         })
@@ -12938,14 +12940,18 @@ async function kingpinCriminalEmpire() {
         villainDeck.push(...revealedCards.reverse());
         onscreenConsole.log(`Three Villains revealed. Playing them now.`);
         for (let i = 0; i < 3; i++) {
+          enterCityNotDraw = true;
           await drawVillainCard();
+          enterCityNotDraw = false;
           await new Promise((resolve) => setTimeout(resolve, 100)); // Ensure UI updates
         }
       } else if (villains.length === 2) {
         villainDeck.push(...villains.reverse());
         onscreenConsole.log(`Two Villains revealed. Playing them now.`);
         for (let i = 0; i < 2; i++) {
+          enterCityNotDraw = true;
           await drawVillainCard();
+          enterCityNotDraw = false;
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
         if (nonVillains.length > 0) {
@@ -12957,7 +12963,9 @@ async function kingpinCriminalEmpire() {
         onscreenConsole.log(
           `One Villain revealed. It will be played now. The other revealed cards will be shuffled and returned to the top of the Villain deck.`,
         );
+        enterCityNotDraw = true;
         await drawVillainCard();
+        enterCityNotDraw = false;
         shuffleArray(nonVillains);
         villainDeck.push(...nonVillains);
       } else {
@@ -13010,7 +13018,9 @@ function stryfeSwiftVengeance() {
     `A Wound from the Wound Stack is becoming a Master Strike to take effect immediately.`,
   );
   villainDeck.push(topWound);
+  enterCityNotDraw = true;
   drawVillainCard();
+  enterCityNotDraw = false;
 }
 
 function mephistoThePriceOfFailure() {
@@ -13503,7 +13513,9 @@ async function stryfeFuriousWrath() {
 
     // Play each Master Strike
     for (let i = 0; i < masterStrikes.length; i++) {
+      enterCityNotDraw = true;
       await drawVillainCard();
+      enterCityNotDraw = false;
     }
   } else {
     onscreenConsole.log("No Master Strikes were revealed.");

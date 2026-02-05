@@ -1,5 +1,5 @@
 // updatesContent.js
-//03.02.26 10:30
+//05.02.26 8:30
 const updatesHTML = `
 <h3>✨ <i>Version 5.0.0</i> - Guardians of the Galaxy <img src="Visual Assets/Icons/Guardians of the Galaxy.svg" alt="Guardians of the Galaxy Icon" class="popup-card-icons"></h3>
 <p>NEW EXPANSION! Happy New Year! Along with bug fixes and new custom soundtracks, this patch brings you all the content of <strong>Guardians of the Galaxy</strong>.</p>

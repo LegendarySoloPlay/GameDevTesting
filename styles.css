@@ -1,5 +1,5 @@
 /* Styles */
-/* //03.02.26 20:45 */
+/* //05.02.26 8:30 */
 
 body {
   font-family: Arial, sans-serif;
@@ -500,16 +500,17 @@ button:active {
 @keyframes pulseGlowArtifact {
   0% {
     border-color: rgb(92, 60, 159);
-    box-shadow: 0 0 25px rgb(92 60 159 / 70%);
-  }
-  50% {
+    box-shadow: 0 0 10px rgb(167 135 234 / 70%);
+}
+50% {
     border-color: rgb(92, 60, 159);
-    box-shadow: 0 0 35px rgba(119, 82, 201, 0.8);
-  }
-  100% {
+    box-shadow: 0 0 40px rgb(119, 82, 201);
+}
+
+100% {
     border-color: rgb(92, 60, 159);
-    box-shadow: 0 0 25px rgb(92 60 159 / 70%);
-  }
+    box-shadow: 0 0 10px rgb(167 135 234 / 70%);
+}
 }
 
 @keyframes pulseGlowFocus {
@@ -8551,21 +8552,46 @@ div.screws:nth-of-type(4) {
 }
 
 .villain-shards-class {
-        width: 1.5vw;
+        width: 2vw;
     height: auto;
     display: inline-block;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    top: 77%;
+    top: 76%;
 }
 
 .villain-shards-count {
         color: #ebe5e4;
     font-size: calc(0.6vh + 0.6vw);
     position: absolute;
-    bottom: 1vh;
-    left: 0.19vw;
+    bottom: 1.2vh;
+    left: 0.39vw;
+    text-shadow: 0.1vh 0.1 0.2vh #000000;
+    pointer-events: none;
+    border-radius: 1vh;
+    width: 1.2vw;
+    height: 1.2vw;
+    font-family: var(--heading-font);
+    z-index: 996;
+}
+
+.mastermind-shards-class {
+        width: 2vw;
+    height: auto;
+    display: inline-block;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 76%;
+}
+
+.mastermind-shards-count {
+        color: #ebe5e4;
+    font-size: calc(0.6vh + 0.6vw);
+    position: absolute;
+    bottom: 1.2vh;
+    left: 0.39vw;
     text-shadow: 0.1vh 0.1 0.2vh #000000;
     pointer-events: none;
     border-radius: 1vh;

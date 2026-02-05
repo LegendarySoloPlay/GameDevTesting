@@ -1,5 +1,5 @@
 // cardAbilities.js
-//03.02.26 20:45
+//05.02.26 8:30
 
 function koBonuses() {
   playSFX("ko");
@@ -14745,9 +14745,10 @@ function handleMystiqueEscape() {
       onscreenConsole.log(
         `Escape! <span class="console-highlights">Mystique</span> has transformed into a Scheme Twist.`,
       );
-
+      enterCityNotDraw = true;
       // Draw the top card of the villain deck
-      drawVillainCard()
+      drawVillainCard();
+      enterCityNotDraw = false
         .then(() => {
           resolve(); // Resolve the promise after the card is drawn
         })
@@ -17010,8 +17011,9 @@ function heroSkrulled(hero) {
   if (!hq[heroIndex]) {
     showHeroDeckEmptyPopup();
   }
-
+enterCityNotDraw = true;
   drawVillainCard();
+  enterCityNotDraw = false;
 
   // Attach an overlay to the villain
   hero.overlayText = `<span style="filter:drop-shadow(0vh 0vh 0.3vh black);">SKRULL</span>`;

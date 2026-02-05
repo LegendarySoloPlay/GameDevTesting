@@ -1,5 +1,5 @@
 // Paint the Town Red Expansion
-//03.02.26 20:45
+//05.02.26 8:30
 
 //Schemes
 
@@ -5556,7 +5556,9 @@ async function mysterioMistsOfDeception() {
         // Add to top of deck first
         villainDeck.push(strike);
         // Then draw it properly
+        enterCityNotDraw = true;
         await drawVillainCard();
+        enterCityNotDraw = false;
       }
     }
 
