@@ -1,5 +1,5 @@
 // Card Abilities for Dark City
-//05.02.26 8:30
+//07.02.26 20:00
 
 async function angelDivingCatch(card) {
   return new Promise((resolve) => {
@@ -2463,20 +2463,12 @@ function ghostRiderInfernalChains() {
 
       // Remove villain from deck and add to victory pile (NO point deduction)
       villainDeck.pop();
-      victoryPile.push(villainCard);
+      
+      await defeatNonPlacedVillain(villainCard);
 
       onscreenConsole.log(
         `<span class="console-highlights">${villainCard.name}</span> has been defeated for free.`,
       );
-
-      // Handle rescue of extra bystanders
-      if (rescueExtraBystanders > 0) {
-        for (let i = 0; i < rescueExtraBystanders; i++) {
-          await rescueBystander();
-        }
-      }
-
-      defeatBonuses();
 
       // Handle fight effect if the villain has one
       let fightEffectPromise = Promise.resolve();
@@ -3237,19 +3229,8 @@ async function punisherHailOfBulletsDefeat() {
         );
 
         closeInfoChoicePopup();
-        villainDeck.pop(topCardVillainDeck);
-        victoryPile.push(topCardVillainDeck);
-        updateGameBoard();
 
-        if (hasProfessorXMindControl) {
-          await professorXMindControlGainVillain(villainCard);
-        }
-        if (rescueExtraBystanders > 0) {
-          for (let i = 0; i < rescueExtraBystanders; i++) {
-            await rescueBystander();
-          }
-        }
-        defeatBonuses();
+        villainDeck.pop();
 
         // Handle fight effect if the villain has one
         let fightEffectPromise = Promise.resolve();
@@ -3288,6 +3269,20 @@ async function punisherHailOfBulletsDefeat() {
             updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
             resolve();
           });
+
+          if (telepathicProbeSelected) {
+        // Handle telepathic probe villain defeat
+        onscreenConsole.log(
+          `You have defeated <span class="console-highlights">${telepathicProbeVillain.name}</span> for free using Telepathic Probe.`,
+        );
+        await freeTelepathicVillainDefeat(
+          telepathicProbeVillain,
+          telepathicProbeVillain.telepathicProbeCard,
+        );
+      } else {
+        await defeatNonPlacedVillain(topCardVillainDeck);
+      }
+          
       };
     }, 10);
   });
