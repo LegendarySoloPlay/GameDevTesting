@@ -8076,8 +8076,6 @@ if (stackedTwistNextToMastermind > 0) {
           mastermind.name === "The Beyonder" ||
           mastermind.name === "Epic Beyonder");
 
-console.log(`Update Game Board, Mastermind Cosmic Threat check. ${mastermindCosmicThreatResolved}`);
-
       if (
         isTargetMastermind &&
         !mastermindCosmicThreatResolved &&
@@ -19086,7 +19084,13 @@ function closeInfoChoicePopup() {
   if (infochoicepopup) infochoicepopup.style.display = "none";
   if (close) close.style.display = "block";
   if (title) title.textContent = "POPUP TITLE";
-  if (instructions) instructions.textContent = "INSTRUCTIONS";
+  
+  // Clear instructions to remove any slider elements
+  if (instructions) {
+    instructions.textContent = "INSTRUCTIONS";
+    instructions.innerHTML = "INSTRUCTIONS"; // Also clear innerHTML to remove any DOM elements
+  }
+  
   if (preview) preview.innerHTML = "";
   if (preview) preview.style.backgroundColor = `var(--accent)`;
   if (preview) preview.style.backgroundImage = `none`;

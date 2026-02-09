@@ -391,12 +391,12 @@ function shardsToAttack() {
         return;
       }
 
-if (choice === "recruit") {
-  // Call the recruit version
-  await shardsToRecruit();
-  resolve();
-  return;
-}
+      if (choice === "recruit") {
+        // Call the recruit version
+        await shardsToRecruit();
+        resolve();
+        return;
+      }
       // If attack was chosen, continue to the quantity selection
     }
 
@@ -429,7 +429,7 @@ if (choice === "recruit") {
 
     // Set card preview background
     if (previewEl) {
-      previewEl.style.backgroundImage = `url('Visual Assets/Icons/Shards.svg')`;
+      previewEl.style.backgroundImage = `none`;
       previewEl.style.backgroundColor = `transparent`;
       previewEl.style.border = `none`;
       previewEl.style.backgroundSize = "contain";
@@ -438,13 +438,13 @@ if (choice === "recruit") {
     }
 
     closeBtn.onclick = (e) => {
-          e.stopPropagation();
-          closeInfoChoicePopup();
-          resolve();
-        }
+      e.stopPropagation();
+      closeInfoChoicePopup();
+      resolve();
+    }
 
     // PRESET TO 0 QUANTITY
-    let chosenQty = 0;
+    let chosenQty = Math.ceil(totalPlayerShards / 2);
 
     // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
     noThanksBtn.textContent = "+";
@@ -452,36 +452,139 @@ if (choice === "recruit") {
     confirmBtn.textContent = "-";
 
     // Show all buttons
-    confirmBtn.style.display = "inline-block";
+    confirmBtn.style.display = "none";
     otherBtn.style.display = "inline-block";
-    noThanksBtn.style.display = "inline-block";
+    noThanksBtn.style.display = "none";
 
+    // Create slider HTML - Keep this separate from the instructions text
+    const sliderHTML = `
+      <div class="slider-container" style="margin: 20px 0;">
+        <div class="slider-track-wrapper">
+          <div class="slider-track">
+            <div class="slider-fill" id="sliderFill"></div>
+            <input type="range" id="shardSlider" class="shard-slider" 
+                   min="0" max="${totalPlayerShards}" value="${chosenQty}" step="1">
+          </div>
+          <div class="shard-thumb" id="shardThumb">
+            <img src="Visual Assets/Icons/Shards.svg" alt="Shard" class="shard-icon">
+            <span class="thumb-value">${chosenQty}</span>
+          </div>
+        </div>
+        <div class="slider-controls">
+          <button id="sliderMinusBtn" class="slider-btn">-</button>
+          <div class="slider-value-display">
+            <span id="sliderValue">${chosenQty}</span> / <span>${totalPlayerShards}</span>
+          </div>
+          <button id="sliderPlusBtn" class="slider-btn">+</button>
+        </div>
+      </div>
+    `;
+
+    // Create a container for the dynamic quantity text
+    const quantityTextHTML = `
+      <div id="quantityTextContainer">
+        You are choosing to spend ${chosenQty} ${chosenQty === 1 ? 'Shard' : 'Shards'} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. 
+        This will give you a total of ${totalAttackPoints + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.
+      </div>
+    `;
+
+    // Set up the full HTML structure
+    instrEl.innerHTML = `
+      You can spend a Shard to get +1 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?
+      <br><br>
+      ${quantityTextHTML}
+      <br><br>
+      ${sliderHTML}
+    `;
+
+    // Get all elements once
+    const quantityTextContainer = document.getElementById("quantityTextContainer");
+    const shardSlider = document.getElementById("shardSlider");
+    const shardThumb = document.getElementById("shardThumb");
+    const sliderValue = document.getElementById("sliderValue");
+    const sliderMinusBtn = document.getElementById("sliderMinusBtn");
+    const sliderPlusBtn = document.getElementById("sliderPlusBtn");
+    const sliderFill = document.getElementById("sliderFill");
+
+    // Function to update ONLY the quantity text (not the whole slider)
     function updateQuantityText() {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
       const currentAttack = totalAttackPoints;
-      instrEl.innerHTML =
-        `You can spend a Shard to get +1 <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?<br><br>You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. This will give you a total of ${currentAttack + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+      
+      if (quantityTextContainer) {
+        quantityTextContainer.innerHTML = 
+          `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">. 
+          This will give you a total of ${currentAttack + chosenQty} <img src="Visual Assets/Icons/Attack.svg" alt="Attack Icon" class="card-icons">.`;
+      }
     }
 
-        // Initial update
-    updateQuantityText();
-
-    // Button handlers
-    confirmBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (chosenQty > 0) {
-        chosenQty -= 1;
-        updateQuantityText();
+    // Function to update ONLY the slider display
+    function updateSliderDisplay() {
+      // Update slider value display
+      if (sliderValue) sliderValue.textContent = chosenQty;
+      
+      // Update slider input value
+      if (shardSlider) shardSlider.value = chosenQty;
+      
+      // Update thumb position
+      if (shardSlider && shardThumb) {
+        const percentage = totalPlayerShards > 0 ? (chosenQty / totalPlayerShards) * 100 : 0;
+        // Adjust for thumb width (50px wide, so move back half)
+        shardThumb.style.left = `calc(${percentage}%)`;
+        
+        // Update thumb value
+        const thumbValue = shardThumb.querySelector('.thumb-value');
+        if (thumbValue) thumbValue.textContent = chosenQty;
       }
-    };
-
-    noThanksBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (chosenQty < totalPlayerShards) {
-        chosenQty += 1;
-        updateQuantityText();
+      
+      // Update fill
+      if (sliderFill && totalPlayerShards > 0) {
+        const percentage = (chosenQty / totalPlayerShards) * 100;
+        sliderFill.style.width = `${percentage}%`;
       }
-    };
+      
+      // Update button states
+      if (confirmBtn) confirmBtn.disabled = chosenQty <= 0;
+      if (sliderMinusBtn) sliderMinusBtn.disabled = chosenQty <= 0;
+      if (sliderPlusBtn) sliderPlusBtn.disabled = chosenQty >= totalPlayerShards;
+      if (noThanksBtn) noThanksBtn.disabled = chosenQty >= totalPlayerShards;
+      if (otherBtn) otherBtn.disabled = chosenQty === 0;
+    }
+
+    // Function to update everything
+    function updateAllDisplays() {
+      updateQuantityText();
+      updateSliderDisplay();
+    }
+
+    // Set up event listeners ONCE
+    if (shardSlider) {
+      shardSlider.addEventListener('input', () => {
+        chosenQty = parseInt(shardSlider.value);
+        updateAllDisplays();
+      });
+    }
+    
+    if (sliderMinusBtn) {
+      sliderMinusBtn.addEventListener('click', () => {
+        if (chosenQty > 0) {
+          chosenQty -= 1;
+          updateAllDisplays();
+        }
+      });
+    }
+    
+    if (sliderPlusBtn) {
+      sliderPlusBtn.addEventListener('click', () => {
+        if (chosenQty < totalPlayerShards) {
+          chosenQty += 1;
+          updateAllDisplays();
+        }
+      });
+    }
+
+    // Initial update
+    updateAllDisplays();
 
     otherBtn.onclick = (e) => {
       e.stopPropagation();
@@ -559,8 +662,8 @@ function shardsToRecruit() {
       previewEl.style.backgroundPosition = "center";
     }
 
-    // PRESET TO 0
-    let chosenQty = 0;
+    // PRESET TO MIDDLE
+    let chosenQty = Math.ceil(totalPlayerShards / 2);
 
     // SWAP BUTTON ROLES: noThanks becomes +, other becomes confirm, confirm becomes -
     noThanksBtn.textContent = "+";
@@ -568,36 +671,139 @@ function shardsToRecruit() {
     confirmBtn.textContent = "-";
 
     // Show all buttons
-    confirmBtn.style.display = "inline-block";
+    confirmBtn.style.display = "none";
     otherBtn.style.display = "inline-block";
-    noThanksBtn.style.display = "inline-block";
+    noThanksBtn.style.display = "none";
 
+    // Create slider HTML - Keep this separate from the instructions text
+    const sliderHTML = `
+      <div class="slider-container" style="margin: 20px 0;">
+        <div class="slider-track-wrapper">
+          <div class="slider-track">
+            <div class="slider-fill" id="sliderFill"></div>
+            <input type="range" id="shardSlider" class="shard-slider" 
+                   min="0" max="${totalPlayerShards}" value="${chosenQty}" step="1">
+          </div>
+          <div class="shard-thumb" id="shardThumb">
+            <img src="Visual Assets/Icons/Shards.svg" alt="Shard" class="shard-icon">
+            <span class="thumb-value">${chosenQty}</span>
+          </div>
+        </div>
+        <div class="slider-controls">
+          <button id="sliderMinusBtn" class="slider-btn">-</button>
+          <div class="slider-value-display">
+            <span id="sliderValue">${chosenQty}</span> / <span>${totalPlayerShards}</span>
+          </div>
+          <button id="sliderPlusBtn" class="slider-btn">+</button>
+        </div>
+      </div>
+    `;
+
+    // Create a container for the dynamic quantity text
+    const quantityTextHTML = `
+      <div id="quantityTextContainer">
+        You are choosing to spend ${chosenQty} ${chosenQty === 1 ? 'Shard' : 'Shards'} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. 
+        This will give you a total of ${totalRecruitPoints + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.
+      </div>
+    `;
+
+    // Set up the full HTML structure
+    instrEl.innerHTML = `
+      You can spend a Shard to get +1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?
+      <br><br>
+      ${quantityTextHTML}
+      <br><br>
+      ${sliderHTML}
+    `;
+
+    // Get all elements once
+    const quantityTextContainer = document.getElementById("quantityTextContainer");
+    const shardSlider = document.getElementById("shardSlider");
+    const shardThumb = document.getElementById("shardThumb");
+    const sliderValue = document.getElementById("sliderValue");
+    const sliderMinusBtn = document.getElementById("sliderMinusBtn");
+    const sliderPlusBtn = document.getElementById("sliderPlusBtn");
+    const sliderFill = document.getElementById("sliderFill");
+
+    // Function to update ONLY the quantity text (not the whole slider)
     function updateQuantityText() {
       const plural = chosenQty === 1 ? "Shard" : "Shards";
       const currentRecruit = totalRecruitPoints;
-      instrEl.innerHTML =
-        `You can spend a Shard to get +1 <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons"> (returning the Shard to the supply). How many Shards would you like to spend?<br><br>You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. This will give you a total of ${currentRecruit + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
+      
+      if (quantityTextContainer) {
+        quantityTextContainer.innerHTML = 
+          `You are choosing to spend ${chosenQty} ${plural} to get +${chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">. 
+          This will give you a total of ${currentRecruit + chosenQty} <img src="Visual Assets/Icons/Recruit.svg" alt="Recruit Icon" class="card-icons">.`;
+      }
+    }
+
+    // Function to update ONLY the slider display
+    function updateSliderDisplay() {
+      // Update slider value display
+      if (sliderValue) sliderValue.textContent = chosenQty;
+      
+      // Update slider input value
+      if (shardSlider) shardSlider.value = chosenQty;
+      
+      // Update thumb position
+      if (shardSlider && shardThumb) {
+        const percentage = totalPlayerShards > 0 ? (chosenQty / totalPlayerShards) * 100 : 0;
+        // Adjust for thumb width (50px wide, so move back half)
+        shardThumb.style.left = `calc(${percentage}%)`;
+        
+        // Update thumb value
+        const thumbValue = shardThumb.querySelector('.thumb-value');
+        if (thumbValue) thumbValue.textContent = chosenQty;
+      }
+      
+      // Update fill
+      if (sliderFill && totalPlayerShards > 0) {
+        const percentage = (chosenQty / totalPlayerShards) * 100;
+        sliderFill.style.width = `${percentage}%`;
+      }
+      
+      // Update button states
+      if (confirmBtn) confirmBtn.disabled = chosenQty <= 0;
+      if (sliderMinusBtn) sliderMinusBtn.disabled = chosenQty <= 0;
+      if (sliderPlusBtn) sliderPlusBtn.disabled = chosenQty >= totalPlayerShards;
+      if (noThanksBtn) noThanksBtn.disabled = chosenQty >= totalPlayerShards;
+      if (otherBtn) otherBtn.disabled = chosenQty === 0;
+    }
+
+    // Function to update everything
+    function updateAllDisplays() {
+      updateQuantityText();
+      updateSliderDisplay();
+    }
+
+    // Set up event listeners ONCE
+    if (shardSlider) {
+      shardSlider.addEventListener('input', () => {
+        chosenQty = parseInt(shardSlider.value);
+        updateAllDisplays();
+      });
+    }
+    
+    if (sliderMinusBtn) {
+      sliderMinusBtn.addEventListener('click', () => {
+        if (chosenQty > 0) {
+          chosenQty -= 1;
+          updateAllDisplays();
+        }
+      });
+    }
+    
+    if (sliderPlusBtn) {
+      sliderPlusBtn.addEventListener('click', () => {
+        if (chosenQty < totalPlayerShards) {
+          chosenQty += 1;
+          updateAllDisplays();
+        }
+      });
     }
 
     // Initial update
-    updateQuantityText();
-
-    // Button handlers
-    confirmBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (chosenQty > 0) {
-        chosenQty -= 1;
-        updateQuantityText();
-      }
-    };
-
-    noThanksBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (chosenQty < totalPlayerShards) {
-        chosenQty += 1;
-        updateQuantityText();
-      }
-    };
+    updateAllDisplays();
 
     otherBtn.onclick = (e) => {
       e.stopPropagation();

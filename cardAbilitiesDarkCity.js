@@ -2453,65 +2453,63 @@ function ghostRiderInfernalChains() {
       villainCard,
       telepathicProbeCard,
     ) {
-      if (telepathicProbeCard) {
-        telepathicProbeCard.villain = null; // Clear the reference after fighting
+  playSFX("attack");
+
+  if (telepathicProbeCard) {
+    telepathicProbeCard.villain = null; // Clear the reference after fighting
+  }
+
+  onscreenConsole.log(
+    `Preparing to fight <span class="console-highlights">${villainCard.name}</span> using <span class="console-highlights">Professor X - Telepathic Probe</span>.`,
+  );
+
+  const selectedSchemeName = document.querySelector(
+    "#scheme-section input[type=radio]:checked",
+  ).value;
+  const selectedScheme = schemes.find(
+    (scheme) => scheme.name === selectedSchemeName,
+  );
+
+  villainDeck.pop(villainCard);
+
+    // Handle fight effect if the villain has one (using punisherHailOfBulletsDefeat style)
+  try {
+  if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
+    const fightEffectFunction = window[villainCard.fightEffect];
+    console.log("Fight effect function found:", fightEffectFunction);
+    if (typeof fightEffectFunction === "function") {
+      // Check if we should negate the fight effect
+      let negate = false;
+      if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+        negate = await promptNegateFightEffectWithMrFantastic(villainCard, villainCard);
       }
-
-      onscreenConsole.log(
-        `Defeating <span class="console-highlights">${villainCard.name}</span> for free using <span class="console-highlights">Professor X - Telepathic Probe</span>.`,
-      );
-
-      // Remove villain from deck and add to victory pile (NO point deduction)
-      villainDeck.pop();
       
-      await defeatNonPlacedVillain(villainCard);
-
-      onscreenConsole.log(
-        `<span class="console-highlights">${villainCard.name}</span> has been defeated for free.`,
-      );
-
-      // Handle fight effect if the villain has one
-      let fightEffectPromise = Promise.resolve();
-      if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
-        const fightEffectFunction = window[villainCard.fightEffect];
-        console.log("Fight effect function found:", fightEffectFunction);
-        if (typeof fightEffectFunction === "function") {
-          fightEffectPromise = new Promise((resolve, reject) => {
-            try {
-              const result = fightEffectFunction(villainCard);
-              console.log("Fight effect executed:", result);
-              resolve(result);
-            } catch (error) {
-              reject(error);
-            }
-          });
-        } else {
-          console.error(
-            `Fight effect function ${villainCard.fightEffect} not found`,
-          );
-        }
+      // Only execute the fight effect if not negated
+      if (!negate) {
+        await fightEffectFunction(villainCard);
+        console.log("Fight effect executed successfully");
       } else {
-        console.log("No fight effect found for this villain.");
+        console.log("Fight effect was negated by Mr. Fantastic");
       }
-
-      // Handle fight effect promise
-      await fightEffectPromise
-        .then(() => {
-          updateGameBoard(); // Update the game board after fight effect is handled
-        })
-        .catch((error) => {
-          console.error(`Error in fight effect: ${error}`);
-          updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
-        });
-
-      if (hasProfessorXMindControl) {
-        await professorXMindControlGainVillain(villainCard);
-      }
-
-      // Reset the currentVillainLocation after the attack is resolved
-      currentVillainLocation = null;
-      updateGameBoard();
+    } else {
+      console.error(
+        `Fight effect function ${villainCard.fightEffect} not found`,
+      );
     }
+  } else {
+    console.log("No fight effect found for this villain.");
+  }
+} catch (error) {
+  console.error(`Error in fight effect: ${error}`);
+}
+
+  // Call defeatNonPlacedVillain if it exists (similar to punisherHailOfBulletsDefeat)
+  if (typeof defeatNonPlacedVillain === "function") {
+    await defeatNonPlacedVillain(villainCard);
+  }
+
+  updateGameBoard();
+}
   });
 }
 
@@ -3185,7 +3183,7 @@ async function punisherHailOfBulletsDefeat() {
   }
 
   return new Promise((resolve) => {
-    setTimeout(() => {
+    setTimeout(async () => {
       const { confirmButton, denyButton } = showHeroAbilityMayPopup(
         `DO YOU WISH TO DEFEAT <span class="bold-spans">${topCardVillainDeck.name}</span> FOR FREE?`,
         "Defeat Villain",
@@ -3229,60 +3227,51 @@ async function punisherHailOfBulletsDefeat() {
         );
 
         closeInfoChoicePopup();
-
         villainDeck.pop();
 
         // Handle fight effect if the villain has one
-        let fightEffectPromise = Promise.resolve();
-        if (
-          topCardVillainDeck.fightEffect &&
-          topCardVillainDeck.fightEffect !== "None"
-        ) {
-          const fightEffectFunction = window[topCardVillainDeck.fightEffect];
-          console.log("Fight effect function found:", fightEffectFunction);
-          if (typeof fightEffectFunction === "function") {
-            fightEffectPromise = new Promise((fightResolve, reject) => {
-              try {
-                const result = fightEffectFunction(topCardVillainDeck); // Pass villainCard as an argument here
-                console.log("Fight effect executed:", result);
-                fightResolve(result);
-              } catch (error) {
-                reject(error);
-              }
-            });
-          } else {
-            console.error(
-              `Fight effect function ${topCardVillainDeck.fightEffect} not found`,
-            );
-          }
-        } else {
-          console.log("No fight effect found for this villain.");
-        }
-
-        fightEffectPromise
-          .then(() => {
-            updateGameBoard(); // Update the game board after fight effect is handled
-            resolve();
-          })
-          .catch((error) => {
-            console.error(`Error in fight effect: ${error}`);
-            updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
-            resolve();
-          });
-
-          if (telepathicProbeSelected) {
-        // Handle telepathic probe villain defeat
-        onscreenConsole.log(
-          `You have defeated <span class="console-highlights">${telepathicProbeVillain.name}</span> for free using Telepathic Probe.`,
-        );
-        await freeTelepathicVillainDefeat(
-          telepathicProbeVillain,
-          telepathicProbeVillain.telepathicProbeCard,
-        );
-      } else {
-        await defeatNonPlacedVillain(topCardVillainDeck);
+        try {
+  if (
+    topCardVillainDeck.fightEffect &&
+    topCardVillainDeck.fightEffect !== "None"
+  ) {
+    const fightEffectFunction = window[topCardVillainDeck.fightEffect];
+    if (typeof fightEffectFunction === "function") {
+      // Check if we should negate the fight effect
+      let negate = false;
+      if (typeof promptNegateFightEffectWithMrFantastic === "function") {
+        negate = await promptNegateFightEffectWithMrFantastic(topCardVillainDeck, topCardVillainDeck);
       }
-          
+      
+      // Only execute the fight effect if not negated
+      if (!negate) {
+        await fightEffectFunction(topCardVillainDeck);
+        console.log("Fight effect executed successfully");
+      } else {
+        console.log("Fight effect was negated by Mr. Fantastic");
+      }
+    } else {
+      console.error(
+        `Fight effect function ${topCardVillainDeck.fightEffect} not found`,
+      );
+    }
+  } else {
+    console.log("No fight effect found for this villain.");
+  }
+} catch (error) {
+  console.error(`Error in fight effect: ${error}`);
+}
+
+        // Update game board after fight effect
+        updateGameBoard();
+
+
+          if (typeof defeatNonPlacedVillain === "function") {
+            await defeatNonPlacedVillain(topCardVillainDeck);
+          }
+  
+
+        resolve();
       };
     }, 10);
   });
@@ -7111,11 +7100,6 @@ async function initiateTelepathicVillainFight(
   }
 
   villainDeck.pop(villainCard);
-  victoryPile.push(villainCard);
-
-  onscreenConsole.log(
-    `<span class="console-highlights">${villainCard.name}</span> has been defeated.`,
-  );
 
   // ---- POINT DEDUCTION LOGIC (SAME AS defeatVillain) ----
   if (villainAttack > 0) {
@@ -7153,55 +7137,31 @@ async function initiateTelepathicVillainFight(
     }
   }
 
-  // Handle rescue of extra bystanders
-  if (rescueExtraBystanders > 0) {
-    for (let i = 0; i < rescueExtraBystanders; i++) {
-      await rescueBystander();
-    }
-  }
-
-  defeatBonuses();
-
-  // Handle fight effect if the villain has one
-  let fightEffectPromise = Promise.resolve();
-  if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
-    const fightEffectFunction = window[villainCard.fightEffect];
-    console.log("Fight effect function found:", fightEffectFunction);
-    if (typeof fightEffectFunction === "function") {
-      fightEffectPromise = new Promise((resolve, reject) => {
-        try {
-          const result = fightEffectFunction(villainCard);
-          console.log("Fight effect executed:", result);
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      });
+  // Handle fight effect if the villain has one (using punisherHailOfBulletsDefeat style)
+  try {
+    if (villainCard.fightEffect && villainCard.fightEffect !== "None") {
+      const fightEffectFunction = window[villainCard.fightEffect];
+      console.log("Fight effect function found:", fightEffectFunction);
+      if (typeof fightEffectFunction === "function") {
+        await fightEffectFunction(villainCard);
+        console.log("Fight effect executed successfully");
+      } else {
+        console.error(
+          `Fight effect function ${villainCard.fightEffect} not found`,
+        );
+      }
     } else {
-      console.error(
-        `Fight effect function ${villainCard.fightEffect} not found`,
-      );
+      console.log("No fight effect found for this villain.");
     }
-  } else {
-    console.log("No fight effect found for this villain.");
+  } catch (error) {
+    console.error(`Error in fight effect: ${error}`);
   }
 
-  // Handle fight effect promise
-  await fightEffectPromise
-    .then(() => {
-      updateGameBoard(); // Update the game board after fight effect is handled
-    })
-    .catch((error) => {
-      console.error(`Error in fight effect: ${error}`);
-      updateGameBoard(); // Ensure the game board is updated even if the fight effect fails
-    });
-
-  if (hasProfessorXMindControl) {
-    await professorXMindControlGainVillain(villainCard);
+  // Call defeatNonPlacedVillain if it exists (similar to punisherHailOfBulletsDefeat)
+  if (typeof defeatNonPlacedVillain === "function") {
+    await defeatNonPlacedVillain(villainCard);
   }
 
-  // Reset the currentVillainLocation after the attack is resolved
-  currentVillainLocation = null;
   updateGameBoard();
 }
 
@@ -17002,47 +16962,6 @@ async function confirmInstantMastermindAttack() {
       await executeOperationsInPlayerOrder(operations, mastermindCopy);
     } else if (operations.length === 1) {
       await operations[0].execute();
-    }
-
-    // Handle extra bystanders from other effects
-    if (rescueExtraBystanders > 0) {
-      for (let i = 0; i < rescueExtraBystanders; i++) {
-        await rescueBystander();
-      }
-    }
-
-    // Apply defeat bonuses
-    defeatBonuses();
-    updateMastermindOverlay();
-    updateGameBoard();
-
-    onscreenConsole.log(
-      `You attacked <span class="console-highlights">${mastermind.name}</span> with an instant defeat!`,
-    );
-
-    // Handle Final Blow logic
-    if (finalBlowNow) {
-      finalBlowDelivered = true;
-      
-      const finalBlowCard = {
-        name: "Final Blow",
-        type: "Mastermind",
-        victoryPoints: mastermind.victoryPoints,
-        image: mastermind.image,
-      };
-      victoryPile.push(finalBlowCard);
-      updateGameBoard();
-
-      onscreenConsole.log(
-        `You delivered the Final Blow to <span class="console-highlights">${mastermind.name}</span>!`,
-      );
-      checkWinCondition();
-    } else if (mastermind.tactics.length === 0) {
-      // Regular defeat without Final Blow
-      checkWinCondition();
-    } else {
-      // Reveal next tactic
-      revealMastermindTactic(mastermind);
     }
 
 await handleMastermindPostDefeat(mastermind, mastermindCopy, 0);
